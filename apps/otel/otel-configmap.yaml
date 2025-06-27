@@ -27,8 +27,8 @@ data:
             action: insert
 
     exporters:
-      logging:
-        loglevel: debug
+      debug:
+        verbosity: detailed
       
       loki:
         endpoint: http://loki.loki-system.svc.cluster.local:3100/loki/api/v1/push
@@ -47,4 +47,4 @@ data:
         logs:
           receivers: [otlp]
           processors: [batch, attributes]
-          exporters: [logging, loki]
+          exporters: [debug, loki]

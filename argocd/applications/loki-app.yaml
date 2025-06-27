@@ -6,40 +6,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://grafana.github.io/helm-charts
-    targetRevision: "*"
-    chart: loki
-    helm:
-      valueFiles:
-      - values.yaml
-      values: |
-        deploymentMode: SingleBinary
-        singleBinary:
-          replicas: 1
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: 1000m
-              memory: 1Gi
-        test:
-          enabled: false
-        monitoring:
-          selfMonitoring:
-            enabled: false
-          serviceMonitor:
-            enabled: false
-        gateway:
-          enabled: false
-        minio:
-          enabled: false
-        loki:
-          auth_enabled: false
-          commonConfig:
-            replication_factor: 1
-          storage:
-            type: filesystem
+    repoURL: https://github.com/norandom/observability-k8s.git
+    targetRevision: HEAD
+    path: apps/loki
   destination:
     server: https://kubernetes.default.svc
     namespace: loki-system

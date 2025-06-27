@@ -5,6 +5,7 @@ namespace: quickwit-system
 
 resources:
   - quickwit-configmap.yaml
+  - quickwit-pvc.yaml
   - quickwit-deployment.yaml
   - quickwit-service.yaml
   - quickwit-ingress.yaml

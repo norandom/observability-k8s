@@ -31,4 +31,5 @@ spec:
         configMap:
           name: quickwit-config
       - name: data
-        emptyDir: {}
+        persistentVolumeClaim:
+          claimName: quickwit-pvc

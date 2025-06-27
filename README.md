@@ -31,7 +31,7 @@ curl -H "Host: argocd.k3s.local" http://192.168.122.27/
 ## Applications Managed by ArgoCD
 
 - **Grafana** (`apps/grafana/`)
-- **Loki** (Helm chart)
+- **Loki** (`apps/loki/`)
 - **OpenTelemetry Collector** (`apps/otel/`)
 - **Quickwit** (`apps/quickwit/`)
 
@@ -67,13 +67,20 @@ git push
 
 ## Data Sources in Grafana
 
-- **Loki**: http://loki-gateway.loki-system.svc.cluster.local/
-- **Quickwit**: http://quickwit.quickwit-system.svc.cluster.local:7280
+- **Loki**: http://loki.loki-system.svc.cluster.local:3100
+- **Quickwit**: http://192.168.122.27:7280/api/v1 (indexes: otel-logs-v0_7, otel-traces-v0_7)
 
 ## Log Routing
 
 - **Security logs** (auth, audit) → Quickwit
 - **Operational logs** (syslog, web) → Loki
+
+## Data Retention
+
+- **Loki**: No retention policy configured (manual cleanup required)
+- **Quickwit**: Persistent storage (5Gi PVC) - data survives pod restarts
+- **Grafana**: Persistent storage (1Gi PVC) - data survives pod restarts
+- **OTEL Collector**: No persistent storage (ephemeral)
 
 ## Architecture
 

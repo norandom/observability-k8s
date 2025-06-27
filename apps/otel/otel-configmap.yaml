@@ -14,14 +14,32 @@ data:
 
     processors:
       batch:
+      attributes:
+        actions:
+          - key: service.name
+            from_attribute: service
+            action: insert
+          - key: log.type
+            from_attribute: log_type
+            action: insert
+          - key: host.name
+            from_attribute: host
+            action: insert
 
     exporters:
       logging:
         loglevel: debug
+      
+      loki:
+        endpoint: http://loki-gateway.loki-system.svc.cluster.local/loki/api/v1/push
+        tenant_id: operational
+        default_labels_enabled:
+          exporter: false
+          job: true
 
     service:
       pipelines:
         logs:
           receivers: [otlp]
-          processors: [batch]
-          exporters: [logging]
+          processors: [batch, attributes]
+          exporters: [logging, loki]

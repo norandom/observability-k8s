@@ -10,5 +10,3 @@ data:
     rest_listen_port: 7280
     data_dir: /quickwit/qwdata
     default_index_root_uri: file:///quickwit/qwdata/indexes
-    otel_logs_service:
-      enabled: true

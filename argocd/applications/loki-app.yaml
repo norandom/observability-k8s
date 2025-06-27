@@ -36,27 +36,30 @@ spec:
             volume_enabled: true
             retention_period: 720h
             retention_deletes_enabled: true
-        deploymentMode: Distributed
+        deploymentMode: SingleBinary
+        singleBinary:
+          replicas: 1
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
         ingester:
-          replicas: 1
-          zoneAwareReplication:
-            enabled: false
+          replicas: 0
         querier:
-          replicas: 1
-          maxUnavailable: 0
+          replicas: 0
         queryFrontend:
-          replicas: 1
-          maxUnavailable: 0
+          replicas: 0
         queryScheduler:
-          replicas: 1
+          replicas: 0
         distributor:
-          replicas: 1
-          maxUnavailable: 0
+          replicas: 0
         compactor:
-          replicas: 1
+          replicas: 0
         indexGateway:
-          replicas: 1
-          maxUnavailable: 0
+          replicas: 0
         bloomPlanner:
           replicas: 0
         bloomBuilder:
@@ -68,8 +71,6 @@ spec:
         read:
           replicas: 0
         write:
-          replicas: 0
-        singleBinary:
           replicas: 0
         gateway:
           service:

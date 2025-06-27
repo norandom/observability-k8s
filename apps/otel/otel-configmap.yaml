@@ -13,49 +13,15 @@ data:
             endpoint: 0.0.0.0:4317
 
     processors:
-      attributes:
-        actions:
-          - key: service.name
-            from_attribute: service
-            action: insert
-          - key: log.type
-            from_attribute: log_type
-            action: insert
-          - key: host.name
-            from_attribute: host
-            action: insert
-
-      routing:
-        table:
-          - statement: route() where attributes["log_type"] == "auth" or attributes["log_type"] == "audit"
-            pipelines: [logs/security]
-          - statement: route() where attributes["log_type"] == "syslog" or attributes["log_type"] == "web_access"
-            pipelines: [logs/operational]
+      batch:
 
     exporters:
-      loki:
-        endpoint: http://loki-gateway.loki-system.svc.cluster.local/loki/api/v1/push
-        tenant_id: operational
-        labels:
-          resource:
-            service.name: "service_name"
-            host.name: "host"
-          attributes:
-            log.type: "log_type"
-
-      otlphttp/quickwit:
-        endpoint: http://quickwit.quickwit-system.svc.cluster.local:7280/api/v1/otel/logs
-        headers:
-          "X-Tenant-ID": "security"
+      logging:
+        loglevel: debug
 
     service:
       pipelines:
-        logs/security:
+        logs:
           receivers: [otlp]
-          processors: [attributes]
-          exporters: [otlphttp/quickwit]
-        
-        logs/operational:
-          receivers: [otlp]
-          processors: [attributes] 
-          exporters: [loki]
+          processors: [batch]
+          exporters: [logging]

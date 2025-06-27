@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: quickwit
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/yourusername/observability-k8s.git
+    targetRevision: HEAD
+    path: apps/quickwit
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: quickwit-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

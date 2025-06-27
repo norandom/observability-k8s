@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: quickwit-config
+data:
+  quickwit.yaml: |
+    version: 0.8
+    node_id: quickwit-node
+    listen_address: 0.0.0.0:7280
+    rest_listen_port: 7280
+    data_dir: /quickwit/qwdata
+    default_index_root_uri: file:///quickwit/qwdata/indexes
+    otel_logs_service:
+      enabled: true

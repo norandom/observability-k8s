@@ -1,0 +1,59 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: simple-observable-build
+  namespace: tekton-pipelines
+spec:
+  params:
+  - name: git-url
+    type: string
+  - name: image-url
+    type: string
+  workspaces:
+  - name: source
+  steps:
+  - name: git-clone
+    image: alpine/git:latest
+    command: ['sh', '-c']
+    args:
+    - |
+      git clone $(params.git-url) $(workspaces.source.path)/source
+      cd $(workspaces.source.path)/source
+      ls -la apps/observable/
+  
+  - name: kaniko-build
+    image: gcr.io/kaniko-project/executor:latest
+    command: ['/kaniko/executor']
+    args:
+    - --context=$(workspaces.source.path)/source/apps/observable
+    - --dockerfile=$(workspaces.source.path)/source/apps/observable/Dockerfile
+    - --destination=$(params.image-url)
+    - --insecure
+    - --skip-tls-verify
+---
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: simple-observable-pipeline
+  namespace: tekton-pipelines
+spec:
+  params:
+  - name: git-url
+    type: string
+  - name: image-url
+    type: string
+    default: "192.168.122.27:30500/observable-conda:latest"
+  workspaces:
+  - name: shared-data
+  tasks:
+  - name: build
+    taskRef:
+      name: simple-observable-build
+    params:
+    - name: git-url
+      value: $(params.git-url)
+    - name: image-url
+      value: $(params.image-url)
+    workspaces:
+    - name: source
+      workspace: shared-data

@@ -6,7 +6,6 @@ dependencies:
   # Core runtime
   - python=3.11
   - nodejs=20
-  - npm
   
   # Data processing and analysis
   - polars>=0.20.0

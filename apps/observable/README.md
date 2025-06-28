@@ -136,3 +136,9 @@ curl http://observable.k3s.local/operations
 - Add live data loaders connecting to Loki, Quickwit, and Prometheus APIs
 - Enhance Python data processing with polars/pandas integration
 - Implement real-time data refresh in dashboards
+
+## 📚 Further Topics
+
+- **[Adding New Dashboards](./add_dashboards.md)** - Complete GitOps workflow for dashboard development
+- **[Tekton Pipeline Configuration](./tekton-pipeline.yaml)** - Auto-building system setup
+- **[Container Build Process](./Dockerfile)** - Observable Framework container details

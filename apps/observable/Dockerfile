@@ -23,16 +23,25 @@ RUN python --version && \
     python -c "import polars, pandas, requests; print('Python packages OK')" && \
     npx @observablehq/framework --version
 
-# Create app structure
+# Create app structure and copy dashboard files
 RUN mkdir -p /app/src/data
+
+# Copy dashboard source files into the container
+COPY src/ /app/src/
+
+# Initialize npm project
+RUN npm init -y && npm install @observablehq/framework
 
 # Set environment variables
 ENV CONDA_DEFAULT_ENV=observable-dashboard
 ENV PATH=/opt/conda/envs/observable-dashboard/bin:$PATH
+ENV LOKI_ENDPOINT=http://192.168.122.27:3100
+ENV QUICKWIT_ENDPOINT=http://192.168.122.27:7280
+ENV PROMETHEUS_ENDPOINT=http://192.168.122.27:9090
 
 # Expose port
 EXPOSE 3000
 
 # Use conda environment for all commands
 ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "observable-dashboard"]
-CMD ["/bin/bash", "/config/start.sh"]
+CMD ["npx", "@observablehq/framework", "dev", "--host", "0.0.0.0", "--port", "3000"]

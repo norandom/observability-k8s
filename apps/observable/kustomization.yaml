@@ -2,16 +2,11 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  # For conda-based deployment (requires building Docker image first):
+  # Single Observable Framework deployment with conda Python environment
   - conda-deployment.yaml
-  - conda-configmap.yaml
-  # For simple HTML-based deployment (currently active):
-  # - simple-deployment.yaml
-  # - minimal.yaml
   - observable-service.yaml
   - observable-ingress.yaml
   - observable-pvc.yaml
-  - dashboards-configmap.yaml
 
 namespace: observable
 

@@ -28,13 +28,16 @@ data:
       
       loki:
         endpoint: http://loki.loki-system.svc.cluster.local:3100/loki/api/v1/push
+      
+      otlphttp/quickwit:
+        endpoint: http://quickwit.quickwit-system.svc.cluster.local:7280/api/v1/otel-logs-v0_7/ingest
 
     service:
       pipelines:
         logs:
           receivers: [otlp]
           processors: [memory_limiter, batch]
-          exporters: [debug, loki]
+          exporters: [debug, loki, otlphttp/quickwit]
         traces:
           receivers: [otlp]
           processors: [memory_limiter, batch]

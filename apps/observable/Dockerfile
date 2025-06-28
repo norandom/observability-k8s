@@ -10,14 +10,15 @@ COPY conda-environment.yml /tmp/environment.yml
 RUN conda env create -f /tmp/environment.yml && \
     conda clean -afy
 
-# Make RUN commands use the new environment
-SHELL ["conda", "run", "-n", "observable-dashboard", "/bin/bash", "-c"]
-
-# Install Observable Framework via npm (must be done after conda environment is activated)
-RUN npm install -g @observablehq/framework@latest
+# Activate conda environment and install Observable Framework
+RUN . /opt/conda/etc/profile.d/conda.sh && \
+    conda activate observable-dashboard && \
+    npm install -g @observablehq/framework@latest
 
 # Verify installations
-RUN python --version && \
+RUN . /opt/conda/etc/profile.d/conda.sh && \
+    conda activate observable-dashboard && \
+    python --version && \
     node --version && \
     npm --version && \
     python -c "import polars, pandas, requests; print('Python packages OK')" && \
@@ -30,7 +31,9 @@ RUN mkdir -p /app/src/data
 COPY src/ /app/src/
 
 # Initialize npm project
-RUN npm init -y && npm install @observablehq/framework
+RUN . /opt/conda/etc/profile.d/conda.sh && \
+    conda activate observable-dashboard && \
+    npm init -y && npm install @observablehq/framework
 
 # Set environment variables
 ENV CONDA_DEFAULT_ENV=observable-dashboard

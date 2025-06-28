@@ -42,11 +42,98 @@ data:
         version: 1
         editable: true
         jsonData:
-          url_options:
-            method: "POST"
-            headers:
-              - name: "Content-Type"
-                value: "application/json"
+          datasource_mode: "basic"
+          global_queries:
+            - name: "All Logs"
+              url: "/api/v1/otel-logs-v0_7/search"
+              url_options:
+                method: "POST"
+                headers:
+                  - name: "Content-Type"
+                    value: "application/json"
+                body_type: "raw"
+                body_content_type: "application/json"
+                body: '{"query": "*", "max_hits": 50}'
+              parser: "backend"
+              source: "url"
+              format: "table"
+              root_selector: "$.hits"
+              columns:
+                - selector: "timestamp"
+                  text: "Time"
+                  type: "timestamp_epoch_s"
+                - selector: "body"
+                  text: "Message"
+                  type: "string"
+                - selector: "log_type"
+                  text: "Type"
+                  type: "string"
+                - selector: "severity_text"
+                  text: "Level"
+                  type: "string"
+                - selector: "service_name"
+                  text: "Service"
+                  type: "string"
+            - name: "Security Logs"
+              url: "/api/v1/otel-logs-v0_7/search"
+              url_options:
+                method: "POST"
+                headers:
+                  - name: "Content-Type"
+                    value: "application/json"
+                body_type: "raw"
+                body_content_type: "application/json"
+                body: '{"query": "log_type:security", "max_hits": 100}'
+              parser: "backend"
+              source: "url"
+              format: "table"
+              root_selector: "$.hits"
+              columns:
+                - selector: "timestamp"
+                  text: "Time"
+                  type: "timestamp_epoch_s"
+                - selector: "body"
+                  text: "Message"
+                  type: "string"
+                - selector: "log_type"
+                  text: "Type"
+                  type: "string"
+                - selector: "severity_text"
+                  text: "Level"
+                  type: "string"
+                - selector: "service_name"
+                  text: "Service"
+                  type: "string"
+            - name: "Auth Logs"
+              url: "/api/v1/otel-logs-v0_7/search"
+              url_options:
+                method: "POST"
+                headers:
+                  - name: "Content-Type"
+                    value: "application/json"
+                body_type: "raw"
+                body_content_type: "application/json"
+                body: '{"query": "category:auth", "max_hits": 100}'
+              parser: "backend"
+              source: "url"
+              format: "table"
+              root_selector: "$.hits"
+              columns:
+                - selector: "timestamp"
+                  text: "Time"
+                  type: "timestamp_epoch_s"
+                - selector: "body"
+                  text: "Message"
+                  type: "string"
+                - selector: "category"
+                  text: "Category"
+                  type: "string"
+                - selector: "severity_text"
+                  text: "Level"
+                  type: "string"
+                - selector: "service_name"
+                  text: "Service"
+                  type: "string"
 ---
 apiVersion: v1
 kind: ConfigMap

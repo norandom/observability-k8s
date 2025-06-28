@@ -21,6 +21,8 @@ spec:
           name: grpc
         - containerPort: 4318
           name: http
+        - containerPort: 8888
+          name: metrics
         volumeMounts:
         - name: config
           mountPath: /etc/otel

@@ -1,0 +1,128 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vector-config
+  namespace: vector-system
+data:
+  vector.toml: |
+    # Vector configuration for Kubernetes log collection
+    # Sends logs via OpenTelemetry to existing OTEL collector
+    
+    [api]
+    enabled = true
+    address = "0.0.0.0:8686"
+    
+    # Data directory for Vector state
+    data_dir = "/var/lib/vector"
+    
+    # Sources: Collect logs from Kubernetes
+    [sources.kubernetes_logs]
+    type = "kubernetes_logs"
+    
+    # Pod logs from /var/log/pods
+    [sources.kubernetes_logs.pod_logs]
+    
+    # Exclude Vector's own logs to prevent loops
+    [sources.kubernetes_logs.exclude_paths_glob_patterns]
+    exclude_paths_glob_patterns = [
+      "**/vector-*/**",
+      "**/kube-system/**"
+    ]
+    
+    # Additional sources for system logs
+    [sources.journald]
+    type = "journald"
+    current_boot_only = true
+    units = [
+      "kubelet.service",
+      "containerd.service", 
+      "docker.service"
+    ]
+    
+    # Transforms: Enrich logs with metadata and classification
+    [transforms.enrich_logs]
+    type = "remap"
+    inputs = ["kubernetes_logs", "journald"]
+    source = '''
+    # Add log classification based on namespace and content
+    if exists(.kubernetes.pod_namespace) {
+      if match(.kubernetes.pod_namespace, r'(kube-system|monitoring|logging)') {
+        .log_type = "infrastructure"
+        .category = "system"
+      } else if match(.kubernetes.pod_namespace, r'(security|auth|audit)') {
+        .log_type = "security" 
+        .category = "security"
+      } else {
+        .log_type = "operational"
+        .category = "application" 
+      }
+    } else {
+      # Journald logs
+      .log_type = "infrastructure"
+      .category = "system"
+    }
+    
+    # Extract service name from Kubernetes metadata
+    if exists(.kubernetes.pod_labels."app") {
+      .service_name = .kubernetes.pod_labels."app"
+    } else if exists(.kubernetes.container_name) {
+      .service_name = .kubernetes.container_name
+    } else if exists(.systemd.unit) {
+      .service_name = .systemd.unit
+    } else {
+      .service_name = "unknown"
+    }
+    
+    # Set severity level
+    if exists(.level) {
+      .severity_text = upcase(.level)
+    } else if match(string!(.message), r'(?i)(error|err|exception|fail)') {
+      .severity_text = "ERROR"
+    } else if match(string!(.message), r'(?i)(warn|warning)') {
+      .severity_text = "WARN"
+    } else {
+      .severity_text = "INFO"
+    }
+    
+    # Ensure message is in body field for OTEL compatibility
+    if !exists(.body) {
+      .body = .message
+    }
+    
+    # Add cluster information
+    .cluster_name = "k3s-observability"
+    .deployment_environment = "production"
+    '''
+    
+    # Sinks: Send to OpenTelemetry Collector
+    [sinks.otel_logs]
+    type = "opentelemetry"
+    inputs = ["enrich_logs"]
+    endpoint = "http://otel-collector.otel-system.svc.cluster.local:4317"
+    
+    # OTLP configuration
+    [sinks.otel_logs.encoding]
+    codec = "json"
+    
+    # Request configuration
+    [sinks.otel_logs.request]
+    timeout_secs = 30
+    
+    # Buffer configuration for reliability
+    [sinks.otel_logs.buffer]
+    type = "disk"
+    max_size = 104857600  # 100MB
+    when_full = "drop_newest"
+    
+    # Health check endpoint
+    [sinks.otel_logs.healthcheck]
+    enabled = true
+    
+    # Debug sink for troubleshooting
+    [sinks.debug_console]
+    type = "console"
+    inputs = ["enrich_logs"]
+    target = "stdout"
+    
+    [sinks.debug_console.encoding]
+    codec = "json"

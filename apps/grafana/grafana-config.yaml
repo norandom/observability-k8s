@@ -27,10 +27,26 @@ data:
         jsonData:
           maxLines: 1000
           derivedFields:
-            - datasourceUid: quickwit
+            - datasourceUid: prometheus
               matcherRegex: "trace_id=(\\w+)"
               name: TraceID
               url: "$${__value.raw}"
+      
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        orgId: 1
+        url: http://prometheus.prometheus-system.svc.cluster.local:9090
+        basicAuth: false
+        isDefault: true
+        version: 1
+        editable: true
+        jsonData:
+          httpMethod: POST
+          manageAlerts: true
+          prometheusType: Prometheus
+          prometheusVersion: 2.40.0
+          cacheLevel: 'High'
       
 ---
 apiVersion: v1
@@ -42,12 +58,124 @@ data:
     {
       "id": null,
       "title": "Observability Overview",
-      "tags": ["observability", "logs"],
+      "tags": ["observability", "logs", "metrics"],
       "style": "dark",
       "timezone": "browser",
       "panels": [
         {
           "id": 1,
+          "title": "Cluster CPU Usage",
+          "type": "stat",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "expr": "100 - (avg(irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+              "refId": "A"
+            }
+          ],
+          "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "min": 0,
+              "max": 100
+            }
+          }
+        },
+        {
+          "id": 2,
+          "title": "Memory Usage",
+          "type": "stat", 
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "expr": "100 * (1 - ((node_memory_MemAvailable_bytes) / (node_memory_MemTotal_bytes)))",
+              "refId": "A"
+            }
+          ],
+          "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "min": 0,
+              "max": 100
+            }
+          }
+        },
+        {
+          "id": 3,
+          "title": "Pod Count",
+          "type": "stat",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "expr": "count(kube_pod_info)",
+              "refId": "A"
+            }
+          ],
+          "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0}
+        },
+        {
+          "id": 4,
+          "title": "Service Count",
+          "type": "stat",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "expr": "count(kube_service_info)",
+              "refId": "A"
+            }
+          ],
+          "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0}
+        },
+        {
+          "id": 5,
+          "title": "OTEL Collector Metrics",
+          "type": "graph",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "expr": "rate(otelcol_processor_accepted_log_records_total[5m])",
+              "refId": "A",
+              "legendFormat": "Logs/sec"
+            }
+          ],
+          "gridPos": {"h": 6, "w": 12, "x": 0, "y": 4}
+        },
+        {
+          "id": 6,
+          "title": "Vector Log Collection Rate",
+          "type": "graph",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "expr": "rate(vector_component_sent_events_total[5m])",
+              "refId": "A",
+              "legendFormat": "Events/sec - {{component_name}}"
+            }
+          ],
+          "gridPos": {"h": 6, "w": 12, "x": 12, "y": 4}
+        },
+        {
+          "id": 7,
           "title": "Recent Operational Logs (Loki)",
           "type": "logs",
           "targets": [
@@ -60,7 +188,7 @@ data:
               "refId": "A"
             }
           ],
-          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0}
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 10}
         }
       ],
       "time": {

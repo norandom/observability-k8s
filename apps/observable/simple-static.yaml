@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: observable-config
+  namespace: observable
+data:
+  start.sh: |
+    #!/bin/sh
+    set -e
+    npm install -g http-server
+    cd /app
+    mkdir -p public
+    cp /config/index.html public/
+    http-server public -p 3000 -a 0.0.0.0
+  
+  index.html: |+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Observability Dashboard</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
+            .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; }
+            h1 { color: #2c3e50; }
+            .links { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 30px 0; }
+            .link-card { padding: 20px; background: #3498db; color: white; text-decoration: none; border-radius: 6px; }
+            .link-card:hover { background: #2980b9; }
+            .architecture { background: #ecf0f1; padding: 20px; border-radius: 6px; margin: 20px 0; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🔍 Observability Dashboard</h1>
+            <p>Welcome to your observability stack dashboard</p>
+            
+            <h2>Quick Access</h2>
+            <div class="links">
+                <a href="http://grafana.k3s.local" class="link-card">
+                    <h3>📊 Grafana</h3>
+                    <p>Operational monitoring</p>
+                </a>
+                <a href="http://quickwit.k3s.local/ui/search" class="link-card">
+                    <h3>🔍 Quickwit</h3>
+                    <p>Security log search</p>
+                </a>
+                <a href="http://argocd.k3s.local" class="link-card">
+                    <h3>🚀 ArgoCD</h3>
+                    <p>GitOps management</p>
+                </a>
+                <a href="http://loki.k3s.local" class="link-card">
+                    <h3>📝 Loki API</h3>
+                    <p>Log aggregation</p>
+                </a>
+            </div>
+            
+            <h2>Architecture</h2>
+            <div class="architecture">
+                <pre>
+Vector/Clients → OpenTelemetry Collector → {Loki (operational), Quickwit (security)}
+                           ↓                    ↓                    ↓
+                   Grafana (dashboards)  Quickwit UI (search)  Observable (reports)
+                           ↓                                        ↓
+                  Prometheus (metrics)                    Data analysis
+                </pre>
+            </div>
+            
+            <h2>Data Sources</h2>
+            <ul>
+                <li><strong>Loki:</strong> http://192.168.122.27:3100 - Operational logs</li>
+                <li><strong>Quickwit:</strong> http://192.168.122.27:7280 - Security logs</li>
+                <li><strong>Prometheus:</strong> http://192.168.122.27:9090 - Metrics</li>
+            </ul>
+            
+            <footer style="margin-top: 40px; text-align: center; color: #7f8c8d;">
+                <p>Built with Observable Framework for observability-k8s</p>
+                <p>Last updated: <span id="timestamp"></span></p>
+                <script>document.getElementById('timestamp').textContent = new Date().toLocaleString();</script>
+            </footer>
+        </div>
+    </body>
+    </html>

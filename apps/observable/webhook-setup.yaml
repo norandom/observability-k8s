@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: webhook-setup-script
+  namespace: tekton-pipelines
+data:
+  setup-webhook.sh: |
+    #!/bin/bash
+    set -e
+    
+    # Get the EventListener service URL
+    WEBHOOK_URL="http://$(kubectl get service el-observable-listener -n tekton-pipelines -o jsonpath='{.spec.clusterIP}'):8080"
+    
+    echo "🔗 Webhook URL: $WEBHOOK_URL"
+    echo ""
+    echo "To complete the GitOps automation setup:"
+    echo ""
+    echo "1. In your GitHub repository, go to Settings > Webhooks"
+    echo "2. Click 'Add webhook'"
+    echo "3. Set Payload URL to: $WEBHOOK_URL"
+    echo "4. Set Content type to: application/json"
+    echo "5. Select 'Just the push event'"
+    echo "6. Click 'Add webhook'"
+    echo ""
+    echo "Alternative: Use kubectl port-forward for external access:"
+    echo "kubectl port-forward service/el-observable-listener -n tekton-pipelines 8080:8080"
+    echo "Then use: http://localhost:8080 as webhook URL"
+    echo ""
+    echo "🚀 After webhook setup, any changes to:"
+    echo "   - apps/observable/*.md files"
+    echo "   - apps/observable/conda-environment.yml"
+    echo "   - apps/observable/Dockerfile"
+    echo "Will automatically trigger a container rebuild and deployment!"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: webhook-info
+  namespace: tekton-pipelines
+spec:
+  template:
+    spec:
+      containers:
+      - name: webhook-setup
+        image: bitnami/kubectl:latest
+        command: ["/bin/bash", "/scripts/setup-webhook.sh"]
+        volumeMounts:
+        - name: script-volume
+          mountPath: /scripts
+      volumes:
+      - name: script-volume
+        configMap:
+          name: webhook-setup-script
+          defaultMode: 0755
+      restartPolicy: OnFailure
+  backoffLimit: 1

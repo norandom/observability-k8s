@@ -1,0 +1,98 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: observable-dashboard
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/your-username/observability-k8s.git  # Update this to your repo
+    targetRevision: HEAD
+    path: apps/observable
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: observable
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+    - CreateNamespace=true
+    - PrunePropagationPolicy=foreground
+    - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  revisionHistoryLimit: 3
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: observable-registry
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/your-username/observability-k8s.git  # Update this to your repo
+    targetRevision: HEAD
+    path: apps/observable
+    directory:
+      include: registry-deployment.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: registry
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+    - CreateNamespace=true
+    - PrunePropagationPolicy=foreground
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: observable-tekton-pipeline
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/your-username/observability-k8s.git  # Update this to your repo
+    targetRevision: HEAD
+    path: apps/observable
+    directory:
+      include: tekton-pipeline.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: tekton-pipelines
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+    - CreateNamespace=true
+    - PrunePropagationPolicy=foreground
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

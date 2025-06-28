@@ -1,0 +1,28 @@
+# Python dependencies for Observable Framework data loaders
+# Data processing and analysis
+polars>=0.20.0
+pandas>=2.0.0
+
+# HTTP requests and API interactions
+requests>=2.31.0
+urllib3>=2.0.0
+
+# Data visualization and plotting (for Observable integration)
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# Date and time handling
+python-dateutil>=2.8.0
+
+# JSON and data serialization
+orjson>=3.9.0
+
+# Prometheus client for metrics collection
+prometheus-client>=0.17.0
+
+# Loki client for log queries
+# Note: Add custom Loki client if needed
+
+# Optional: Scientific computing
+numpy>=1.24.0
+scipy>=1.10.0

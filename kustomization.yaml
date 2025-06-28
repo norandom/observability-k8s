@@ -7,5 +7,6 @@ resources:
   - grafana/
   - otel/
   - quickwit/
+  - apps/observable/
 
 namespace: default

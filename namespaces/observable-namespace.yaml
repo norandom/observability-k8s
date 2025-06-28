@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: observable
+  labels:
+    name: observable
+    app.kubernetes.io/name: observable
+    app.kubernetes.io/component: dashboard

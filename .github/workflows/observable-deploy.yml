@@ -1,0 +1,156 @@
+name: Observable Framework Auto-Deploy
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'apps/observable/conda-environment.yml'
+      - 'apps/observable/dashboards-configmap.yaml'
+      - 'apps/observable/*.md'
+      - 'apps/observable/Dockerfile'
+      - 'apps/observable/src/**/*.md'
+
+env:
+  REGISTRY_URL: "192.168.122.27:30500"  # Update this to your cluster IP
+  IMAGE_NAME: "observable-conda"
+  KUBE_NAMESPACE: "observable"
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      build-needed: ${{ steps.changes.outputs.build-needed }}
+      dashboards-changed: ${{ steps.changes.outputs.dashboards-changed }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
+    
+    - name: Detect changes
+      id: changes
+      run: |
+        # Check if conda environment or Dockerfile changed
+        if git diff HEAD~1 --name-only | grep -E "(conda-environment\.yml|Dockerfile)"; then
+          echo "build-needed=true" >> $GITHUB_OUTPUT
+          echo "🔨 Container rebuild needed - dependencies or Dockerfile changed"
+        else
+          echo "build-needed=false" >> $GITHUB_OUTPUT
+          echo "📦 No container rebuild needed"
+        fi
+        
+        # Check if dashboards changed
+        if git diff HEAD~1 --name-only | grep -E "(dashboards-configmap\.yaml|\.md$)"; then
+          echo "dashboards-changed=true" >> $GITHUB_OUTPUT
+          echo "📊 Dashboard changes detected"
+        else
+          echo "dashboards-changed=false" >> $GITHUB_OUTPUT
+          echo "📊 No dashboard changes"
+        fi
+
+  build-and-push:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.build-needed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      with:
+        driver-opts: |
+          network=host
+    
+    - name: Build and push Docker image
+      run: |
+        cd apps/observable
+        
+        # Build image
+        docker build -t ${{ env.REGISTRY_URL }}/${{ env.IMAGE_NAME }}:${{ github.sha }} .
+        docker build -t ${{ env.REGISTRY_URL }}/${{ env.IMAGE_NAME }}:latest .
+        
+        # Push to registry (assuming registry allows insecure connections)
+        docker push ${{ env.REGISTRY_URL }}/${{ env.IMAGE_NAME }}:${{ github.sha }} --insecure-registry ${{ env.REGISTRY_URL }}
+        docker push ${{ env.REGISTRY_URL }}/${{ env.IMAGE_NAME }}:latest --insecure-registry ${{ env.REGISTRY_URL }}
+        
+        echo "✅ Image pushed: ${{ env.REGISTRY_URL }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+
+  deploy:
+    needs: [detect-changes, build-and-push]
+    if: always() && (needs.detect-changes.outputs.build-needed == 'true' || needs.detect-changes.outputs.dashboards-changed == 'true')
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.28.0'
+    
+    - name: Configure kubectl
+      run: |
+        # Create kubeconfig from secrets
+        mkdir -p ~/.kube
+        echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+        chmod 600 ~/.kube/config
+        
+        # Test connection
+        kubectl cluster-info
+    
+    - name: Update image tag in deployment
+      if: needs.detect-changes.outputs.build-needed == 'true'
+      run: |
+        cd apps/observable
+        
+        # Update deployment with new image
+        kubectl set image deployment/observable \
+          observable=${{ env.REGISTRY_URL }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+          -n ${{ env.KUBE_NAMESPACE }}
+        
+        echo "🚀 Deployment updated with new image"
+    
+    - name: Apply dashboard changes
+      if: needs.detect-changes.outputs.dashboards-changed == 'true'
+      run: |
+        cd apps/observable
+        
+        # Apply dashboard ConfigMap changes
+        kubectl apply -f dashboards-configmap.yaml
+        
+        echo "📊 Dashboard changes applied"
+    
+    - name: Wait for deployment
+      run: |
+        # Wait for rollout to complete
+        kubectl rollout status deployment/observable -n ${{ env.KUBE_NAMESPACE }} --timeout=300s
+        
+        # Show pod status
+        kubectl get pods -n ${{ env.KUBE_NAMESPACE }} -l app=observable
+        
+        echo "✅ Deployment completed successfully!"
+    
+    - name: Show access information
+      run: |
+        echo "🌐 Observable Framework Dashboard is available at:"
+        echo "   http://observable.k3s.local/"
+        echo ""
+        echo "📊 Updated dashboards:"
+        if git diff HEAD~1 --name-only | grep -E "\.md$"; then
+          git diff HEAD~1 --name-only | grep -E "\.md$" | sed 's/^/   - /'
+        fi
+
+  notify:
+    needs: [detect-changes, build-and-push, deploy]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+    - name: Deployment notification
+      run: |
+        if [[ "${{ needs.deploy.result }}" == "success" ]]; then
+          echo "✅ Observable Framework deployed successfully!"
+          echo "🔗 Access at: http://observable.k3s.local/"
+        elif [[ "${{ needs.deploy.result }}" == "failure" ]]; then
+          echo "❌ Deployment failed!"
+          exit 1
+        else
+          echo "ℹ️  No deployment needed - no relevant changes detected"
+        fi

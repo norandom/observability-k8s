@@ -1,0 +1,289 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: observable-config
+  namespace: observable
+data:
+  start.sh: |
+    #!/bin/sh
+    set -e
+    
+    # Install system packages
+    apk add --no-cache python3 py3-pip
+    
+    # Install Python dependencies (essential packages only to avoid compilation issues)
+    pip3 install --break-system-packages requests pandas numpy python-dateutil
+    
+    # Install Observable Framework globally
+    npm install -g @observablehq/framework@latest
+    
+    # Setup project
+    cd /app
+    npm init -y
+    npm install @observablehq/framework
+    
+    # Create project structure
+    mkdir -p src/data
+    
+    # Copy configuration files
+    cp /config/observablehq.config.js ./
+    
+    # Copy all dashboard markdown files from the dashboards ConfigMap
+    echo "Copying dashboard files..."
+    cp /dashboard-src/*.md src/ 2>/dev/null || echo "No dashboard files found"
+    ls -la src/
+    
+    # Copy data loaders
+    cp /config/loki-loader.py src/data/
+    cp /config/quickwit-loader.py src/data/
+    cp /config/metrics-loader.py src/data/
+    chmod +x src/data/*.py
+    
+    # Set environment variables for data loaders
+    export LOKI_ENDPOINT=${LOKI_ENDPOINT:-http://192.168.122.27:3100}
+    export QUICKWIT_ENDPOINT=${QUICKWIT_ENDPOINT:-http://192.168.122.27:7280}
+    export PROMETHEUS_ENDPOINT=${PROMETHEUS_ENDPOINT:-http://192.168.122.27:9090}
+    
+    # Test data loaders
+    echo "Testing data loaders..."
+    python3 src/data/loki-loader.py > /tmp/loki-test.json 2>/dev/null || echo "Loki loader test completed"
+    python3 src/data/quickwit-loader.py > /tmp/quickwit-test.json 2>/dev/null || echo "Quickwit loader test completed"
+    python3 src/data/metrics-loader.py > /tmp/metrics-test.json 2>/dev/null || echo "Metrics loader test completed"
+    
+    # Start Observable Framework
+    echo "Starting Observable Framework..."
+    npx @observablehq/framework dev --host 0.0.0.0 --port 3000
+  
+  observablehq.config.js: |
+    export default {
+      title: "Observability Dashboard",
+      theme: "dashboard",
+      sidebar: true,
+      footer: "Built with Observable Framework - GitOps Enabled",
+      head: '<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔍</text></svg>">',
+      root: "src",
+      output: "dist"
+    };
+  
+  loki-loader.py: |
+    #!/usr/bin/env python3
+    import os
+    import sys
+    import json
+    import requests
+    from datetime import datetime, timedelta
+    
+    import pandas as pd
+    
+    LOKI_ENDPOINT = os.getenv('LOKI_ENDPOINT', 'http://192.168.122.27:3100')
+    
+    def fetch_loki_logs():
+        try:
+            end_time = datetime.now()
+            start_time = end_time - timedelta(hours=2)
+            
+            url = f"{LOKI_ENDPOINT}/loki/api/v1/query_range"
+            params = {
+                'query': '{job=~".+"}',
+                'start': int(start_time.timestamp() * 1000000000),
+                'end': int(end_time.timestamp() * 1000000000),
+                'limit': 500
+            }
+            
+            response = requests.get(url, params=params, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                logs = []
+                
+                if 'data' in data and 'result' in data['data']:
+                    for stream in data['data']['result']:
+                        labels = stream.get('stream', {})
+                        for value in stream.get('values', []):
+                            timestamp = int(value[0]) // 1000000
+                            message = value[1]
+                            
+                            # Extract log level
+                            level = 'unknown'
+                            msg_upper = message.upper()
+                            if any(l in msg_upper for l in ['ERROR', 'ERR']):
+                                level = 'error'
+                            elif any(l in msg_upper for l in ['WARN', 'WARNING']):
+                                level = 'warning'
+                            elif any(l in msg_upper for l in ['INFO']):
+                                level = 'info'
+                            elif any(l in msg_upper for l in ['DEBUG']):
+                                level = 'debug'
+                            
+                            logs.append({
+                                'timestamp': timestamp,
+                                'message': message,
+                                'labels': labels,
+                                'source': 'loki',
+                                'level': level,
+                                'severity': level,
+                                'service_name': labels.get('service_name', labels.get('container', 'unknown')),
+                                'message_length': len(message)
+                            })
+                
+                print(json.dumps(logs, indent=2))
+            else:
+                print(json.dumps([]))
+                
+        except Exception as e:
+            print(f"Error: {e}", file=sys.stderr)
+            print(json.dumps([]))
+    
+    if __name__ == "__main__":
+        fetch_loki_logs()
+  
+  quickwit-loader.py: |
+    #!/usr/bin/env python3
+    import os
+    import sys
+    import json
+    import requests
+    from datetime import datetime, timedelta
+    
+    QUICKWIT_ENDPOINT = os.getenv('QUICKWIT_ENDPOINT', 'http://192.168.122.27:7280')
+    
+    def fetch_quickwit_logs():
+        try:
+            url = f"{QUICKWIT_ENDPOINT}/api/v1/otel-logs-v0_7/search"
+            end_time = int(datetime.now().timestamp())
+            start_time = int((datetime.now() - timedelta(hours=2)).timestamp())
+            
+            payload = {
+                "query": "*",
+                "max_hits": 500,
+                "start_timestamp": start_time,
+                "end_timestamp": end_time
+            }
+            
+            response = requests.post(url, json=payload, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                logs = []
+                
+                if 'hits' in data:
+                    for hit in data['hits']:
+                        doc = hit.get('document', {})
+                        timestamp_nanos = doc.get('timestamp_nanos', 0)
+                        timestamp_ms = timestamp_nanos // 1000000 if timestamp_nanos else 0
+                        
+                        # Calculate risk score
+                        risk_score = 0
+                        message = doc.get('body', '').lower()
+                        severity = doc.get('severity_text', '').lower()
+                        
+                        if severity in ['error', 'critical']:
+                            risk_score += 3
+                        elif severity == 'warning':
+                            risk_score += 2
+                        elif severity == 'info':
+                            risk_score += 1
+                        
+                        if any(word in message for word in ['failed', 'error', 'denied', 'unauthorized']):
+                            risk_score += 2
+                        
+                        # Determine if security relevant
+                        is_security_relevant = (
+                            risk_score >= 3 or
+                            any(word in message for word in ['auth', 'login', 'security', 'firewall', 'intrusion'])
+                        )
+                        
+                        logs.append({
+                            'timestamp': timestamp_ms,
+                            'message': doc.get('body', ''),
+                            'severity': doc.get('severity_text', 'unknown'),
+                            'service': doc.get('service_name', 'unknown'),
+                            'source': 'quickwit',
+                            'risk_score': min(risk_score, 10),
+                            'is_security_relevant': is_security_relevant,
+                            'category': 'security' if 'security' in message else 'general',
+                            'source_ip': doc.get('attributes', {}).get('source_ip', ''),
+                            'user_id': doc.get('attributes', {}).get('user_id', '')
+                        })
+                
+                print(json.dumps(logs, indent=2))
+            else:
+                print(json.dumps([]))
+                
+        except Exception as e:
+            print(f"Error: {e}", file=sys.stderr)
+            print(json.dumps([]))
+    
+    if __name__ == "__main__":
+        fetch_quickwit_logs()
+  
+  metrics-loader.py: |
+    #!/usr/bin/env python3
+    import os
+    import sys
+    import json
+    import requests
+    from datetime import datetime
+    
+    PROMETHEUS_ENDPOINT = os.getenv('PROMETHEUS_ENDPOINT', 'http://192.168.122.27:9090')
+    
+    def fetch_metrics():
+        try:
+            metrics_data = {
+                'timestamp': int(datetime.now().timestamp() * 1000),
+                'system_metrics': {},
+                'summary': {
+                    'overall_health': 'unknown',
+                    'performance_score': 0,
+                    'availability_score': 0
+                }
+            }
+            
+            # Basic metrics queries
+            queries = {
+                'cpu_usage': 'avg(1 - rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100',
+                'memory_usage': 'avg((1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100)',
+                'load_average': 'avg(node_load1)'
+            }
+            
+            for metric_name, query in queries.items():
+                try:
+                    url = f"{PROMETHEUS_ENDPOINT}/api/v1/query"
+                    params = {'query': query}
+                    response = requests.get(url, params=params, timeout=5)
+                    
+                    if response.status_code == 200:
+                        result = response.json()
+                        if result.get('status') == 'success' and result.get('data', {}).get('result'):
+                            value = float(result['data']['result'][0]['value'][1])
+                            metrics_data['system_metrics'][metric_name] = value
+                        else:
+                            metrics_data['system_metrics'][metric_name] = None
+                    else:
+                        metrics_data['system_metrics'][metric_name] = None
+                        
+                except Exception:
+                    metrics_data['system_metrics'][metric_name] = None
+            
+            # Calculate summary
+            cpu = metrics_data['system_metrics'].get('cpu_usage', 0) or 0
+            memory = metrics_data['system_metrics'].get('memory_usage', 0) or 0
+            
+            if cpu < 80 and memory < 85:
+                metrics_data['summary']['overall_health'] = 'good'
+                metrics_data['summary']['performance_score'] = 85
+            elif cpu < 90 and memory < 90:
+                metrics_data['summary']['overall_health'] = 'warning'
+                metrics_data['summary']['performance_score'] = 70
+            else:
+                metrics_data['summary']['overall_health'] = 'critical'
+                metrics_data['summary']['performance_score'] = 50
+                
+            metrics_data['summary']['availability_score'] = metrics_data['summary']['performance_score']
+            
+            print(json.dumps(metrics_data, indent=2))
+            
+        except Exception as e:
+            print(f"Error: {e}", file=sys.stderr)
+            print(json.dumps({'timestamp': int(datetime.now().timestamp() * 1000), 'error': str(e)}))
+    
+    if __name__ == "__main__":
+        fetch_metrics()

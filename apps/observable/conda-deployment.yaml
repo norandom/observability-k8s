@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: observable
+  namespace: observable
+  labels:
+    app: observable
+    component: dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: observable
+      component: dashboard
+  template:
+    metadata:
+      labels:
+        app: observable
+        component: dashboard
+    spec:
+      containers:
+      - name: observable
+        # In-cluster registry image
+        # kubectl apply -f registry-deployment.yaml
+        # docker build -t 192.168.122.27:30500/observable-conda:latest .
+        # docker push 192.168.122.27:30500/observable-conda:latest
+        image: 192.168.122.27:30500/observable-conda:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3000
+          name: web
+        env:
+        - name: NODE_ENV
+          value: "development"
+        - name: CLUSTER_IP
+          value: "192.168.122.27"
+        - name: LOKI_ENDPOINT
+          value: "http://192.168.122.27:3100"
+        - name: QUICKWIT_ENDPOINT
+          value: "http://192.168.122.27:7280"
+        - name: PROMETHEUS_ENDPOINT
+          value: "http://192.168.122.27:9090"
+        volumeMounts:
+        - name: observable-storage
+          mountPath: /app
+        - name: config-volume
+          mountPath: /config
+        - name: dashboard-files
+          mountPath: /dashboard-src
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "200m"
+          limits:
+            memory: "4Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 120
+          periodSeconds: 30
+          timeoutSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+      volumes:
+      - name: observable-storage
+        persistentVolumeClaim:
+          claimName: observable-storage
+      - name: config-volume
+        configMap:
+          name: observable-config
+          defaultMode: 0755
+      - name: dashboard-files
+        configMap:
+          name: observable-dashboards
+          defaultMode: 0644

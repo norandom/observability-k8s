@@ -1,0 +1,215 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: observable-config
+  namespace: observable
+data:
+  start.sh: |
+    #!/bin/bash
+    set -e
+    
+    echo "Starting Observable Framework with conda environment..."
+    
+    # Activate conda environment (should already be active from ENTRYPOINT)
+    source /opt/conda/etc/profile.d/conda.sh
+    conda activate observable-dashboard
+    
+    # Verify environment
+    echo "Python version: $(python --version)"
+    echo "Node version: $(node --version)"
+    echo "Available Python packages:"
+    pip list | grep -E "(polars|pandas|requests)"
+    
+    # Set environment variables
+    export LOKI_ENDPOINT=${LOKI_ENDPOINT:-http://192.168.122.27:3100}
+    export QUICKWIT_ENDPOINT=${QUICKWIT_ENDPOINT:-http://192.168.122.27:7280}
+    export PROMETHEUS_ENDPOINT=${PROMETHEUS_ENDPOINT:-http://192.168.122.27:9090}
+    
+    # Change to app directory
+    cd /app
+    
+    # Initialize npm project if needed
+    if [ ! -f package.json ]; then
+        echo "Initializing npm project..."
+        npm init -y
+        npm install @observablehq/framework
+    fi
+    
+    # Create project structure
+    mkdir -p src/data
+    
+    # Copy configuration files
+    cp /config/observablehq.config.js ./ 2>/dev/null || echo "Config file not found, using defaults"
+    
+    # Copy all dashboard markdown files from the dashboards ConfigMap
+    echo "Copying dashboard files..."
+    cp /dashboard-src/*.md src/ 2>/dev/null || echo "No dashboard files found, creating default index.md"
+    
+    # Create default index.md if none exists
+    if [ ! -f src/index.md ]; then
+        cat > src/index.md << 'EOF'
+# Observability Dashboard
+
+Welcome to your Observable Framework dashboard with conda environment support!
+
+## Available Data Sources
+
+- **Loki**: ${LOKI_ENDPOINT} - Operational logs
+- **Quickwit**: ${QUICKWIT_ENDPOINT} - Security logs  
+- **Prometheus**: ${PROMETHEUS_ENDPOINT} - Metrics
+
+## Python Environment
+
+This dashboard runs with a full conda environment including:
+- polars and pandas for data processing
+- requests for API calls
+- matplotlib, seaborn, plotly for visualizations
+
+## GitOps Workflow
+
+To add new dashboards:
+1. Add markdown files to the `observable-dashboards` ConfigMap
+2. Commit and push to trigger ArgoCD deployment
+3. Your dashboards will be automatically available
+
+## Data Loaders
+
+```js
+// Example: Load Loki data
+const lokiData = FileAttachment("data/loki-logs.json").json();
+```
+
+```js
+// Example: Load security data
+const securityData = FileAttachment("data/quickwit-logs.json").json();
+```
+
+Add your visualizations and analysis here!
+EOF
+    fi
+    
+    ls -la src/
+    
+    # Copy data loaders
+    cp /config/loki-loader.py src/data/ 2>/dev/null || echo "Loki loader not found"
+    cp /config/quickwit-loader.py src/data/ 2>/dev/null || echo "Quickwit loader not found"
+    cp /config/metrics-loader.py src/data/ 2>/dev/null || echo "Metrics loader not found"
+    chmod +x src/data/*.py 2>/dev/null || true
+    
+    # Test data loaders
+    echo "Testing data loaders..."
+    if [ -f src/data/loki-loader.py ]; then
+        python src/data/loki-loader.py > /tmp/loki-test.json 2>/dev/null || echo "Loki loader test completed"
+    fi
+    if [ -f src/data/quickwit-loader.py ]; then
+        python src/data/quickwit-loader.py > /tmp/quickwit-test.json 2>/dev/null || echo "Quickwit loader test completed"
+    fi
+    if [ -f src/data/metrics-loader.py ]; then
+        python src/data/metrics-loader.py > /tmp/metrics-test.json 2>/dev/null || echo "Metrics loader test completed"
+    fi
+    
+    # Verify conda environment
+    echo "Python environment check:"
+    python --version
+    python -c "import polars, pandas, requests; print('✓ All Python packages available')"
+    
+    # Start Observable Framework
+    echo "Starting Observable Framework dev server..."
+    npx @observablehq/framework dev --host 0.0.0.0 --port 3000
+  
+  observablehq.config.js: |
+    export default {
+      title: "Observability Dashboard",
+      theme: "dashboard",
+      sidebar: true,
+      footer: "Built with Observable Framework and conda environment",
+      head: '<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔍</text></svg>">',
+      root: "src",
+      output: "dist",
+      style: "style.css"
+    };
+  
+  style.css: |
+    :root {
+      --theme-foreground: #333;
+      --theme-background: #fff;
+      --theme-background-alt: #f8f9fa;
+      --theme-accent: #007bff;
+    }
+    
+    .service-grid, .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin: 2rem 0;
+    }
+    
+    .service-grid > div {
+      padding: 1.5rem;
+      border: 1px solid #e1e5e9;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .service-grid > div:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .service-grid h3 {
+      margin: 0 0 0.5rem 0;
+      color: #2c3e50;
+    }
+    
+    .service-grid a {
+      text-decoration: none;
+      color: inherit;
+    }
+    
+    .service-grid a:hover {
+      color: var(--theme-accent);
+    }
+    
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+      font-family: var(--mono-family);
+      font-size: 0.9rem;
+    }
+    
+    .status-grid > div {
+      padding: 1rem;
+      background: var(--theme-background-alt);
+      border-radius: 4px;
+      border-left: 4px solid var(--theme-accent);
+    }
+    
+    .metric-card {
+      background: var(--theme-background-alt);
+      border: 1px solid #e1e5e9;
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 0.5rem 0;
+    }
+    
+    .metric-value {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--theme-accent);
+    }
+    
+    .health-indicator {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 0.5rem;
+    }
+    
+    .health-good { background-color: #28a745; }
+    .health-warning { background-color: #ffc107; }
+    .health-critical { background-color: #dc3545; }
+    .health-unknown { background-color: #6c757d; }

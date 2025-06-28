@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  # For conda-based deployment (requires building Docker image first):
+  - conda-deployment.yaml
+  - conda-configmap.yaml
+  # For simple HTML-based deployment (currently active):
+  # - simple-deployment.yaml
+  # - minimal.yaml
+  - observable-service.yaml
+  - observable-ingress.yaml
+  - observable-pvc.yaml
+  - dashboards-configmap.yaml
+
+namespace: observable
+
+labels:
+  - pairs:
+      app: observable
+      component: dashboard
+
+# Note: For conda-based deployment, you'll need to:
+# 1. Build the Docker image from the Dockerfile
+# 2. Push to a registry accessible by your cluster
+# 3. Update the image in conda-deployment.yaml

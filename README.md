@@ -151,17 +151,83 @@ Vector clients collect logs from multiple sources and forward to OTEL:
 
 ## Testing the Log Pipeline
 
-Test log routing with the provided scripts:
+### **Sending Test Logs**
+
+Send test logs to validate the entire pipeline:
 
 ```bash
-# Test operational logs → Loki
+# Send operational logs to Loki via OTEL
 ./scripts/test-operational-logs.sh
+```
+- Sends 2 operational log entries with 15+ structured fields
+- Includes web server request log and database error log
+- Routes through OTEL → Loki for operational monitoring
 
-# Test security logs → Quickwit  
+```bash  
+# Send security logs to Quickwit via OTEL
 ./scripts/test-security-logs.sh
 ```
+- Sends 3 security log entries with 15+ structured fields  
+- Includes SSH auth failure, sudo privilege escalation, and firewall block
+- Routes through OTEL → Quickwit for security analysis
 
-Both scripts send JSON logs with 15+ structured fields for comprehensive testing.
+### **Retrieving Logs**
+
+Query the centralized log collection services:
+
+```bash
+# Get latest 10 logs from Quickwit (security logs)
+./scripts/get-quickwit-logs.sh
+```
+- Queries Quickwit REST API at `http://CLUSTER_IP:7280`
+- Shows security events, auth logs, and audit trails
+- Provides query examples for specific security log types
+
+```bash
+# Get latest 10 logs from Loki (operational logs)  
+./scripts/get-loki-logs.sh
+```
+- Queries Loki REST API at `http://CLUSTER_IP:3100`
+- Shows operational logs, application events, and infrastructure logs
+- Includes examples for time-range and label-based queries
+
+### **Complete Testing Workflow**
+
+```bash
+# 1. Configure cluster IP
+vi config/cluster-config.env
+
+# 2. Generate Vector client config
+./scripts/configure-vector.sh
+
+# 3. Send test logs to validate routing
+./scripts/test-operational-logs.sh
+./scripts/test-security-logs.sh
+
+# 4. Wait for logs to be processed (10-30 seconds)
+sleep 30
+
+# 5. Retrieve and verify logs
+./scripts/get-loki-logs.sh
+./scripts/get-quickwit-logs.sh
+
+# 6. View in Grafana dashboard
+# Open http://grafana.k3s.local (admin/admin)
+```
+
+### **Grafana Integration**
+
+Grafana comes pre-configured with:
+
+- **Loki Datasource**: Connected to `http://loki.loki-system.svc.cluster.local:3100`
+- **Quickwit Datasource**: Using Infinity plugin connected to `http://quickwit.quickwit-system.svc.cluster.local:7280`
+- **Default Dashboard**: "Observability Overview" showing both operational and security logs
+- **Default Login**: admin/admin
+
+**Pre-installed Plugins:**
+- `yesoreyeram-infinity-datasource` for Quickwit integration
+
+**Note**: Both Loki and Quickwit are now configured as LoadBalancer services for external access.
 
 ## Cluster Configuration
 

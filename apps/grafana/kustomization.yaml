@@ -8,3 +8,5 @@ resources:
   - grafana-deployment.yaml
   - grafana-service.yaml
   - grafana-ingress.yaml
+  - grafana-config.yaml
+  - grafana-dashboards-config.yaml

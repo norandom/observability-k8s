@@ -84,7 +84,11 @@ git push
 - **OTel HTTP**: http://[CLUSTER_IP]:4318/v1/logs
 - **OTel gRPC**: http://[CLUSTER_IP]:4317
 - **Loki API**: http://[CLUSTER_IP]:3100/loki/api/v1/
+  - Query Range: `/query_range?query={job=~".+"}&start=[timestamp]&end=[timestamp]&limit=10`
+  - Recent Logs: `/query_range?query={job=~".+"}&start=$(date -d '1 hour ago' +%s)000000000&end=$(date +%s)000000000&limit=10`
 - **Quickwit API**: http://[CLUSTER_IP]:7280/api/v1/
+  - Search: `/otel-logs-v0_7/search` (POST with JSON query)
+  - Recent Logs: `{"query": "*", "max_hits": 10}` for latest entries
 
 ## Data Sources in Grafana
 
@@ -192,16 +196,18 @@ Query the centralized log collection services:
 ./scripts/get-quickwit-logs.sh
 ```
 - Queries Quickwit REST API at `http://CLUSTER_IP:7280`
-- Shows security events, auth logs, and audit trails
+- Shows security events, auth logs, and audit trails sorted by timestamp (newest first)
 - Provides query examples for specific security log types
+- **Note**: May take 10-30 seconds for new logs to appear in search index
 
 ```bash
 # Get latest 10 logs from Loki (operational logs)  
 ./scripts/get-loki-logs.sh
 ```
 - Queries Loki REST API at `http://CLUSTER_IP:3100`
-- Shows operational logs, application events, and infrastructure logs
+- Shows operational logs, application events, and infrastructure logs from last 24 hours
 - Includes examples for time-range and label-based queries
+- **Note**: Logs appear almost immediately after ingestion
 
 ### **Complete Testing Workflow**
 
@@ -262,6 +268,53 @@ Grafana comes pre-configured with datasources and dashboards:
 
 **Default Dashboard:**
 - **"Observability Overview"** - Shows recent operational logs from Loki and security events from Quickwit
+
+### **Finding Most Recent Logs**
+
+**In Loki Datasource:**
+1. **Explore Tab**: Go to Grafana → Explore → Select "Loki" datasource
+2. **Query Recent Logs**: Use LogQL queries:
+   ```logql
+   # All recent logs (last 1 hour)
+   {job=~".+"}
+   
+   # Recent operational logs only
+   {log_type="operational"}
+   
+   # Recent logs from specific service
+   {service_name="web-server"}
+   
+   # Recent error logs
+   {level="ERROR"} or {severity="error"}
+   ```
+3. **Time Range**: Set to "Last 15 minutes" or "Last 1 hour" for most recent
+4. **Live Tail**: Click "Live" button for real-time log streaming
+
+**In Quickwit Datasource:**
+1. **Explore Tab**: Go to Grafana → Explore → Select "Quickwit" datasource
+2. **Use Pre-configured Queries**:
+   - Select "Security Logs" global query for recent security events
+   - Select "Auth Logs" for recent authentication events
+   - Select "All Logs" for recent logs of any type
+3. **Custom Queries**: Create new query with:
+   ```json
+   {
+     "query": "*",
+     "max_hits": 50,
+     "start_timestamp": "now-1h",
+     "end_timestamp": "now"
+   }
+   ```
+4. **Sort Results**: Results automatically ordered by timestamp (newest first)
+
+**Via Command Line Scripts:**
+```bash
+# Get 10 most recent operational logs
+./scripts/get-loki-logs.sh
+
+# Get 10 most recent security logs  
+./scripts/get-quickwit-logs.sh
+```
 
 **Note**: Both Loki and Quickwit are now configured as LoadBalancer services for external access.
 

@@ -1,0 +1,79 @@
+# Vector configuration for client machines
+# Collects journald and Docker container logs and forwards to OTEL Collector
+
+[sources.journald]
+type = "journald"
+journal_directory = "/var/log/journal"
+
+[sources.docker]
+type = "docker_logs"
+docker_host = "unix:///var/run/docker.sock"
+include_containers = []
+exclude_containers = []
+
+[sources.auditd]
+type = "file"
+include = ["/var/log/audit/audit.log"]
+read_from = "beginning"
+
+[transforms.add_host]
+type = "remap"
+inputs = ["journald", "docker", "auditd"]
+source = '''
+.host = get_hostname!()
+.timestamp = now()
+.source_type = "vector"
+'''
+
+[transforms.classify_logs]
+type = "remap"
+inputs = ["add_host"]
+source = '''
+# Extract service name from systemd unit or container name
+.service_name = .SYSTEMD_UNIT || .container_name || "unknown"
+
+# Classify log type based on content and source
+if .file == "/var/log/audit/audit.log" {
+  .category = "audit"
+  .log_type = "security"
+} else if match(.message, r"(?i)(ssh|sudo|login|logout|auth|failed|denied|unauthorized|privilege)") || 
+   match(.SYSTEMD_UNIT, r"(?i)(ssh|auth|security)") ||
+   .PRIORITY == "3" || .PRIORITY == "4" {
+  .category = "auth"
+  .log_type = "security"
+} else if match(.message, r"(?i)(firewall|iptables|denied|blocked|intrusion|attack|malware|virus)") {
+  .category = "security"  
+  .log_type = "security"
+} else if match(.message, r"(?i)(audit|compliance|policy)") {
+  .category = "audit"
+  .log_type = "security" 
+} else {
+  .category = "operational"
+  .log_type = "operational"
+}
+'''
+
+[sinks.otel_logs]
+type = "opentelemetry"
+inputs = ["classify_logs"]
+endpoint = "http://{{CLUSTER_IP}}:4318"
+compression = "gzip"
+default_namespace = "vector"
+
+[sinks.otel_logs.encoding]
+codec = "json"
+
+[sinks.otel_logs.batch]
+max_events = 1000
+timeout_secs = 1
+
+# Optional: Local file backup in case OTEL is unavailable
+[sinks.local_backup]
+type = "file"
+inputs = ["classify_logs"]
+path = "/var/log/vector/backup-%Y-%m-%d.log"
+encoding.codec = "json"
+
+[sinks.local_backup.batch]
+max_events = 1000
+timeout_secs = 10

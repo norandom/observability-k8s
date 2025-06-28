@@ -18,6 +18,25 @@ data:
         send_batch_size: 1024
       memory_limiter:
         limit_mib: 512
+      
+      # Route security-related logs to Quickwit
+      routing/security:
+        table:
+          - statement: route() where attributes["log_type"] == "security" or attributes["category"] == "auth" or attributes["category"] == "audit" or body matches "(?i)(login|logout|auth|failed|denied|unauthorized|privilege|sudo|ssh|firewall|intrusion|malware|virus|attack)"
+            pipelines: [logs/security]
+          - statement: route()
+            pipelines: [logs/operational]
+      
+      # Add log classification
+      transform/classify:
+        log_statements:
+          - context: log
+            statements:
+              # Classify security logs
+              - set(attributes["log_type"], "security") where attributes["category"] == "auth" or attributes["category"] == "audit"
+              - set(attributes["log_type"], "security") where body matches "(?i)(login|logout|auth|failed|denied|unauthorized|privilege|sudo|ssh|firewall|intrusion|malware|virus|attack)"
+              # Default to operational
+              - set(attributes["log_type"], "operational") where attributes["log_type"] == nil
 
     exporters:
       debug:
@@ -25,6 +44,7 @@ data:
         sampling_initial: 5
         sampling_thereafter: 200
       
+      # Loki for operational logs (infrastructure, application logs)
       loki:
         endpoint: http://loki.loki-system.svc.cluster.local:3100/loki/api/v1/push
         default_labels_enabled:
@@ -35,13 +55,30 @@ data:
             service.name: "service_name"
           attributes:
             level: "severity"
+            log_type: "log_type"
+      
+      # Quickwit for security logs (auth, audit, security events)
+      otlphttp/quickwit:
+        endpoint: http://quickwit.quickwit-system.svc.cluster.local:7280/api/v1/otel-logs-v0_7/ingest
+        headers:
+          content-type: application/json
 
     service:
       pipelines:
         logs:
           receivers: [otlp]
-          processors: [memory_limiter, batch]
+          processors: [memory_limiter, transform/classify, routing/security]
+          exporters: []
+        
+        logs/operational:
+          receivers: []
+          processors: [batch]
           exporters: [debug, loki]
+        
+        logs/security:
+          receivers: []
+          processors: [batch]
+          exporters: [debug, otlphttp/quickwit]
         traces:
           receivers: [otlp]
           processors: [memory_limiter, batch]

@@ -8,22 +8,16 @@ data:
     # Vector configuration for Kubernetes log collection
     # Sends logs via OpenTelemetry to existing OTEL collector
     
+    # Data directory for Vector state
+    data_dir = "/var/lib/vector"
+    
     [api]
     enabled = true
     address = "0.0.0.0:8686"
     
-    # Data directory for Vector state
-    data_dir = "/var/lib/vector"
-    
     # Sources: Collect logs from Kubernetes
     [sources.kubernetes_logs]
     type = "kubernetes_logs"
-    
-    # Pod logs from /var/log/pods
-    [sources.kubernetes_logs.pod_logs]
-    
-    # Exclude Vector's own logs to prevent loops
-    [sources.kubernetes_logs.exclude_paths_glob_patterns]
     exclude_paths_glob_patterns = [
       "**/vector-*/**",
       "**/kube-system/**"
@@ -98,25 +92,14 @@ data:
     [sinks.otel_logs]
     type = "opentelemetry"
     inputs = ["enrich_logs"]
-    endpoint = "http://otel-collector.otel-system.svc.cluster.local:4317"
+    endpoint = "http://otel-collector.otel-system.svc.cluster.local:4318/v1/logs"
+    compression = "gzip"
     
-    # OTLP configuration
     [sinks.otel_logs.encoding]
     codec = "json"
     
-    # Request configuration
-    [sinks.otel_logs.request]
-    timeout_secs = 30
-    
-    # Buffer configuration for reliability
     [sinks.otel_logs.buffer]
-    type = "disk"
-    max_size = 104857600  # 100MB
-    when_full = "drop_newest"
-    
-    # Health check endpoint
-    [sinks.otel_logs.healthcheck]
-    enabled = true
+    max_events = 1000
     
     # Debug sink for troubleshooting
     [sinks.debug_console]

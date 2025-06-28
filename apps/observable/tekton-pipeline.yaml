@@ -20,6 +20,9 @@ spec:
   - name: image-url
     type: string
     description: Registry URL for the built image
+  - name: external-image-url
+    type: string
+    description: External registry URL for deployment
   workspaces:
   - name: source
     description: Workspace for source code
@@ -78,13 +81,11 @@ spec:
       #!/busybox/sh
       set -e
       
-      # Check if we should build
-      if [ "$(cat /tmp/should-build)" = "false" ]; then
-        echo "Skipping build - no relevant changes"
-        exit 0
-      fi
-      
       cd $(workspaces.source.path)/source/apps/observable
+      
+      echo "Building Observable Framework image..."
+      echo "Source files:"
+      ls -la
       
       echo "Building image $(params.image-url)"
       /kaniko/executor \
@@ -149,6 +150,8 @@ spec:
       value: $(params.git-revision)
     - name: image-url
       value: $(params.image-url)
+    - name: external-image-url
+      value: $(params.external-image-url)
     workspaces:
     - name: source
       workspace: shared-data
@@ -200,18 +203,21 @@ spec:
         spec:
           containers:
           - name: git-poller
-            image: alpine/git:latest
+            image: bitnami/kubectl:latest
             env:
             - name: GIT_REPO_URL
               value: "https://github.com/norandom/observability-k8s.git"  # Update this
             - name: GIT_BRANCH
               value: "main"
             command:
-            - /bin/sh
+            - /bin/bash
             - -c
             - |
               set -e
               echo "Checking for changes in Observable Framework..."
+              
+              # Install git
+              apt-get update && apt-get install -y git
               
               # Clone repo to check for changes
               git clone --depth 2 $GIT_REPO_URL /tmp/repo
@@ -258,7 +264,7 @@ spec:
               
               # Trigger pipeline
               echo "Triggering Observable Framework pipeline..."
-              cat <<EOF | kubectl apply -f -
+              cat <<EOF | kubectl create -f -
               apiVersion: tekton.dev/v1beta1
               kind: PipelineRun
               metadata:

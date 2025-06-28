@@ -1,6 +1,17 @@
 # GitOps Observability Stack
 
-Complete observability stack managed by ArgoCD for learning GitOps principles.
+Complete observability stack managed by ArgoCD for learning GitOps principles with dual log routing: operational logs to Loki and security logs to Quickwit.
+
+## Table of Contents
+
+1. [Quick Start](#quick-start)
+2. [Access Points](#access-points)
+3. [Log Routing & Data Processing](#log-routing--data-processing)
+4. [Search API Endpoints](#search-api-endpoints)
+5. [Testing the Log Pipeline](#testing-the-log-pipeline)
+6. [GitOps Workflow](#gitops-workflow)
+7. [Cluster Configuration](#cluster-configuration)
+8. [Architecture](#architecture)
 
 ## Quick Start
 
@@ -19,54 +30,12 @@ Complete observability stack managed by ArgoCD for learning GitOps principles.
    ./scripts/bootstrap-gitops.sh
    ```
 
-## Access ArgoCD UI
-
-```bash
-# Get ArgoCD admin credentials
-echo "Username: admin"
-echo "Password: $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)"
-echo ""  # Line break for easier copy-paste
-
-# Access ArgoCD UI
-# Open http://argocd.k3s.local in browser
-# Or via curl: curl -H "Host: argocd.k3s.local" http://192.168.122.27/
-```
-
-## GitOps Workflow
-
-1. Make changes to any YAML in `apps/`
-2. Commit and push to your Git repository
-3. ArgoCD automatically syncs changes to cluster
-4. Monitor in ArgoCD UI - see deployment status, health, sync status
-
-## Applications Managed by ArgoCD
-
-- **Grafana** (`apps/grafana/`)
-- **Loki** (`apps/loki/`)
-- **OpenTelemetry Collector** (`apps/otel/`)
-- **Quickwit** (`apps/quickwit/`)
-
-## Learning GitOps
-
-- **App of Apps pattern** - ArgoCD manages multiple applications
-- **Automated sync** - Changes in Git trigger deployments
-- **Self-healing** - ArgoCD fixes configuration drift
-- **Rollback capability** - Easy rollback to previous Git commits
-- **Health monitoring** - Visual health status of all components
-
-## Making Changes
-
-```bash
-# Example: Update Grafana image
-vi apps/grafana/grafana-deployment.yaml
-# Change image: grafana/grafana:latest to grafana/grafana:10.2.0
-
-git add .
-git commit -m "Update Grafana to 10.2.0"
-git push
-
-# Watch ArgoCD sync the change automatically
-```
+3. **Get ArgoCD admin credentials:**
+   ```bash
+   echo "Username: admin"
+   echo "Password: $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)"
+   echo ""  # Line break for easier copy-paste
+   ```
 
 ## Access Points
 
@@ -75,29 +44,17 @@ git push
   - Username: admin  
   - Password: `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d`
 - **Grafana**: http://grafana.k3s.local  
-  - Username: admin
-  - Password: admin
+  - Username: admin / Password: admin
   - **Purpose**: Operational log analysis and dashboards (Loki datasource)
 - **Quickwit UI**: http://quickwit.k3s.local/ui/search
   - **Purpose**: Security log analysis and full-text search
 - **Loki**: http://loki.k3s.local
 
-### **API Endpoints**
-- **OTel HTTP**: http://[CLUSTER_IP]:4318/v1/logs
-- **OTel gRPC**: http://[CLUSTER_IP]:4317
-- **Loki API**: http://[CLUSTER_IP]:3100/loki/api/v1/
-  - Query Range: `/query_range?query={job=~".+"}&start=[timestamp]&end=[timestamp]&limit=10`
-  - Recent Logs: `/query_range?query={job=~".+"}&start=$(date -d '1 hour ago' +%s)000000000&end=$(date +%s)000000000&limit=10`
-- **Quickwit API**: http://[CLUSTER_IP]:7280/api/v1/
-  - Search: `/otel-logs-v0_7/search` (POST with JSON query)
-  - Recent Logs: `{"query": "*", "max_hits": 10}` for latest entries
-
-## Data Sources in Grafana
-
-- **Loki**: http://loki.loki-system.svc.cluster.local:3100
-  - **Purpose**: All log types for operational monitoring and dashboards
-  - **Query Language**: LogQL with JSON parsing support
-  - **Use Cases**: Dashboards, alerts, operational analysis
+### **Applications Managed by ArgoCD**
+- **Grafana** (`apps/grafana/`)
+- **Loki** (`apps/loki/`)
+- **OpenTelemetry Collector** (`apps/otel/`)
+- **Quickwit** (`apps/quickwit/`)
 
 ## Log Routing & Data Processing
 
@@ -115,103 +72,178 @@ git push
 
 ### **OpenTelemetry Log Routing Logic**
 
-The OTEL Collector automatically classifies and routes logs based on content analysis:
+The OTEL Collector automatically routes all logs to both destinations:
 
-**Security Logs Route to Quickwit when:**
-- `attributes["log_type"] == "security"`
-- `attributes["category"] == "auth"` or `"audit"`
-- Log body contains keywords: `login|logout|auth|failed|denied|unauthorized|privilege|sudo|ssh|firewall|intrusion|malware|virus|attack`
+**Dual Routing**: All logs go to both Loki and Quickwit for comprehensive coverage
+- **Loki**: Fast operational queries and dashboards
+- **Quickwit**: Deep security analysis and investigations
 
-**Operational Logs Route to Loki for:**
-- All other logs (default route)
-- Application performance logs
-- Infrastructure monitoring
-- System health metrics
-
-### **OTEL Endpoints**
-
+**OTEL Endpoints**:
 - **HTTP Ingestion**: `http://[CLUSTER_IP]:4318/v1/logs`
 - **gRPC Ingestion**: `http://[CLUSTER_IP]:4317` 
-- **Internal Routing**: Automatic based on log content classification
-
-**Note**: Replace `[CLUSTER_IP]` with your actual cluster IP configured in `config/cluster-config.env`
-
-## Data Retention
-
-- **Loki**: No retention policy configured (manual cleanup required)
-- **Quickwit**: Persistent storage (5Gi PVC) - data survives pod restarts
-- **Grafana**: Persistent storage (1Gi PVC) - data survives pod restarts
-- **OTEL Collector**: No persistent storage (ephemeral)
-
-## Architecture
-
-```
-Vector/Clients → OpenTelemetry Collector → {Loki (operational), Quickwit (security)}
-                           ↓                    ↓
-                   Grafana (dashboards)  Grafana (search)
-```
 
 ### **Vector Client Configuration**
 
 Vector clients collect logs from multiple sources and forward to OTEL:
-
 - **journald**: System service logs  
 - **docker**: Container logs
 - **auditd**: Security audit logs (`/var/log/audit/audit.log`)
-
-**Log Classification**: Vector automatically tags logs with `log_type` and `category` based on:
-- Source file paths (auditd → security)
-- Log content analysis (auth keywords → security)  
-- Default routing (everything else → operational)
 
 **Installation**: 
 1. Configure cluster IP: `vi config/cluster-config.env`
 2. Generate config: `./scripts/configure-vector.sh`  
 3. Install: `./vector-install.sh`
 
+## Search API Endpoints
+
+### **Loki API**
+**Base URL**: `http://[CLUSTER_IP]:3100/loki/api/v1/`
+
+#### **Query Recent Logs**
+```bash
+# Get last 10 logs from past hour
+curl -G 'http://192.168.122.27:3100/loki/api/v1/query_range' \
+  --data-urlencode 'query={job=~".+"}' \
+  --data-urlencode 'start='$(date -d '1 hour ago' +%s)000000000 \
+  --data-urlencode 'end='$(date +%s)000000000 \
+  --data-urlencode 'limit=10'
+
+# Query operational logs only
+curl -G 'http://192.168.122.27:3100/loki/api/v1/query_range' \
+  --data-urlencode 'query={log_type="operational"}' \
+  --data-urlencode 'limit=10'
+
+# Query with JSON parsing
+curl -G 'http://192.168.122.27:3100/loki/api/v1/query_range' \
+  --data-urlencode 'query={job=~".+"} | json | level="ERROR"' \
+  --data-urlencode 'limit=10'
+```
+
+#### **Real-time Log Streaming**
+```bash
+# Tail logs in real-time
+curl -G 'http://192.168.122.27:3100/loki/api/v1/tail' \
+  --data-urlencode 'query={job=~".+"}'
+```
+
+### **Quickwit API**
+**Base URL**: `http://[CLUSTER_IP]:7280/api/v1/otel-logs-v0_7/`
+
+#### **Search Recent Logs**
+```bash
+# Get last 10 logs
+curl -X POST 'http://192.168.122.27:7280/api/v1/otel-logs-v0_7/search' \
+  -H 'Content-Type: application/json' \
+  -d '{"query": "*", "max_hits": 10}'
+
+# Search security logs only
+curl -X POST 'http://192.168.122.27:7280/api/v1/otel-logs-v0_7/search' \
+  -H 'Content-Type: application/json' \
+  -d '{"query": "log_type:security", "max_hits": 10}'
+
+# Search authentication events
+curl -X POST 'http://192.168.122.27:7280/api/v1/otel-logs-v0_7/search' \
+  -H 'Content-Type: application/json' \
+  -d '{"query": "category:auth", "max_hits": 10}'
+
+# Search by service name
+curl -X POST 'http://192.168.122.27:7280/api/v1/otel-logs-v0_7/search' \
+  -H 'Content-Type: application/json' \
+  -d '{"query": "service_name:ssh-server", "max_hits": 10}'
+
+# Search with time range (last hour)
+curl -X POST 'http://192.168.122.27:7280/api/v1/otel-logs-v0_7/search' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "query": "*", 
+    "max_hits": 50,
+    "start_timestamp": '$(date -d '1 hour ago' +%s)',
+    "end_timestamp": '$(date +%s)'
+  }'
+```
+
+#### **Advanced Quickwit Queries**
+```bash
+# Complex search with multiple conditions
+curl -X POST 'http://192.168.122.27:7280/api/v1/otel-logs-v0_7/search' \
+  -H 'Content-Type: application/json' \
+  -d '{"query": "log_type:security AND severity_text:ERROR", "max_hits": 20}'
+
+# Search by IP address
+curl -X POST 'http://192.168.122.27:7280/api/v1/otel-logs-v0_7/search' \
+  -H 'Content-Type: application/json' \
+  -d '{"query": "source_ip:203.0.113.42", "max_hits": 10}'
+
+# Text search in message body
+curl -X POST 'http://192.168.122.27:7280/api/v1/otel-logs-v0_7/search' \
+  -H 'Content-Type: application/json' \
+  -d '{"query": "message:firewall", "max_hits": 10}'
+```
+
 ## Testing the Log Pipeline
 
-### **Sending Test Logs**
-
-Send test logs to validate the entire pipeline:
+### **Send Test Logs**
 
 ```bash
-# Send operational logs to Loki via OTEL
+# Send operational logs to both Loki and Quickwit
 ./scripts/test-operational-logs.sh
-```
-- Sends 2 operational log entries with 15+ structured fields
-- Includes web server request log and database error log
-- Routes through OTEL → Loki for operational monitoring
 
-```bash  
-# Send security logs to Quickwit via OTEL
+# Send security logs to both Loki and Quickwit  
 ./scripts/test-security-logs.sh
 ```
-- Sends 3 security log entries with 15+ structured fields  
-- Includes SSH auth failure, sudo privilege escalation, and firewall block
-- Routes through OTEL → Quickwit for security analysis
 
-### **Retrieving Logs**
-
-Query the centralized log collection services:
+### **Retrieve and Verify Logs**
 
 ```bash
-# Get latest 10 logs from Quickwit (security logs)
-./scripts/get-quickwit-logs.sh
-```
-- Queries Quickwit REST API at `http://CLUSTER_IP:7280`
-- Shows security events, auth logs, and audit trails sorted by timestamp (newest first)
-- Provides query examples for specific security log types
-- **Note**: May take 10-30 seconds for new logs to appear in search index
-
-```bash
-# Get latest 10 logs from Loki (operational logs)  
+# Get latest logs from Loki (operational focus)
 ./scripts/get-loki-logs.sh
+
+# Get latest logs from Quickwit (security focus)
+./scripts/get-quickwit-logs.sh
+
+# Wait for logs to be processed (10-30 seconds)
+sleep 30
 ```
-- Queries Loki REST API at `http://CLUSTER_IP:3100`
-- Shows operational logs, application events, and infrastructure logs from last 24 hours
-- Includes examples for time-range and label-based queries
-- **Note**: Logs appear almost immediately after ingestion
+
+### **Access Log Analysis Interfaces**
+
+#### **Grafana (Operational Monitoring)**
+- **URL**: http://grafana.k3s.local 
+- **Credentials**: admin/admin
+- **Purpose**: Operational monitoring, dashboards, and alerts
+- **Datasource**: Loki (pre-configured)
+- **Features**: Time-series log aggregation, LogQL queries, label-based filtering
+
+**Sample LogQL Queries in Grafana**:
+```logql
+# All recent logs with JSON parsing
+{job=~".+"} | json
+
+# Error logs only
+{job=~".+"} | json | level="ERROR"
+
+# Operational logs from specific service
+{service_name="web-server"}
+
+# Recent logs with text filtering
+{job=~".+"} |= "database"
+```
+
+#### **Quickwit UI (Security Analysis)**
+- **URL**: http://quickwit.k3s.local/ui/search
+- **Index**: Select `otel-logs-v0_7`
+- **Purpose**: Security log analysis and forensic investigations
+- **Features**: Full-text search, complex queries, structured data analysis
+
+**Sample Queries in Quickwit UI**:
+- All logs: `*`
+- Security logs: `log_type:security`
+- Authentication events: `category:auth`
+- SSH events: `SSH`
+- Firewall events: `firewall`
+- Error level logs: `severity_text:ERROR`
+- IP-based search: `source_ip:203.0.113.42`
+- Combined search: `log_type:security AND severity_text:ERROR`
 
 ### **Complete Testing Workflow**
 
@@ -226,93 +258,57 @@ vi config/cluster-config.env
 ./scripts/test-operational-logs.sh
 ./scripts/test-security-logs.sh
 
-# 4. Wait for logs to be processed (10-30 seconds)
+# 4. Wait for logs to be processed
 sleep 30
 
 # 5. Retrieve and verify logs
 ./scripts/get-loki-logs.sh
 ./scripts/get-quickwit-logs.sh
 
-# 6. View in Grafana dashboard
-# Open http://grafana.k3s.local (admin/admin)
+# 6. View in web interfaces
+# Grafana: http://grafana.k3s.local (admin/admin)
+# Quickwit: http://quickwit.k3s.local/ui/search
 ```
 
-### **Log Analysis Interfaces**
+## GitOps Workflow
 
-#### **Grafana (Operational Logs)**
-- **URL**: http://grafana.k3s.local 
-- **Username**: admin / **Password**: admin
-- **Purpose**: Operational monitoring, dashboards, and alerts
-- **Datasource**: Loki (pre-configured)
-- **Features**: Time-series log aggregation, LogQL queries, label-based filtering
-- **Best For**: Operational monitoring, infrastructure logs, application performance
+1. Make changes to any YAML in `apps/`
+2. Commit and push to your Git repository
+3. ArgoCD automatically syncs changes to cluster
+4. Monitor in ArgoCD UI - see deployment status, health, sync status
 
-**Pre-configured Datasource:**
-- **Loki**: `http://loki.loki-system.svc.cluster.local:3100`
-- **Max Lines**: 1000 (configurable)
-- **Default Dashboard**: "Observability Overview" showing recent operational logs
-
-#### **Quickwit UI (Security Logs)**
-- **URL**: http://quickwit.k3s.local/ui/search
-- **Purpose**: Security log analysis and forensic investigations
-- **Features**: Full-text search, complex queries, structured data analysis
-- **Best For**: Security events, audit trails, compliance, threat detection
-- **Indexes**: `otel-logs-v0_7`, `otel-traces-v0_7`
-
-### **Finding Most Recent Logs**
-
-**In Loki Datasource:**
-1. **Explore Tab**: Go to Grafana → Explore → Select "Loki" datasource
-2. **Query Recent Logs**: Use LogQL queries:
-   ```logql
-   # All recent logs (last 1 hour)
-   {job=~".+"}
-   
-   # Recent operational logs only
-   {log_type="operational"}
-   
-   # Recent logs from specific service
-   {service_name="web-server"}
-   
-   # Recent error logs
-   {level="ERROR"} or {severity="error"}
-   ```
-3. **Time Range**: Set to "Last 15 minutes" or "Last 1 hour" for most recent
-4. **Live Tail**: Click "Live" button for real-time log streaming
-
-**In Quickwit UI:**
-1. **Open Quickwit Search**: Go to http://quickwit.k3s.local/ui/search
-2. **Basic Search**: Enter `*` to see all recent logs
-3. **Security Search**: Enter `log_type:security` for security events only
-4. **Time Range**: Use the time picker to filter by date/time
-5. **Text Search**: Enter keywords like `auth`, `login`, `firewall`, etc.
-6. **Advanced Queries**: Use Quickwit query syntax for complex searches
-7. **Sort Results**: Results ordered by timestamp (newest first by default)
-
-**Via Command Line Scripts:**
+### **Making Changes Example**
 ```bash
-# Get 10 most recent operational logs
-./scripts/get-loki-logs.sh
+# Update Grafana image
+vi apps/grafana/grafana-deployment.yaml
+# Change image: grafana/grafana:latest to grafana/grafana:10.2.0
 
-# Get 10 most recent security logs  
-./scripts/get-quickwit-logs.sh
+git add .
+git commit -m "Update Grafana to 10.2.0"
+git push
+
+# Watch ArgoCD sync the change automatically
 ```
 
-**Note**: Both Loki and Quickwit are configured as LoadBalancer services for external access. Use Grafana for operational monitoring and Quickwit UI for security analysis.
+### **Key GitOps Learning Benefits**
+- **Declarative** - Everything defined in Git
+- **Automated** - Changes deploy automatically
+- **Auditable** - Git history = deployment history
+- **Rollback** - Easy to revert via Git
+- **Drift detection** - ArgoCD shows configuration drift
+- **Health monitoring** - Visual status of all applications
 
 ## Cluster Configuration
 
 The observability stack is designed to work with different Kubernetes clusters by using a centralized configuration system:
 
 ### **Configuration Files**
-
 - **`config/cluster-config.env`**: Main configuration file - edit this to set your cluster IP
 - **`vector-client-config.toml.template`**: Template for Vector client configuration  
 - **`scripts/load-config.sh`**: Loads configuration for use in scripts
 - **`scripts/configure-vector.sh`**: Generates Vector config from template
 
 ### **Setting Up for a New Cluster**
-
 ```bash
 # 1. Update cluster IP
 vi config/cluster-config.env
@@ -327,18 +323,28 @@ vi config/cluster-config.env
 ```
 
 ### **Configuration Variables**
-
 - **`CLUSTER_IP`**: Main cluster IP address (edit this in config/cluster-config.env)
 - **`OTEL_HTTP_ENDPOINT`**: Auto-generated from CLUSTER_IP
 - **`OTEL_GRPC_ENDPOINT`**: Auto-generated from CLUSTER_IP  
 - **`QUICKWIT_ENDPOINT`**: Auto-generated from CLUSTER_IP
 
-**Key GitOps Learning Benefits:**
-- **Declarative** - Everything defined in Git
-- **Automated** - Changes deploy automatically
-- **Auditable** - Git history = deployment history
-- **Rollback** - Easy to revert via Git
-- **Drift detection** - ArgoCD shows configuration drift
-- **Health monitoring** - Visual status of all applications
+## Architecture
 
-This setup gives you hands-on experience with production GitOps patterns!
+```
+Vector/Clients → OpenTelemetry Collector → {Loki (operational), Quickwit (security)}
+                           ↓                    ↓
+                   Grafana (dashboards)  Quickwit UI (search)
+```
+
+### **Data Retention**
+- **Loki**: No retention policy configured (manual cleanup required)
+- **Quickwit**: Persistent storage (5Gi PVC) - data survives pod restarts
+- **Grafana**: Persistent storage (1Gi PVC) - data survives pod restarts
+- **OTEL Collector**: No persistent storage (ephemeral)
+
+### **LoadBalancer Services**
+Both Loki and Quickwit are configured as LoadBalancer services for external access. Use Grafana for operational monitoring and Quickwit UI for security analysis.
+
+**Note**: Replace `[CLUSTER_IP]` with your actual cluster IP configured in `config/cluster-config.env`
+
+This setup gives you hands-on experience with production GitOps patterns and comprehensive log management!

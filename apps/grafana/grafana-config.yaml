@@ -42,32 +42,11 @@ data:
         version: 1
         editable: true
         jsonData:
-          datasource_mode: "basic"
           url_options:
-            data: ""
             method: "POST"
-          global_queries:
-            - name: "Security Logs"
-              url: "/api/v1/otel-logs-v0_7/search"
-              data: |
-                {
-                  "query": "log_type:security",
-                  "max_hits": 100
-                }
-            - name: "Auth Logs"
-              url: "/api/v1/otel-logs-v0_7/search"
-              data: |
-                {
-                  "query": "category:auth",
-                  "max_hits": 100
-                }
-            - name: "All Logs"
-              url: "/api/v1/otel-logs-v0_7/search"
-              data: |
-                {
-                  "query": "*",
-                  "max_hits": 50
-                }
+            headers:
+              - name: "Content-Type"
+                value: "application/json"
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -76,51 +55,32 @@ metadata:
 data:
   observability-overview.json: |
     {
-      "dashboard": {
-        "id": null,
-        "title": "Observability Overview",
-        "tags": ["observability", "logs"],
-        "style": "dark",
-        "timezone": "browser",
-        "panels": [
-          {
-            "id": 1,
-            "title": "Recent Operational Logs (Loki)",
-            "type": "logs",
-            "targets": [
-              {
-                "datasource": {
-                  "type": "loki",
-                  "uid": "loki"
-                },
-                "expr": "{job=~\".+\"} |= \"operational\"",
-                "refId": "A"
-              }
-            ],
-            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
-          },
-          {
-            "id": 2,
-            "title": "Security Events (Quickwit)",
-            "type": "table",
-            "targets": [
-              {
-                "datasource": {
-                  "type": "yesoreyeram-infinity-datasource",
-                  "uid": "quickwit"
-                },
-                "format": "table",
-                "global_query_id": "Security Logs",
-                "refId": "A"
-              }
-            ],
-            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
-          }
-        ],
-        "time": {
-          "from": "now-1h",
-          "to": "now"
-        },
-        "refresh": "30s"
-      }
+      "id": null,
+      "title": "Observability Overview",
+      "tags": ["observability", "logs"],
+      "style": "dark",
+      "timezone": "browser",
+      "panels": [
+        {
+          "id": 1,
+          "title": "Recent Operational Logs (Loki)",
+          "type": "logs",
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
+              "expr": "{job=~\".+\"}",
+              "refId": "A"
+            }
+          ],
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0}
+        }
+      ],
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      },
+      "refresh": "30s"
     }

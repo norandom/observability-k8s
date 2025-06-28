@@ -22,12 +22,14 @@ Complete observability stack managed by ArgoCD for learning GitOps principles.
 ## Access ArgoCD UI
 
 ```bash
-# Get credentials
+# Get ArgoCD admin credentials
 echo "Username: admin"
 echo "Password: $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)"
+echo ""  # Line break for easier copy-paste
 
-# Access UI (use Host header)
-curl -H "Host: argocd.k3s.local" http://192.168.122.27/
+# Access ArgoCD UI
+# Open http://argocd.k3s.local in browser
+# Or via curl: curl -H "Host: argocd.k3s.local" http://192.168.122.27/
 ```
 
 ## GitOps Workflow
@@ -68,11 +70,21 @@ git push
 
 ## Access Points
 
+### **Web Interfaces**
 - **ArgoCD UI**: http://argocd.k3s.local
-- **Grafana**: http://grafana.k3s.local
-- **OTel Endpoint**: http://[CLUSTER_IP]:4318/v1/logs
-- **Quickwit**: http://quickwit.k3s.local  
+  - Username: admin  
+  - Password: `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d`
+- **Grafana**: http://grafana.k3s.local  
+  - Username: admin
+  - Password: admin
+- **Quickwit UI**: http://quickwit.k3s.local  
 - **Loki**: http://loki.k3s.local
+
+### **API Endpoints**
+- **OTel HTTP**: http://[CLUSTER_IP]:4318/v1/logs
+- **OTel gRPC**: http://[CLUSTER_IP]:4317
+- **Loki API**: http://[CLUSTER_IP]:3100/loki/api/v1/
+- **Quickwit API**: http://[CLUSTER_IP]:7280/api/v1/
 
 ## Data Sources in Grafana
 
@@ -217,15 +229,39 @@ sleep 30
 
 ### **Grafana Integration**
 
-Grafana comes pre-configured with:
+Grafana comes pre-configured with datasources and dashboards:
 
-- **Loki Datasource**: Connected to `http://loki.loki-system.svc.cluster.local:3100`
-- **Quickwit Datasource**: Using Infinity plugin connected to `http://quickwit.quickwit-system.svc.cluster.local:7280`
-- **Default Dashboard**: "Observability Overview" showing both operational and security logs
-- **Default Login**: admin/admin
+**Access:**
+- **URL**: http://grafana.k3s.local 
+- **Username**: admin
+- **Password**: admin
+
+**Pre-configured Datasources:**
+
+1. **Loki Datasource**
+   - **Name**: Loki
+   - **Type**: loki  
+   - **URL**: `http://loki.loki-system.svc.cluster.local:3100`
+   - **Purpose**: Query operational logs, application logs, infrastructure events
+   - **Features**: Time-series log aggregation, label-based filtering, fast time-range queries
+   - **Max Lines**: 1000 (configurable)
+
+2. **Quickwit Datasource**
+   - **Name**: Quickwit
+   - **Type**: yesoreyeram-infinity-datasource
+   - **URL**: `http://quickwit.quickwit-system.svc.cluster.local:7280`
+   - **Purpose**: Full-text search on security logs, audit trails, compliance data
+   - **Pre-configured Queries**:
+     - Security Logs: `log_type:security` (100 results)
+     - Auth Logs: `category:auth` (100 results)
+     - All Logs: `*` (50 results)
+   - **API Endpoint**: `/api/v1/otel-logs-v0_7/search`
 
 **Pre-installed Plugins:**
-- `yesoreyeram-infinity-datasource` for Quickwit integration
+- `yesoreyeram-infinity-datasource` - Enables REST API datasources for Quickwit integration
+
+**Default Dashboard:**
+- **"Observability Overview"** - Shows recent operational logs from Loki and security events from Quickwit
 
 **Note**: Both Loki and Quickwit are now configured as LoadBalancer services for external access.
 

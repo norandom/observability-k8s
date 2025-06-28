@@ -163,13 +163,22 @@ Data loaders are Python scripts that fetch data and output JSON for Observable F
 
 ## Automated GitOps Workflow
 
-### 🤖 GitHub Actions Automation
+### 🤖 Fully Automated GitOps Workflow
 
-This setup includes a fully automated GitOps workflow. When you commit changes to:
+This setup includes a **complete GitOps workflow** using Tekton Pipelines running inside your cluster:
+
+**Fully Automatic (Tekton Pipeline):**
 - `conda-environment.yml` → **Automatic container rebuild with new dependencies**
+- `Dockerfile` → **Automatic container rebuild**  
 - `dashboards-configmap.yaml` or `*.md` files → **Automatic dashboard deployment**
 
-**Setup:** Follow instructions in `github-action-setup.md`
+**Benefits:**
+- ✅ Runs inside cluster (can reach internal registry)
+- ✅ Complete automation for all changes
+- ✅ Git polling (no webhook required for internal clusters)
+- ✅ Zero manual intervention required
+
+**Setup:** Follow instructions in `tekton-setup.md`
 
 ### 📊 Usage Examples
 
@@ -194,10 +203,12 @@ This setup includes a fully automated GitOps workflow. When you commit changes t
    git push
    ```
 
-3. **Automatic result:**
-   - GitHub Action builds new container with packages
+3. **Automatic result (within 2 minutes):**
+   - Git poller detects conda-environment.yml change
+   - Triggers Tekton pipeline automatically
+   - Pipeline builds new container with packages
    - Pushes to in-cluster registry
-   - Restarts Observable Framework with new environment
+   - Updates Observable Framework deployment
    - All ML packages available in data loaders
 
 #### Adding New Dashboards
@@ -234,9 +245,12 @@ This setup includes a fully automated GitOps workflow. When you commit changes t
    git push
    ```
 
-3. **Automatic result:**
-   - GitHub Action applies ConfigMap changes
-   - Dashboard immediately available at `http://observable.k3s.local/ml-analysis`
+3. **Automatic result (within 2 minutes):**
+   - Git poller detects dashboard changes
+   - Triggers Tekton pipeline automatically
+   - Pipeline rebuilds container with new dashboards
+   - Updates deployment
+   - Dashboard available at `http://observable.k3s.local/ml-analysis`
 
 #### Creating Custom Data Loaders
 

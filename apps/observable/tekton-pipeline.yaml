@@ -39,18 +39,33 @@ spec:
       ls -la apps/observable/
   
   - name: check-changes
-    image: alpine:latest
+    image: alpine/git:latest
     script: |
       #!/bin/sh
       set -e
       cd $(workspaces.source.path)/source/apps/observable
       
-      # Check if conda-environment.yml or Dockerfile changed
-      if git diff HEAD~1 --name-only | grep -E "(conda-environment\.yml|Dockerfile|\.md$)" > /dev/null; then
-        echo "Changes detected in dependencies or dashboards - proceeding with build"
+      # Check if conda-environment.yml or Dockerfile changed (require rebuild)
+      if git diff HEAD~1 --name-only | grep -E "(conda-environment\.yml|Dockerfile)" > /dev/null; then
+        echo "Container rebuild needed - dependencies or Dockerfile changed"
+        echo "true" > /tmp/should-build
+        echo "true" > /tmp/deps-changed
+      else
+        echo "false" > /tmp/deps-changed
+      fi
+      
+      # Check if any markdown files changed (dashboard update)
+      if git diff HEAD~1 --name-only | grep -E "\.md$" > /dev/null; then
+        echo "Dashboard changes detected"
+        echo "true" > /tmp/dashboards-changed
+      else
+        echo "false" > /tmp/dashboards-changed
+      fi
+      
+      # Build if either deps or dashboards changed
+      if [ "$(cat /tmp/deps-changed)" = "true" ] || [ "$(cat /tmp/dashboards-changed)" = "true" ]; then
         echo "true" > /tmp/should-build
       else
-        echo "No relevant changes detected - skipping build"
         echo "false" > /tmp/should-build
       fi
       
@@ -76,10 +91,13 @@ spec:
         --context=. \
         --dockerfile=./Dockerfile \
         --destination=$(params.image-url) \
+        --destination=$(params.external-image-url) \
         --insecure \
         --skip-tls-verify
         
-      echo "Image built and pushed successfully: $(params.image-url)"
+      echo "Image built and pushed successfully:"
+      echo "  Internal: $(params.image-url)"
+      echo "  External: $(params.external-image-url)"
     volumeMounts:
     - name: docker-config
       mountPath: /kaniko/.docker
@@ -107,6 +125,10 @@ spec:
     type: string
     description: Image URL
     default: "registry.registry.svc.cluster.local:5000/observable-conda:latest"
+  - name: external-image-url
+    type: string
+    description: External registry URL for updates
+    default: "192.168.122.27:30500/observable-conda:latest"
   - name: deployment-namespace
     type: string
     description: Namespace for deployment
@@ -135,107 +157,138 @@ spec:
     runAfter: ["build-image"]
     taskSpec:
       params:
-      - name: image-url
+      - name: external-image-url
         type: string
       - name: deployment-namespace
         type: string
       steps:
-      - name: rollout-restart
+      - name: update-and-restart
         image: bitnami/kubectl:latest
         script: |
           #!/bin/bash
           set -e
-          echo "Restarting deployment to use new image: $(params.image-url)"
-          kubectl rollout restart deployment/observable -n $(params.deployment-namespace)
+          
+          # Update deployment image to use external registry URL
+          echo "Updating deployment image to: $(params.external-image-url)"
+          kubectl set image deployment/observable \
+            observable=$(params.external-image-url) \
+            -n $(params.deployment-namespace)
+          
+          # Wait for rollout to complete
+          echo "Waiting for deployment rollout..."
           kubectl rollout status deployment/observable -n $(params.deployment-namespace) --timeout=300s
-          echo "Deployment restarted successfully"
+          
+          # Show updated pod status
+          echo "Deployment updated successfully!"
+          kubectl get pods -n $(params.deployment-namespace) -l app=observable
     params:
-    - name: image-url
-      value: $(params.image-url)
+    - name: external-image-url
+      value: $(params.external-image-url)
     - name: deployment-namespace
       value: $(params.deployment-namespace)
 ---
-apiVersion: tekton.dev/v1beta1
-kind: TriggerTemplate
+apiVersion: batch/v1
+kind: CronJob
 metadata:
-  name: observable-trigger-template
+  name: observable-git-poller
   namespace: tekton-pipelines
 spec:
-  params:
-  - name: git-revision
-    description: The git revision
-    default: main
-  - name: git-commit-message
-    description: The git commit message
-  - name: git-repo-url
-    description: The git repository url
-  - name: git-repo-name
-    description: The name of the deployment to be created / patched
-    
-  resourcetemplates:
-  - apiVersion: tekton.dev/v1beta1
-    kind: PipelineRun
-    metadata:
-      generateName: observable-pipeline-run-
-      namespace: tekton-pipelines
+  schedule: "*/2 * * * *"  # Every 2 minutes
+  jobTemplate:
     spec:
-      pipelineRef:
-        name: observable-gitops-pipeline
-      params:
-      - name: git-url
-        value: $(tt.params.git-repo-url)
-      - name: git-revision
-        value: $(tt.params.git-revision)
-      workspaces:
-      - name: shared-data
-        volumeClaimTemplate:
-          spec:
-            accessModes:
-            - ReadWriteOnce
-            resources:
-              requests:
-                storage: 1Gi
----
-apiVersion: triggers.tekton.dev/v1alpha1
-kind: TriggerBinding
-metadata:
-  name: observable-pipelinebinding
-  namespace: tekton-pipelines
-spec:
-  params:
-  - name: git-repo-url
-    value: $(body.repository.clone_url)
-  - name: git-repo-name
-    value: $(body.repository.name)
-  - name: git-revision
-    value: $(body.after)
-  - name: git-commit-message
-    value: $(body.head_commit.message)
----
-apiVersion: triggers.tekton.dev/v1alpha1
-kind: EventListener
-metadata:
-  name: observable-listener
-  namespace: tekton-pipelines
-spec:
-  serviceAccountName: tekton-triggers-sa
-  triggers:
-  - name: observable-trigger
-    bindings:
-    - ref: observable-pipelinebinding
-    template:
-      ref: observable-trigger-template
-    interceptors:
-    - name: "only-on-observable-changes"
-      ref:
-        name: "cel"
-      params:
-      - name: "filter"
-        value: >
-          body.commits.exists(c, c.modified.exists(f, 
-            f.startsWith('apps/observable/') && 
-            (f.endsWith('.md') || f.endsWith('conda-environment.yml') || f.endsWith('Dockerfile'))
-          ))
+      template:
+        spec:
+          containers:
+          - name: git-poller
+            image: alpine/git:latest
+            env:
+            - name: GIT_REPO_URL
+              value: "https://github.com/norandom/observability-k8s.git"  # Update this
+            - name: GIT_BRANCH
+              value: "main"
+            command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              echo "Checking for changes in Observable Framework..."
+              
+              # Clone repo to check for changes
+              git clone --depth 2 $GIT_REPO_URL /tmp/repo
+              cd /tmp/repo
+              
+              # Get latest commit hash
+              LATEST_COMMIT=$(git rev-parse HEAD)
+              echo "Latest commit: $LATEST_COMMIT"
+              
+              # Check if we've processed this commit already
+              if kubectl get configmap observable-last-commit -n tekton-pipelines >/dev/null 2>&1; then
+                LAST_PROCESSED=$(kubectl get configmap observable-last-commit -n tekton-pipelines -o jsonpath='{.data.commit}')
+                echo "Last processed: $LAST_PROCESSED"
+                
+                if [ "$LATEST_COMMIT" = "$LAST_PROCESSED" ]; then
+                  echo "No new commits, skipping..."
+                  exit 0
+                fi
+              else
+                echo "No previous commit record found, this is first run"
+              fi
+              
+              # Check if changes are in observable directory
+              if [ -n "$LAST_PROCESSED" ]; then
+                CHANGED_FILES=$(git diff --name-only $LAST_PROCESSED HEAD)
+              else
+                CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+              fi
+              
+              echo "Changed files: $CHANGED_FILES"
+              
+              # Check if any changes are in apps/observable/ and relevant files
+              OBSERVABLE_CHANGES=$(echo "$CHANGED_FILES" | grep -E "^apps/observable/.*\.(md|yml|yaml)$|^apps/observable/Dockerfile$" || true)
+              
+              if [ -z "$OBSERVABLE_CHANGES" ]; then
+                echo "No relevant Observable changes detected"
+                # Still update the commit tracking
+                kubectl create configmap observable-last-commit --from-literal=commit=$LATEST_COMMIT -n tekton-pipelines --dry-run=client -o yaml | kubectl apply -f -
+                exit 0
+              fi
+              
+              echo "Observable changes detected:"
+              echo "$OBSERVABLE_CHANGES"
+              
+              # Trigger pipeline
+              echo "Triggering Observable Framework pipeline..."
+              cat <<EOF | kubectl apply -f -
+              apiVersion: tekton.dev/v1beta1
+              kind: PipelineRun
+              metadata:
+                generateName: observable-pipeline-run-
+                namespace: tekton-pipelines
+              spec:
+                pipelineRef:
+                  name: observable-gitops-pipeline
+                params:
+                - name: git-url
+                  value: $GIT_REPO_URL
+                - name: git-revision
+                  value: $LATEST_COMMIT
+                workspaces:
+                - name: shared-data
+                  volumeClaimTemplate:
+                    spec:
+                      accessModes:
+                      - ReadWriteOnce
+                      resources:
+                        requests:
+                          storage: 1Gi
+              EOF
+              
+              # Update last processed commit
+              kubectl create configmap observable-last-commit --from-literal=commit=$LATEST_COMMIT -n tekton-pipelines --dry-run=client -o yaml | kubectl apply -f -
+              
+              echo "Pipeline triggered for commit: $LATEST_COMMIT"
+          restartPolicy: OnFailure
+          serviceAccountName: tekton-triggers-sa
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -250,9 +303,9 @@ metadata:
 rules:
 - apiGroups: [""]
   resources: ["configmaps"]
-  verbs: ["get", "list", "watch"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 - apiGroups: ["tekton.dev"]
-  resources: ["eventlisteners", "triggers", "triggerbindings", "triggertemplates", "tasks", "taskruns", "pipelines", "pipelineruns"]
+  resources: ["tasks", "taskruns", "pipelines", "pipelineruns"]
   verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 - apiGroups: ["apps"]
   resources: ["deployments"]
@@ -270,18 +323,3 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: tekton-triggers-minimal
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: el-observable-listener
-  namespace: tekton-pipelines
-spec:
-  ports:
-  - name: http-listener
-    port: 8080
-    protocol: TCP
-    targetPort: 8080
-  selector:
-    eventlistener: observable-listener
-  type: ClusterIP

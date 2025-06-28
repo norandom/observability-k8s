@@ -3,9 +3,6 @@ kind: Deployment
 metadata:
   name: observable
   namespace: observable
-  labels:
-    app: observable
-    component: dashboard
 spec:
   replicas: 1
   selector:
@@ -18,20 +15,51 @@ spec:
         app: observable
         component: dashboard
     spec:
-      securityContext:
-        runAsUser: 0
-        runAsGroup: 0
       containers:
       - name: observable
         image: node:20-alpine
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          echo "🚀 Setting up Observable Framework..."
+          npm install -g @observablehq/framework@latest
+          
+          mkdir -p /app/src/data
+          cd /app
+          
+          # Copy dashboard files from mounted volume
+          cp -r /dashboard-src/* /app/src/ 2>/dev/null || echo "No dashboard files to copy"
+          
+          # Create sample data files if they don't exist
+          test -f src/data/quickwit-logs.json || echo '[]' > src/data/quickwit-logs.json
+          test -f src/data/loki-logs.json || echo '[]' > src/data/loki-logs.json  
+          test -f src/data/metrics.json || echo '{}' > src/data/metrics.json
+          
+          npm init -y
+          npm install @observablehq/framework
+          
+          # Create Observable config
+          cat > observablehq.config.js << 'EOF'
+          export default {
+            title: "🔍 Observability Dashboard",
+            pages: [
+              {name: "🏠 Home", path: "/"},
+              {name: "🛡️ Security", path: "/security"},
+              {name: "⚙️ Operations", path: "/operations"}
+            ],
+            toc: {
+              show: true
+            }
+          };
+          EOF
+          
+          echo "📊 Starting Observable Framework..."
+          exec npx @observablehq/framework preview --host 0.0.0.0 --port 3000
         ports:
         - containerPort: 3000
-          name: web
         env:
-        - name: NODE_ENV
-          value: "development"
-        - name: CLUSTER_IP
-          value: "192.168.122.27"
+        - name: OBSERVABLE_TELEMETRY_DISABLE
+          value: "true"
         - name: LOKI_ENDPOINT
           value: "http://192.168.122.27:3100"
         - name: QUICKWIT_ENDPOINT
@@ -39,38 +67,17 @@ spec:
         - name: PROMETHEUS_ENDPOINT
           value: "http://192.168.122.27:9090"
         volumeMounts:
-        - name: observable-storage
-          mountPath: /app
-        - name: config-volume
-          mountPath: /config
-        command: ["/bin/sh"]
-        args: ["/config/start.sh"]
+        - name: dashboard-files
+          mountPath: /dashboard-src
+          readOnly: true
         resources:
           requests:
-            memory: "256Mi"
-            cpu: "100m"
+            memory: "512Mi"
+            cpu: "200m"
           limits:
-            memory: "1Gi"
-            cpu: "500m"
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 3000
-          initialDelaySeconds: 60
-          periodSeconds: 30
-          timeoutSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 3000
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
+            memory: "2Gi"
+            cpu: "1000m"
       volumes:
-      - name: observable-storage
-        persistentVolumeClaim:
-          claimName: observable-storage
-      - name: config-volume
+      - name: dashboard-files
         configMap:
-          name: observable-config
-          defaultMode: 0755
+          name: observable-dashboards

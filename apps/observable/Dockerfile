@@ -30,10 +30,12 @@ RUN mkdir -p /app/src/data
 # Copy dashboard source files into the container
 COPY src/ /app/src/
 
-# Initialize npm project
+# Initialize npm project with proper start script
 RUN . /opt/conda/etc/profile.d/conda.sh && \
     conda activate observable-dashboard && \
-    npm init -y && npm install @observablehq/framework
+    npm init -y && \
+    npm install @observablehq/framework && \
+    npm pkg set scripts.start="npx @observablehq/framework dev --host 0.0.0.0 --port 3000"
 
 # Set environment variables
 ENV CONDA_DEFAULT_ENV=observable-dashboard
@@ -47,4 +49,4 @@ EXPOSE 3000
 
 # Use conda environment for all commands
 ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "observable-dashboard"]
-CMD ["npx", "@observablehq/framework", "dev", "--host", "0.0.0.0", "--port", "3000"]
+CMD ["npm", "start"]

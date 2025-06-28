@@ -6,6 +6,10 @@ spec:
   selector:
     app: quickwit
   ports:
-  - port: 7280
+  - name: http
+    port: 7280
     targetPort: 7280
+  - name: grpc-otel
+    port: 7281
+    targetPort: 7281
   type: LoadBalancer

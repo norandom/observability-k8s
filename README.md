@@ -77,7 +77,9 @@ git push
 - **Grafana**: http://grafana.k3s.local  
   - Username: admin
   - Password: admin
-- **Quickwit UI**: http://quickwit.k3s.local  
+  - **Purpose**: Operational log analysis and dashboards (Loki datasource)
+- **Quickwit UI**: http://quickwit.k3s.local/ui/search
+  - **Purpose**: Security log analysis and full-text search
 - **Loki**: http://loki.k3s.local
 
 ### **API Endpoints**
@@ -93,7 +95,9 @@ git push
 ## Data Sources in Grafana
 
 - **Loki**: http://loki.loki-system.svc.cluster.local:3100
-- **Quickwit**: http://[CLUSTER_IP]:7280/api/v1 (indexes: otel-logs-v0_7, otel-traces-v0_7)
+  - **Purpose**: All log types for operational monitoring and dashboards
+  - **Query Language**: LogQL with JSON parsing support
+  - **Use Cases**: Dashboards, alerts, operational analysis
 
 ## Log Routing & Data Processing
 
@@ -233,41 +237,27 @@ sleep 30
 # Open http://grafana.k3s.local (admin/admin)
 ```
 
-### **Grafana Integration**
+### **Log Analysis Interfaces**
 
-Grafana comes pre-configured with datasources and dashboards:
-
-**Access:**
+#### **Grafana (Operational Logs)**
 - **URL**: http://grafana.k3s.local 
-- **Username**: admin
-- **Password**: admin
+- **Username**: admin / **Password**: admin
+- **Purpose**: Operational monitoring, dashboards, and alerts
+- **Datasource**: Loki (pre-configured)
+- **Features**: Time-series log aggregation, LogQL queries, label-based filtering
+- **Best For**: Operational monitoring, infrastructure logs, application performance
 
-**Pre-configured Datasources:**
+**Pre-configured Datasource:**
+- **Loki**: `http://loki.loki-system.svc.cluster.local:3100`
+- **Max Lines**: 1000 (configurable)
+- **Default Dashboard**: "Observability Overview" showing recent operational logs
 
-1. **Loki Datasource**
-   - **Name**: Loki
-   - **Type**: loki  
-   - **URL**: `http://loki.loki-system.svc.cluster.local:3100`
-   - **Purpose**: Query operational logs, application logs, infrastructure events
-   - **Features**: Time-series log aggregation, label-based filtering, fast time-range queries
-   - **Max Lines**: 1000 (configurable)
-
-2. **Quickwit Datasource**
-   - **Name**: Quickwit
-   - **Type**: yesoreyeram-infinity-datasource
-   - **URL**: `http://quickwit.quickwit-system.svc.cluster.local:7280`
-   - **Purpose**: Full-text search on security logs, audit trails, compliance data
-   - **Pre-configured Queries**:
-     - Security Logs: `log_type:security` (100 results)
-     - Auth Logs: `category:auth` (100 results)
-     - All Logs: `*` (50 results)
-   - **API Endpoint**: `/api/v1/otel-logs-v0_7/search`
-
-**Pre-installed Plugins:**
-- `yesoreyeram-infinity-datasource` - Enables REST API datasources for Quickwit integration
-
-**Default Dashboard:**
-- **"Observability Overview"** - Shows recent operational logs from Loki and security events from Quickwit
+#### **Quickwit UI (Security Logs)**
+- **URL**: http://quickwit.k3s.local/ui/search
+- **Purpose**: Security log analysis and forensic investigations
+- **Features**: Full-text search, complex queries, structured data analysis
+- **Best For**: Security events, audit trails, compliance, threat detection
+- **Indexes**: `otel-logs-v0_7`, `otel-traces-v0_7`
 
 ### **Finding Most Recent Logs**
 
@@ -290,22 +280,14 @@ Grafana comes pre-configured with datasources and dashboards:
 3. **Time Range**: Set to "Last 15 minutes" or "Last 1 hour" for most recent
 4. **Live Tail**: Click "Live" button for real-time log streaming
 
-**In Quickwit Datasource:**
-1. **Explore Tab**: Go to Grafana → Explore → Select "Quickwit" datasource
-2. **Use Pre-configured Queries**:
-   - Select "Security Logs" global query for recent security events
-   - Select "Auth Logs" for recent authentication events
-   - Select "All Logs" for recent logs of any type
-3. **Custom Queries**: Create new query with:
-   ```json
-   {
-     "query": "*",
-     "max_hits": 50,
-     "start_timestamp": "now-1h",
-     "end_timestamp": "now"
-   }
-   ```
-4. **Sort Results**: Results automatically ordered by timestamp (newest first)
+**In Quickwit UI:**
+1. **Open Quickwit Search**: Go to http://quickwit.k3s.local/ui/search
+2. **Basic Search**: Enter `*` to see all recent logs
+3. **Security Search**: Enter `log_type:security` for security events only
+4. **Time Range**: Use the time picker to filter by date/time
+5. **Text Search**: Enter keywords like `auth`, `login`, `firewall`, etc.
+6. **Advanced Queries**: Use Quickwit query syntax for complex searches
+7. **Sort Results**: Results ordered by timestamp (newest first by default)
 
 **Via Command Line Scripts:**
 ```bash
@@ -316,7 +298,7 @@ Grafana comes pre-configured with datasources and dashboards:
 ./scripts/get-quickwit-logs.sh
 ```
 
-**Note**: Both Loki and Quickwit are now configured as LoadBalancer services for external access.
+**Note**: Both Loki and Quickwit are configured as LoadBalancer services for external access. Use Grafana for operational monitoring and Quickwit UI for security analysis.
 
 ## Cluster Configuration
 

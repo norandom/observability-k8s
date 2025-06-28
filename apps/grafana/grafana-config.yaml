@@ -4,7 +4,7 @@ metadata:
   name: grafana-plugins
 data:
   plugins.txt: |
-    yesoreyeram-infinity-datasource
+    # No additional plugins needed
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -32,15 +32,6 @@ data:
               name: TraceID
               url: "$${__value.raw}"
       
-      - name: Quickwit
-        type: yesoreyeram-infinity-datasource
-        access: proxy
-        orgId: 1
-        url: http://quickwit.quickwit-system.svc.cluster.local:7280
-        basicAuth: false
-        isDefault: false
-        version: 1
-        editable: true
 ---
 apiVersion: v1
 kind: ConfigMap

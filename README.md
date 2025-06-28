@@ -4,14 +4,52 @@ Complete observability stack managed by ArgoCD for learning GitOps principles wi
 
 ## Table of Contents
 
-1. [Quick Start](#quick-start)
-2. [Access Points](#access-points)
-3. [Log Routing & Data Processing](#log-routing--data-processing)
-4. [Search API Endpoints](#search-api-endpoints)
-5. [Testing the Log Pipeline](#testing-the-log-pipeline)
-6. [GitOps Workflow](#gitops-workflow)
-7. [Cluster Configuration](#cluster-configuration)
-8. [Architecture](#architecture)
+1. [Overview & Architecture](#overview--architecture)
+2. [Prerequisites](#prerequisites)
+3. [Quick Start](#quick-start)
+4. [GitOps Workflow](#gitops-workflow)
+5. [Access Points](#access-points)
+6. [Log Routing & Data Processing](#log-routing--data-processing)
+7. [Testing the Log Pipeline](#testing-the-log-pipeline)
+8. [Search API Endpoints](#search-api-endpoints)
+9. [Cluster Configuration](#cluster-configuration)
+
+## Overview & Architecture
+
+This observability stack implements a **dual-pipeline log routing architecture** with 7 main components:
+
+### **Core Services**
+- **Vector** - Log collection (DaemonSet + client installations)
+- **OpenTelemetry Collector** - Central log routing hub
+- **Loki** - Time-series log storage for operational monitoring
+- **Quickwit** - Full-text search engine for security analysis
+- **Grafana** - Dashboards and operational log analysis
+- **Prometheus** - Metrics collection and monitoring
+- **ArgoCD** - GitOps automation and deployment management
+
+### **Architecture Flow**
+```
+Vector/Clients → OpenTelemetry Collector → {Loki (operational), Quickwit (security)}
+                           ↓                    ↓
+                   Grafana (dashboards)  Quickwit UI (search)
+                           ↓
+                  Prometheus (metrics)
+```
+
+### **Data Retention**
+- **Loki**: No retention policy configured (manual cleanup required)
+- **Quickwit**: Persistent storage (5Gi PVC) - data survives pod restarts
+- **Grafana**: Persistent storage (1Gi PVC) - data survives pod restarts
+- **Prometheus**: Persistent storage for metrics collection
+- **OTEL Collector**: No persistent storage (ephemeral)
+
+## Prerequisites
+
+- **Kubernetes cluster** (tested with k3s)
+- **kubectl** configured for your cluster
+- **Git** for GitOps workflow
+- **curl** for testing API endpoints
+- **Ingress controller** for web interface access (*.k3s.local domains)
 
 ## Quick Start
 
@@ -51,10 +89,12 @@ Complete observability stack managed by ArgoCD for learning GitOps principles wi
 - **Loki**: http://loki.k3s.local
 
 ### **Applications Managed by ArgoCD**
-- **Grafana** (`apps/grafana/`)
-- **Loki** (`apps/loki/`)
-- **OpenTelemetry Collector** (`apps/otel/`)
-- **Quickwit** (`apps/quickwit/`)
+- **Grafana** (`apps/grafana/`) - Dashboards and visualization
+- **Loki** (`apps/loki/`) - Operational log storage
+- **OpenTelemetry Collector** (`apps/otel/`) - Log routing hub
+- **Quickwit** (`apps/quickwit/`) - Security log search
+- **Prometheus** (`apps/prometheus/`) - Metrics collection
+- **Vector** (`apps/vector/`) - Log collection DaemonSet
 
 ## Log Routing & Data Processing
 
@@ -92,7 +132,7 @@ Vector clients collect logs from multiple sources and forward to OTEL:
 **Installation**: 
 1. Configure cluster IP: `vi config/cluster-config.env`
 2. Generate config: `./scripts/configure-vector.sh`  
-3. Install: `./vector-install.sh`
+3. Install: `./scripts/vector-install.sh`
 
 ## Search API Endpoints
 
@@ -102,19 +142,19 @@ Vector clients collect logs from multiple sources and forward to OTEL:
 #### **Query Recent Logs**
 ```bash
 # Get last 10 logs from past hour
-curl -G 'http://192.168.122.27:3100/loki/api/v1/query_range' \
+curl -G 'http://[CLUSTER_IP]:3100/loki/api/v1/query_range' \
   --data-urlencode 'query={job=~".+"}' \
   --data-urlencode 'start='$(date -d '1 hour ago' +%s)000000000 \
   --data-urlencode 'end='$(date +%s)000000000 \
   --data-urlencode 'limit=10'
 
 # Query operational logs only
-curl -G 'http://192.168.122.27:3100/loki/api/v1/query_range' \
+curl -G 'http://[CLUSTER_IP]:3100/loki/api/v1/query_range' \
   --data-urlencode 'query={log_type="operational"}' \
   --data-urlencode 'limit=10'
 
 # Query with JSON parsing
-curl -G 'http://192.168.122.27:3100/loki/api/v1/query_range' \
+curl -G 'http://[CLUSTER_IP]:3100/loki/api/v1/query_range' \
   --data-urlencode 'query={job=~".+"} | json | level="ERROR"' \
   --data-urlencode 'limit=10'
 ```
@@ -122,7 +162,7 @@ curl -G 'http://192.168.122.27:3100/loki/api/v1/query_range' \
 #### **Real-time Log Streaming**
 ```bash
 # Tail logs in real-time
-curl -G 'http://192.168.122.27:3100/loki/api/v1/tail' \
+curl -G 'http://[CLUSTER_IP]:3100/loki/api/v1/tail' \
   --data-urlencode 'query={job=~".+"}'
 ```
 
@@ -132,27 +172,27 @@ curl -G 'http://192.168.122.27:3100/loki/api/v1/tail' \
 #### **Search Recent Logs**
 ```bash
 # Get last 10 logs
-curl -X POST 'http://192.168.122.27:7280/api/v1/otel-logs-v0_7/search' \
+curl -X POST 'http://[CLUSTER_IP]:7280/api/v1/otel-logs-v0_7/search' \
   -H 'Content-Type: application/json' \
   -d '{"query": "*", "max_hits": 10}'
 
 # Search security logs only
-curl -X POST 'http://192.168.122.27:7280/api/v1/otel-logs-v0_7/search' \
+curl -X POST 'http://[CLUSTER_IP]:7280/api/v1/otel-logs-v0_7/search' \
   -H 'Content-Type: application/json' \
   -d '{"query": "log_type:security", "max_hits": 10}'
 
 # Search authentication events
-curl -X POST 'http://192.168.122.27:7280/api/v1/otel-logs-v0_7/search' \
+curl -X POST 'http://[CLUSTER_IP]:7280/api/v1/otel-logs-v0_7/search' \
   -H 'Content-Type: application/json' \
   -d '{"query": "category:auth", "max_hits": 10}'
 
 # Search by service name
-curl -X POST 'http://192.168.122.27:7280/api/v1/otel-logs-v0_7/search' \
+curl -X POST 'http://[CLUSTER_IP]:7280/api/v1/otel-logs-v0_7/search' \
   -H 'Content-Type: application/json' \
   -d '{"query": "service_name:ssh-server", "max_hits": 10}'
 
 # Search with time range (last hour)
-curl -X POST 'http://192.168.122.27:7280/api/v1/otel-logs-v0_7/search' \
+curl -X POST 'http://[CLUSTER_IP]:7280/api/v1/otel-logs-v0_7/search' \
   -H 'Content-Type: application/json' \
   -d '{
     "query": "*", 
@@ -165,17 +205,17 @@ curl -X POST 'http://192.168.122.27:7280/api/v1/otel-logs-v0_7/search' \
 #### **Advanced Quickwit Queries**
 ```bash
 # Complex search with multiple conditions
-curl -X POST 'http://192.168.122.27:7280/api/v1/otel-logs-v0_7/search' \
+curl -X POST 'http://[CLUSTER_IP]:7280/api/v1/otel-logs-v0_7/search' \
   -H 'Content-Type: application/json' \
   -d '{"query": "log_type:security AND severity_text:ERROR", "max_hits": 20}'
 
 # Search by IP address
-curl -X POST 'http://192.168.122.27:7280/api/v1/otel-logs-v0_7/search' \
+curl -X POST 'http://[CLUSTER_IP]:7280/api/v1/otel-logs-v0_7/search' \
   -H 'Content-Type: application/json' \
   -d '{"query": "source_ip:203.0.113.42", "max_hits": 10}'
 
 # Text search in message body
-curl -X POST 'http://192.168.122.27:7280/api/v1/otel-logs-v0_7/search' \
+curl -X POST 'http://[CLUSTER_IP]:7280/api/v1/otel-logs-v0_7/search' \
   -H 'Content-Type: application/json' \
   -d '{"query": "message:firewall", "max_hits": 10}'
 ```
@@ -272,10 +312,28 @@ sleep 30
 
 ## GitOps Workflow
 
-1. Make changes to any YAML in `apps/`
-2. Commit and push to your Git repository
-3. ArgoCD automatically syncs changes to cluster
-4. Monitor in ArgoCD UI - see deployment status, health, sync status
+This project demonstrates **GitOps principles** with ArgoCD managing all deployments declaratively.
+
+### **Making Changes**
+1. **Edit** any YAML in `apps/` directories
+2. **Commit** and push to your Git repository  
+3. **ArgoCD automatically syncs** changes to cluster
+4. **Monitor** in ArgoCD UI - see deployment status, health, sync status
+
+### **Available Deployment Scripts**
+```bash
+# GitOps approach (recommended)
+./scripts/bootstrap-gitops.sh     # Setup ArgoCD and all apps
+
+# Direct deployment approach  
+./scripts/deploy-all.sh           # Deploy all services via kubectl
+./scripts/deploy-grafana.sh       # Deploy individual services
+./scripts/deploy-loki.sh
+./scripts/deploy-otel.sh
+./scripts/deploy-quickwit.sh
+./scripts/deploy-prometheus.sh
+./scripts/deploy-vector.sh
+```
 
 ### **Making Changes Example**
 ```bash
@@ -327,23 +385,6 @@ vi config/cluster-config.env
 - **`OTEL_HTTP_ENDPOINT`**: Auto-generated from CLUSTER_IP
 - **`OTEL_GRPC_ENDPOINT`**: Auto-generated from CLUSTER_IP  
 - **`QUICKWIT_ENDPOINT`**: Auto-generated from CLUSTER_IP
-
-## Architecture
-
-```
-Vector/Clients → OpenTelemetry Collector → {Loki (operational), Quickwit (security)}
-                           ↓                    ↓
-                   Grafana (dashboards)  Quickwit UI (search)
-```
-
-### **Data Retention**
-- **Loki**: No retention policy configured (manual cleanup required)
-- **Quickwit**: Persistent storage (5Gi PVC) - data survives pod restarts
-- **Grafana**: Persistent storage (1Gi PVC) - data survives pod restarts
-- **OTEL Collector**: No persistent storage (ephemeral)
-
-### **LoadBalancer Services**
-Both Loki and Quickwit are configured as LoadBalancer services for external access. Use Grafana for operational monitoring and Quickwit UI for security analysis.
 
 **Note**: Replace `[CLUSTER_IP]` with your actual cluster IP configured in `config/cluster-config.env`
 

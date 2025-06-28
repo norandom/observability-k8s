@@ -18,18 +18,7 @@ data:
         send_batch_size: 1024
       memory_limiter:
         limit_mib: 512
-      
-      # Add log classification attributes
-      transform:
-        log_statements:
-          - context: log
-            statements:
-              # Classify security logs based on content
-              - set(attributes["log_type"], "security") where IsString(body) and body matches "(?i)(login|logout|auth|failed|denied|unauthorized|privilege|sudo|ssh|firewall|intrusion|malware|virus|attack)"
-              # Classify based on attributes
-              - set(attributes["log_type"], "security") where attributes["category"] == "auth" or attributes["category"] == "audit"
-              # Default to operational
-              - set(attributes["log_type"], "operational") where attributes["log_type"] == nil
+        check_interval: 1s
 
     exporters:
       debug:
@@ -37,24 +26,14 @@ data:
         sampling_initial: 5
         sampling_thereafter: 200
       
-      # Loki for all logs (simplified for now)
       loki:
         endpoint: http://loki.loki-system.svc.cluster.local:3100/loki/api/v1/push
-        tenant_id: ""
-        labels:
-          attributes:
-            service.name: "service_name"
-            log_type: "log_type"
-      
-      # OTLP HTTP for Quickwit
-      otlphttp:
-        endpoint: http://quickwit.quickwit-system.svc.cluster.local:7280/api/v1/otel-logs-v0_7/ingest
 
     service:
       pipelines:
         logs:
           receivers: [otlp]
-          processors: [memory_limiter, transform, batch]
+          processors: [memory_limiter, batch]
           exporters: [debug, loki]
         traces:
           receivers: [otlp]

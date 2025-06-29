@@ -37,12 +37,12 @@ Vector/Clients → OpenTelemetry Collector → {Loki (operational), Quickwit (se
                   Prometheus (metrics)                    Python data analysis
 ```
 
-### **Data Retention**
-- **Loki**: No retention policy configured (manual cleanup required)
-- **Quickwit**: Persistent storage (5Gi PVC) - data survives pod restarts
+### **Data Retention & Storage**
+- **Loki**: 6GB persistent storage with 7-day retention policy
+- **Quickwit**: 6GB persistent storage with automatic cleanup
 - **Grafana**: Persistent storage (1Gi PVC) - data survives pod restarts
 - **Prometheus**: Persistent storage for metrics collection
-- **OTEL Collector**: No persistent storage (ephemeral)
+- **Observable Framework**: Live development with volume-based storage
 
 ## Prerequisites
 
@@ -452,309 +452,215 @@ notepad C:\Windows\System32\drivers\etc\hosts
 
 After updating the hosts file, you can access all web interfaces using the `.k3s.local` domains listed in the [Access Points](#access-points) section.
 
-### **Observable Framework Dashboard Files**
+### **Observable Framework Dashboard Structure**
 
-The Observable Framework dashboard is located in the following directory structure:
+The Observable Framework has been simplified for rapid development:
 
 ```
 apps/observable/
-├── minimal.yaml                    # Current active ConfigMap with dashboard HTML
 ├── observable-deployment.yaml     # Kubernetes deployment configuration  
 ├── observable-service.yaml        # LoadBalancer service (port 3000)
 ├── observable-ingress.yaml        # Ingress for observable.k3s.local
-├── observable-pvc.yaml            # Persistent storage (2Gi)
 ├── kustomization.yaml             # Kustomize configuration
-├── example-dashboard.md           # Example Observable Framework markdown dashboard
-├── observablehq.config.js         # Observable Framework configuration
-├── src/
-│   ├── index.md                   # Main dashboard page (markdown format)
-│   └── data/
-│       ├── loki-loader.py         # Python data loader for Loki API
-│       └── quickwit-loader.py     # Python data loader for Quickwit API
-└── Dockerfile                     # Custom container definition (if building custom image)
+├── tekton-pipeline-otel.yaml      # Tekton pipeline with OTEL integration
+├── tekton-logs-forwarder.yaml     # Build logs forwarding to OTEL
+└── src/                           # Dashboard source files (created via kubectl cp)
+    ├── index.md                   # Main dashboard (📊 Home)
+    ├── security.md                # Security dashboard (🛡️ Security)
+    ├── operations.md              # Operations dashboard (⚙️ Operations)
+    └── data/                      # Data loaders (optional)
+        ├── loki-logs.py           # Operational logs from Loki API
+        └── quickwit-logs.py       # Security logs from Quickwit API
 ```
 
-**Dashboard Configuration:**
-- **Framework**: Observable Framework with conda environment
-- **Dashboard URL**: http://observable.k3s.local or http://192.168.122.27:31451
-- **Main Dashboard**: `apps/observable/src/index.md` (markdown with JavaScript)
-- **Configuration**: `apps/observable/conda-configmap.yaml`
+**Current Dashboards:**
+1. **Main Dashboard** (`/`) - Overview with system status
+2. **Security Dashboard** (`/security`) - Real-time security event monitoring
+3. **Operations Dashboard** (`/operations`) - System logs and operational metrics
 
-**Available Dashboards:**
-1. **Main Dashboard** (`src/index.md`) - Overview with real-time data
-2. **Security Analysis** (`src/security-analysis.md`) - Advanced security analytics
-3. **Operational Insights** (`src/operational-insights.md`) - System performance and logs
+**Dashboard URLs:**
+- **Main**: http://observable.k3s.local
+- **Security**: http://observable.k3s.local/security  
+- **Operations**: http://observable.k3s.local/operations
 
-**Python Data Loaders:**
-- **Loki Logs** (`src/data/loki-logs.py`) - Operational log analysis with Polars
-- **Quickwit Logs** (`src/data/quickwit-logs.py`) - Security log analysis with Pandas  
-- **Metrics** (`src/data/metrics.py`) - Prometheus metrics collection
+**Development Features:**
+- ✅ **Live Development**: Use `kubectl cp` to copy files directly
+- ✅ **Hot Reload**: Changes appear immediately in browser
+- ✅ **No Rebuilds**: Edit markdown files without container rebuilds
+- ✅ **Volume Persistence**: Files persist during container restarts
 
-**Python Environment:**
-- **Dependencies**: `apps/observable/requirements.txt` and `environment.yml`
-- **Packages**: polars, pandas, requests, matplotlib, seaborn, numpy, scipy
-- **Conda Environment**: `observable-env`
+## Dashboard Development Workflow (Simplified)
 
-**To Add New Dashboards (GitOps Workflow):**
-1. **Add Dashboard**: Create new `.md` files in `apps/observable/dashboards-configmap.yaml`
-2. **Add Data Loaders**: Create new Python loaders in `apps/observable/src/data/`
-3. **Update Dependencies**: Modify `requirements.txt` or `environment.yml` if needed
-4. **Commit & Push**: 
-   ```bash
-   git add apps/observable/
-   git commit -m "Add new dashboard: your-dashboard-name"
-   git push
-   ```
-5. **Auto-Deploy**: ArgoCD automatically syncs changes within ~3 minutes
-6. **Verify**: Access new dashboard at `http://observable.k3s.local/your-dashboard-name`
+> **New**: Observable Framework now supports live development with direct file copying - no more ConfigMaps or rebuilds needed!
 
-**Dashboard File Structure in ConfigMap:**
-```yaml
-# In apps/observable/dashboards-configmap.yaml
-data:
-  your-dashboard.md: |
-    # Your Dashboard Title
-    
-    ```js
-    const data = FileAttachment("data/your-data-loader.json").json();
-    ```
-    
-    Your dashboard content here...
-```
+### **Quick Dashboard Development**
 
-## Complete Workflow: Adding New Dashboards
+The Observable Framework deployment has been simplified to enable rapid dashboard development using `kubectl cp` and direct container access.
 
-### **Step-by-Step Guide:**
-
-#### **1. Create Your Dashboard**
-Edit the dashboards ConfigMap file:
+#### **1. Copy Files to Running Container**
 ```bash
-vim apps/observable/dashboards-configmap.yaml
+# Get the current Observable pod name
+POD_NAME=$(kubectl get pods -n observable -l app=observable -o jsonpath='{.items[0].metadata.name}')
+
+# Copy dashboard files directly to the container
+kubectl cp your-dashboard.md observable/$POD_NAME:/app/src/your-dashboard.md
+
+# Copy Python data loaders
+kubectl cp your-loader.py observable/$POD_NAME:/app/src/data/your-loader.py
+
+# Copy any additional assets
+kubectl cp assets/ observable/$POD_NAME:/app/src/assets/
 ```
 
-#### **2. Add Dashboard Content**
-Add your dashboard under the `data:` section:
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: observable-dashboards
-  namespace: observable
-data:
-  # Existing dashboards...
-  
-  # Your new dashboard
-  my-analytics.md: |
-    # My Analytics Dashboard
-    
-    Custom analysis of application metrics and logs.
-    
-    ```js
-    // Load data from Python loaders
-    const appLogs = FileAttachment("data/loki-logs.json").json();
-    const securityData = FileAttachment("data/quickwit-logs.json").json();
-    const metrics = FileAttachment("data/metrics.json").json();
-    ```
-    
-    ## Application Performance
-    
-    ```js
-    // Filter for application logs
-    const appData = appLogs.filter(d => d.service_name.includes("my-app"));
-    const errorRate = (appData.filter(d => d.level === "error").length / appData.length * 100).toFixed(2);
-    ```
-    
-    <div class="metric-card">
-      <h3>Error Rate</h3>
-      <div class="metric-value">${errorRate}%</div>
-    </div>
-    
-    ## Response Time Analysis
-    
-    ```js
-    // Group logs by hour for trend analysis
-    const hourlyData = d3.rollup(
-      appData,
-      v => v.length,
-      d => d3.timeHour(new Date(d.timestamp))
-    );
-    
-    const trendData = Array.from(hourlyData, ([hour, count]) => ({
-      time: new Date(hour),
-      requests: count
-    }));
-    ```
-    
-    ```js
-    Plot.plot({
-      title: "Request Volume Over Time",
-      width: 800,
-      height: 300,
-      x: {type: "time", label: "Time"},
-      y: {label: "Requests per Hour"},
-      marks: [
-        Plot.lineY(trendData, {x: "time", y: "requests", stroke: "#007bff"}),
-        Plot.dotY(trendData, {x: "time", y: "requests", fill: "#007bff"})
-      ]
-    })
-    ```
-    
-    ## Top Error Messages
-    
-    ```js
-    const errorMessages = d3.rollup(
-      appData.filter(d => d.level === "error"),
-      v => v.length,
-      d => d.message.substring(0, 100) + "..."
-    );
-    
-    const topErrors = Array.from(errorMessages, ([message, count]) => ({message, count}))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 10);
-    ```
-    
-    ```js
-    Inputs.table(topErrors, {
-      columns: ["message", "count"],
-      header: {message: "Error Message", count: "Occurrences"},
-      width: {message: 500, count: 100}
-    })
-    ```
-```
-
-#### **3. Optional: Add Custom Data Loader**
-If you need custom data processing, add a Python loader in the main ConfigMap:
-```yaml
-# In apps/observable/simple-gitops-configmap.yaml, add under data:
-  my-custom-loader.py: |
-    #!/usr/bin/env python3
-    import os
-    import json
-    import requests
-    from datetime import datetime, timedelta
-    
-    def fetch_custom_data():
-        # Your custom data fetching logic here
-        # Example: fetch from custom API, process logs, etc.
-        
-        custom_endpoint = os.getenv('CUSTOM_API_ENDPOINT', 'http://my-api:8080')
-        
-        try:
-            response = requests.get(f"{custom_endpoint}/api/metrics", timeout=10)
-            if response.status_code == 200:
-                data = response.json()
-                
-                # Process and enhance data
-                processed_data = []
-                for item in data:
-                    processed_data.append({
-                        'timestamp': item.get('timestamp', int(datetime.now().timestamp() * 1000)),
-                        'value': item.get('value', 0),
-                        'category': item.get('type', 'unknown'),
-                        # Add your custom fields
-                    })
-                
-                print(json.dumps(processed_data, indent=2))
-            else:
-                print(json.dumps([]))
-                
-        except Exception as e:
-            print(f"Error: {e}", file=sys.stderr)
-            print(json.dumps([]))
-    
-    if __name__ == "__main__":
-        fetch_custom_data()
-```
-
-#### **4. Update Dependencies (if needed)**
-If your data loader needs additional Python packages:
-```yaml
-# In apps/observable/simple-gitops-configmap.yaml, update the pip install line:
-pip3 install --break-system-packages polars pandas requests matplotlib seaborn numpy scipy your-new-package
-```
-
-#### **5. Commit and Deploy**
+#### **2. Access Container for Development**
 ```bash
-# Add your changes
-git add apps/observable/
+# Access the container shell for development
+kubectl exec -it -n observable $POD_NAME -- /bin/sh
 
-# Commit with descriptive message
-git commit -m "feat: add custom analytics dashboard with error tracking"
+# Inside container - view current structure
+ls -la /app/src/
 
-# Push to trigger GitOps deployment
-git push origin main
+# Edit files directly (vi/nano available)
+vi /app/src/index.md
+
+# Check Observable Framework status  
+curl localhost:3000
 ```
 
-#### **6. Verify Deployment**
+#### **3. Live Development Features**
+- ✅ **Hot Reload**: Observable Framework automatically refreshes on file changes
+- ✅ **No Rebuilds**: Edit markdown and Python files directly
+- ✅ **Instant Updates**: Changes appear immediately in browser
+- ✅ **Development Tools**: Container includes bash, curl, python, git
+- ✅ **Volume Persistence**: Files persist during container restarts
+
+#### **4. Development Tools Available**
 ```bash
-# Monitor ArgoCD sync (should complete within 3 minutes)
-kubectl get applications -n argocd observable
-
-# Check if pods restarted
-kubectl get pods -n observable
-
-# View your dashboard
-open http://observable.k3s.local/my-analytics
+# Inside the Observable container
+python3 --version    # Python 3.12+
+npm --version        # Node.js and npm
+git --version        # Git for version control
+curl --version       # API testing
 ```
 
-### **Dashboard Features You Can Use:**
+#### **5. Dashboard File Structure**
+```
+/app/src/
+├── index.md           # Main dashboard (📊 Home)
+├── security.md        # Security dashboard (🛡️ Security)  
+├── operations.md      # Operations dashboard (⚙️ Operations)
+├── data/
+│   ├── loki-logs.py   # Operational logs loader
+│   ├── quickwit-logs.py # Security logs loader
+│   ├── loki-logs.json # Generated data files
+│   └── quickwit-logs.json
+└── components/        # Reusable components (if needed)
+```
 
-#### **Data Sources:**
-- `data/loki-logs.json` - Operational logs from Loki
-- `data/quickwit-logs.json` - Security logs from Quickwit  
-- `data/metrics.json` - System metrics from Prometheus
+#### **6. Testing Your Changes**
+```bash
+# Access dashboard in browser
+open http://observable.k3s.local
 
-#### **Visualization Libraries:**
-- **Observable Plot** - Built-in charting library
-- **D3.js** - Advanced data manipulation and custom charts
-- **Inputs** - Interactive tables, dropdowns, sliders
+# Test specific dashboards
+open http://observable.k3s.local/security
+open http://observable.k3s.local/operations
 
-#### **JavaScript Features:**
+# Check logs for errors
+kubectl logs -n observable $POD_NAME --tail=20
+```
+
+#### **7. Permanent Storage (Optional)**
+Once you're happy with changes, copy files back and commit:
+```bash
+# Copy from container back to local
+kubectl cp observable/$POD_NAME:/app/src/your-dashboard.md your-dashboard.md
+
+# Add to project (for GitOps deployment)  
+git add your-dashboard.md
+git commit -m "Add new dashboard: your-dashboard"
+git push
+
+# ArgoCD will deploy the updated files permanently
+```
+
+### **Available Python Data Loaders**
+
+The container includes pre-built Python data loaders you can use:
+
+#### **Loki Logs (Operational Data)**
+```python
+# /app/src/data/loki-logs.py
+# Fetches operational logs from Loki API
+# Output: /app/src/data/loki-logs.json
+```
+
+#### **Quickwit Logs (Security Data)**  
+```python
+# /app/src/data/quickwit-logs.py
+# Fetches security logs from Quickwit API
+# Output: /app/src/data/quickwit-logs.json
+```
+
+#### **Running Data Loaders Manually**
+```bash
+# Inside container
+cd /app/src/data
+
+# Update operational logs
+python3 loki-logs.py > loki-logs.json
+
+# Update security logs  
+python3 quickwit-logs.py > quickwit-logs.json
+
+# Verify data
+head -20 loki-logs.json
+head -20 quickwit-logs.json
+```
+
+## Dashboard Examples and Best Practices
+
+### **Available Dashboard Features**
+
+#### **Data Visualization:**
 ```js
-// Data processing with D3
-const grouped = d3.rollup(data, v => v.length, d => d.category);
+// Load data from existing APIs
+const operationalLogs = FileAttachment("data/loki-logs.json").json();
+const securityLogs = FileAttachment("data/quickwit-logs.json").json();
 
-// Date/time handling
-const lastHour = data.filter(d => d.timestamp > Date.now() - 3600000);
+// Create visualizations with Observable Plot
+Plot.plot({
+  title: "Log Volume Over Time",
+  width: 800,
+  height: 300,
+  x: {type: "time", label: "Time"},
+  y: {label: "Logs per Hour"},
+  marks: [
+    Plot.lineY(timelineData, {x: "time", y: "logs", stroke: "#007bff"})
+  ]
+})
+```
 
-// Statistical calculations
-const average = d3.mean(data, d => d.value);
-const percentile95 = d3.quantile(data.map(d => d.value).sort(), 0.95);
-
-// Real-time status indicators
-const status = data.length > 0 ? "🟢 Online" : "🔴 Offline";
+#### **Interactive Tables:**
+```js
+Inputs.table(recentLogs, {
+  columns: ["time", "level", "service", "message"],
+  header: {time: "Timestamp", level: "Level", service: "Service", message: "Message"},
+  width: {time: 150, level: 80, service: 120, message: 400}
+})
 ```
 
 #### **CSS Styling:**
-Use the built-in CSS classes:
-- `.metric-grid` - Grid layout for metrics
-- `.metric-card` - Individual metric display
-- `.service-grid` - Service link grid
-- Custom CSS can be added inline in your markdown
+Built-in CSS classes available:
+- `.metric-grid` - Grid layout for metrics cards
+- `.metric-card` - Individual metric display boxes
+- `.service-grid` - Service link grid layout
+- `.critical`, `.warning` - Status-based styling
 
-### **Best Practices:**
+### **Dashboard Development Tips:**
 
-1. **Performance**: Limit data to recent time ranges (last 1-2 hours)
-2. **Error Handling**: Always provide fallbacks for missing data
-3. **Responsive Design**: Use CSS Grid for mobile-friendly layouts
-4. **Descriptive Names**: Use clear, descriptive dashboard file names
-5. **Documentation**: Add comments explaining complex data transformations
-
-### **Troubleshooting:**
-
-- **404 Error**: Check file name matches URL (e.g., `my-dashboard.md` → `/my-dashboard`)
-- **No Data**: Verify data loaders are working: `kubectl logs -n observable -l app=observable`
-- **Deployment Issues**: Check ArgoCD UI at http://argocd.k3s.local
-- **Syntax Errors**: Validate YAML syntax before committing
-
-**To Update Python Dependencies:**
-1. Edit `apps/observable/requirements.txt` or `environment.yml`
-2. Rebuild the Docker image or restart pods to install new packages
-3. Update deployment with new image if needed
-
-**Docker Image Build:**
-```bash
-cd apps/observable/
-docker build -t observability-observable:latest .
-# Push to your registry and update conda-deployment.yaml image reference
-```
+1. **Performance**: Filter data to recent time ranges (last 1-2 hours)
+2. **Error Handling**: Provide fallbacks for missing data
+3. **Responsive Design**: Use CSS Grid for mobile compatibility  
+4. **Hot Reload**: Observable Framework automatically updates on file changes
+5. **Live Development**: Use `kubectl cp` and `kubectl exec` for rapid iteration

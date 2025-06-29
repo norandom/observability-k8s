@@ -245,6 +245,35 @@ const riskScore = securityData.summary.risk_assessment;
 
 This architecture provides the **best of both worlds**: Python's data processing power combined with JavaScript's visualization capabilities, resulting in fast, interactive, and analytically sophisticated observability dashboards.
 
+### **🔨 Container Build Process (Tekton Integration)**
+
+**Important**: The Observable Framework container requires a **build process** when first deployed or when major updates are made to the conda environment or dependencies.
+
+**Build Process**:
+1. **Tekton Pipeline**: Automatically triggered by ArgoCD deployment changes
+2. **Container Setup**: 
+   - Node.js and npm installation (30-60 seconds)
+   - Conda environment creation with data science packages (2-5 minutes)
+   - Observable Framework installation and startup (10-30 seconds)
+3. **Total Build Time**: 3-7 minutes for complete environment setup
+
+**Monitoring Build Status**:
+```bash
+# Check build logs and progress
+kubectl logs -n observable <pod-name> -f
+
+# Monitor build phases
+kubectl get pods -n observable -w
+```
+
+**Build Completion Indicators**:
+- ✅ Node.js and npm versions displayed
+- ✅ Conda environment "observable" created
+- ✅ Observable Framework listening on port 3000
+- ✅ Dashboard accessible at http://observable.k3s.local
+
+The build process is **automated** and **only required** during initial deployment or major dependency updates. Normal dashboard development using `kubectl cp` does not trigger rebuilds.
+
 ### **Data Retention & Storage**
 - **Loki**: 6GB persistent storage with 7-day retention policy
 - **Quickwit**: 6GB persistent storage with automatic cleanup

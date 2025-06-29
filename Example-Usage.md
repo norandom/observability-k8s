@@ -347,6 +347,13 @@ kubectl exec -n observable $POD_NAME -- bash -c "npm --version 2>/dev/null || ec
 - **Observable Framework**: 10-30 seconds
 - **Total Setup Time**: 3-7 minutes
 
+**⚠️ Important**: This build process is **automatically triggered** by Tekton pipelines when:
+- Observable Framework deployment is first created via ArgoCD
+- Major dependency changes are made to the conda environment
+- Container image is updated or redeployed
+
+The build is **not required** for normal dashboard development using `kubectl cp`.
+
 #### **6. Common Build Issues**
 
 **Pod Restarts Multiple Times:**

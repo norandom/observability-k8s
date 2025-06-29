@@ -176,6 +176,7 @@ This observability stack implements a dual-pipeline architecture:
 - **🛡️ Security Pipeline**: Vector → OpenTelemetry → Quickwit → Observable
 - **🚀 GitOps Management**: ArgoCD manages all deployments and configurations
 - **🐍 Data Analytics**: Python loaders fetch API data for Observable Framework dashboards
+- **🔨 Container Builds**: Tekton pipelines handle Observable Framework container builds (3-7 min setup)
 
 ## 🔄 Live Data Integration
 

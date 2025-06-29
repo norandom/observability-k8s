@@ -2,6 +2,37 @@
 
 Complete observability stack managed by ArgoCD for learning GitOps principles with dual log routing: operational logs to Loki and security logs to Quickwit.
 
+## 🖥️ Dashboard Gallery
+
+Experience powerful analytics with **Python data processing** and **Interactive JavaScript visualizations**.
+
+<div align="center">
+
+### 🏠 Main Dashboard - System Overview
+[![Main Dashboard](screenshots/home.png)](screenshots/home.png)
+*Real-time system health, service links, and comprehensive metrics overview*
+
+---
+
+### ⚙️ Operations Dashboard - System Monitoring  
+[![Operations Dashboard](screenshots/operations.png)](screenshots/operations.png)
+*Log volume analysis, service activity monitoring, and operational health insights*
+
+---
+
+### 🛡️ Security Dashboard - Threat Analysis
+[![Security Dashboard](screenshots/security.png)](screenshots/security.png)
+*Security event monitoring, threat detection, and forensic investigation tools*
+
+</div>
+
+**✨ Features Showcase:**
+- 🐍 **Python Data Analytics** - Real-time processing of Loki and Quickwit APIs
+- 📊 **Interactive Visualizations** - Observable Plot charts with professional styling  
+- 🔄 **Live Data Integration** - Automatic updates from operational and security logs
+- 🎯 **Demo vs Live Data** - Clear distinction between demonstration and production events
+- 📈 **Health Monitoring** - Automated system health scoring and risk assessment
+
 ## Table of Contents
 
 1. [Overview & Architecture](#overview--architecture)

@@ -4,6 +4,7 @@ metadata:
   name: argocd-server
   namespace: argocd
 spec:
+  type: LoadBalancer
   ports:
   - name: http
     port: 80

@@ -9,3 +9,4 @@ resources:
   - quickwit-deployment.yaml
   - quickwit-service.yaml
   - quickwit-ingress.yaml
+  - storage-cleanup-cronjob.yaml

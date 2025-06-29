@@ -105,7 +105,8 @@ spec:
         configMap:
           name: loki-config
       - name: storage
-        emptyDir: {}
+        persistentVolumeClaim:
+          claimName: loki-pvc
 ---
 apiVersion: v1
 kind: Service

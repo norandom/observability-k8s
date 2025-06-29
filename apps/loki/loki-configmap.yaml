@@ -44,6 +44,16 @@ data:
 
     analytics:
       reporting_enabled: false
+
+    limits_config:
+      retention_period: 168h
+      retention_deletes_enabled: true
+      max_cache_freshness_per_query: 10m
+
+    compactor:
+      working_directory: /tmp/loki/compactor
+      retention_enabled: true
+      retention_delete_delay: 2h
 kind: ConfigMap
 metadata:
   annotations:

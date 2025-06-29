@@ -4,5 +4,6 @@ kind: Kustomization
 namespace: loki-system
 
 resources:
+  - loki-pvc.yaml
   - loki-deployment.yaml
   - loki-ingress.yaml

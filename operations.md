@@ -1,454 +1,309 @@
 # ⚙️ Operations Dashboard
 
-System monitoring and operational log analysis using data from Loki.
+Real-time operational monitoring and log analysis with live data from Loki.
 
 ```js
-// Load operational logs from Loki
-const operationalLogs = FileAttachment("data/loki-logs.json").json();
+// Load operational data from Loki API via Python data loader
+const operationalData = FileAttachment("data/loki-logs.json").json();
 ```
 
-```js
-// Process operational data
-const now = Date.now();
-const last24h = now - (24 * 60 * 60 * 1000);
-const last1h = now - (60 * 60 * 1000);
-
-// Filter recent operational events
-const recentLogs = operationalLogs.filter(log => {
-  const timestamp = new Date(log.timestamp || log.time).getTime();
-  return timestamp > last24h;
-});
-
-const lastHourLogs = recentLogs.filter(log => {
-  const timestamp = new Date(log.timestamp || log.time).getTime();
-  return timestamp > last1h;
-});
-
-// Operational metrics
-const totalLogs = recentLogs.length;
-const recentLogs = lastHourLogs.length;
-const errorLogs = recentLogs.filter(log => 
-  log.level === "ERROR" || log.level === "error" || log.level === "WARN"
-).length;
-
-const services = [...new Set(recentLogs.map(log => 
-  log.service_name || log.service || "unknown"
-).filter(s => s !== "unknown"))].length;
-
-const httpRequests = recentLogs.filter(log =>
-  log.message?.includes("HTTP") ||
-  log.message?.includes("GET") ||
-  log.message?.includes("POST") ||
-  log.log_type === "operational"
-).length;
-```
-
-## 📊 Operations Overview (Last 24 Hours)
-
-<div class="metric-grid">
-  <div class="metric-card">
-    <h3>📝 Total Logs</h3>
-    <div class="metric-value">${totalLogs.toLocaleString()}</div>
-    <div class="metric-subtitle">Operational events</div>
+<div class="grid grid-cols-4">
+  <div class="card">
+    <h2>Total Logs</h2>
+    <span class="big-number">${operationalData.summary.total_logs}</span>
   </div>
-  
-  <div class="metric-card">
-    <h3>⏰ Recent Logs</h3>
-    <div class="metric-value">${recentLogs}</div>
-    <div class="metric-subtitle">Last hour</div>
+  <div class="card">
+    <h2>Demo Logs</h2>
+    <span class="big-number demo">${operationalData.summary.demo_logs}</span>
   </div>
-  
-  <div class="metric-card ${errorLogs > 0 ? 'warning' : ''}">
-    <h3>⚠️ Errors/Warnings</h3>
-    <div class="metric-value">${errorLogs}</div>
-    <div class="metric-subtitle">Issues detected</div>
+  <div class="card">
+    <h2>Live Logs</h2>
+    <span class="big-number live">${operationalData.summary.live_logs}</span>
   </div>
-  
-  <div class="metric-card">
-    <h3>🚀 Active Services</h3>
-    <div class="metric-value">${services}</div>
-    <div class="metric-subtitle">Services logging</div>
+  <div class="card">
+    <h2>Services</h2>
+    <span class="big-number">${Object.keys(operationalData.summary.by_service).length}</span>
   </div>
 </div>
 
-## 📈 Log Volume Timeline
+## 📊 Log Volume Analysis
 
 ```js
-// Group logs by hour for timeline
-const hourlyLogs = d3.rollup(
-  recentLogs,
-  v => ({
-    total: v.length,
-    errors: v.filter(log => log.level === "ERROR" || log.level === "error").length,
-    warnings: v.filter(log => log.level === "WARN" || log.level === "warn").length
-  }),
-  d => {
-    const timestamp = new Date(d.timestamp || d.time);
-    return d3.timeHour(timestamp);
-  }
-);
-
-const timelineData = Array.from(hourlyLogs, ([hour, counts]) => ({
-  time: new Date(hour),
-  total: counts.total,
-  errors: counts.errors,
-  warnings: counts.warnings
-})).sort((a, b) => a.time - b.time);
+// Prepare hourly log volume data
+const hourlyData = Object.entries(operationalData.summary.by_hour)
+  .map(([hour, count]) => ({hour, count}))
+  .sort((a, b) => a.hour.localeCompare(b.hour));
 ```
 
+<div class="grid grid-cols-1">
+  <div class="card">
+    ${Plot.plot({
+      title: "Log Volume by Hour",
+      width: 800,
+      height: 300,
+      x: {label: "Hour"},
+      y: {label: "Log Count"},
+      marks: [
+        Plot.barY(hourlyData, {x: "hour", y: "count", fill: "#4f46e5"}),
+        Plot.ruleY([0])
+      ]
+    })}
+  </div>
+</div>
+
+## 🚨 Service Activity Monitoring
+
 ```js
-Plot.plot({
-  title: "Operational Logs Over Time (24 Hours)",
-  width: 800,
-  height: 300,
-  x: { type: "time", label: "Time" },
-  y: { label: "Logs per Hour" },
-  marks: [
-    Plot.areaY(timelineData, {
-      x: "time",
-      y: "total",
-      fill: "rgba(0, 123, 255, 0.3)",
-      stroke: "#007bff"
-    }),
-    Plot.lineY(timelineData, {
-      x: "time", 
-      y: "errors",
-      stroke: "#dc3545",
-      strokeWidth: 2
-    }),
-    Plot.lineY(timelineData, {
-      x: "time",
-      y: "warnings", 
-      stroke: "#ffc107",
-      strokeWidth: 2
-    })
-  ]
-})
+// Prepare service activity data
+const serviceData = Object.entries(operationalData.summary.by_service)
+  .map(([service, count]) => ({service, count}))
+  .sort((a, b) => b.count - a.count);
 ```
 
-## 🏢 Service Activity
+<div class="grid grid-cols-2">
+  <div class="card">
+    ${Plot.plot({
+      title: "Log Count by Service",
+      width: 400,
+      height: 300,
+      marginBottom: 80,
+      x: {label: "Service", tickRotate: -45},
+      y: {label: "Log Count"},
+      marks: [
+        Plot.barY(serviceData, {x: "service", y: "count", fill: "#059669"}),
+        Plot.ruleY([0])
+      ]
+    })}
+  </div>
+  <div class="card">
+    ${Plot.plot({
+      title: "Service Distribution",
+      width: 400,
+      height: 300,
+      marks: [
+        Plot.cell(serviceData, {
+          x: (d, i) => i % 3,
+          y: (d, i) => Math.floor(i / 3),
+          fill: "service",
+          stroke: "white",
+          strokeWidth: 2,
+          width: (d) => Math.sqrt(d.count / Math.max(...serviceData.map(x => x.count))) * 80,
+          height: (d) => Math.sqrt(d.count / Math.max(...serviceData.map(x => x.count))) * 80
+        }),
+        Plot.text(serviceData, {
+          x: (d, i) => i % 3,
+          y: (d, i) => Math.floor(i / 3),
+          text: (d) => `${d.service}\n${d.count}`,
+          fill: "white",
+          fontSize: 10,
+          fontWeight: "bold"
+        })
+      ]
+    })}
+  </div>
+</div>
+
+## 📈 Log Level Distribution
 
 ```js
-// Group logs by service
-const serviceActivity = d3.rollup(
-  recentLogs,
-  v => ({
-    logs: v.length,
-    errors: v.filter(log => log.level === "ERROR" || log.level === "error").length,
-    last_seen: d3.max(v, log => new Date(log.timestamp || log.time))
-  }),
-  d => d.service_name || d.service || "unknown"
-);
+// Prepare log level data
+const levelData = Object.entries(operationalData.summary.by_level)
+  .map(([level, count]) => ({level, count}))
+  .sort((a, b) => b.count - a.count);
 
-const serviceData = Array.from(serviceActivity, ([service, stats]) => ({
-  service,
-  logs: stats.logs,
-  errors: stats.errors,
-  error_rate: stats.logs > 0 ? ((stats.errors / stats.logs) * 100).toFixed(1) : "0.0",
-  last_seen: stats.last_seen ? stats.last_seen.toLocaleString() : "Unknown"
-}))
-.filter(d => d.service !== "unknown")
-.sort((a, b) => b.logs - a.logs)
-.slice(0, 10);
-```
-
-```js
-Inputs.table(serviceData, {
-  columns: ["service", "logs", "errors", "error_rate", "last_seen"],
-  header: {
-    service: "Service Name",
-    logs: "Total Logs",
-    errors: "Errors",
-    error_rate: "Error Rate (%)",
-    last_seen: "Last Activity"
-  },
-  width: {
-    service: 200,
-    logs: 100,
-    errors: 80,
-    error_rate: 120,
-    last_seen: 180
-  }
-})
-```
-
-## 🔍 Log Level Distribution
-
-```js
-// Analyze log levels
-const logLevels = d3.rollup(
-  recentLogs,
-  v => v.length,
-  d => (d.level || "INFO").toUpperCase()
-);
-
-const levelData = Array.from(logLevels, ([level, count]) => ({
-  level,
-  count,
-  percentage: ((count / totalLogs) * 100).toFixed(1)
-})).sort((a, b) => b.count - a.count);
-```
-
-```js
-Plot.plot({
-  title: "Log Level Distribution",
-  width: 600,
-  height: 300,
-  marginLeft: 60,
-  x: { label: "Log Count" },
-  y: { label: "Log Level" },
-  marks: [
-    Plot.barX(levelData, {
-      x: "count",
-      y: "level",
-      fill: d => {
-        switch(d.level) {
-          case "ERROR": return "#dc3545";
-          case "WARN": return "#ffc107";
-          case "INFO": return "#17a2b8";
-          case "DEBUG": return "#6c757d";
-          default: return "#007bff";
-        }
-      },
-      tip: true
-    }),
-    Plot.text(levelData, {
-      x: "count",
-      y: "level",
-      text: d => `${d.count} (${d.percentage}%)`,
-      dx: 10,
-      fontSize: 12
-    })
-  ]
-})
-```
-
-## 🚨 Recent Errors and Warnings
-
-```js
-// Get recent error and warning logs
-const problemLogs = recentLogs
-  .filter(log => 
-    log.level === "ERROR" || 
-    log.level === "error" ||
-    log.level === "WARN" ||
-    log.level === "warn"
-  )
-  .map(log => ({
-    time: new Date(log.timestamp || log.time).toLocaleString(),
-    level: log.level?.toUpperCase() || "UNKNOWN",
-    service: log.service_name || log.service || "Unknown",
-    message: (log.message || "No message").substring(0, 100) + "..."
-  }))
-  .sort((a, b) => new Date(b.time) - new Date(a.time))
-  .slice(0, 15);
-```
-
-```js
-Inputs.table(problemLogs, {
-  columns: ["time", "level", "service", "message"],
-  header: {
-    time: "Timestamp",
-    level: "Level",
-    service: "Service", 
-    message: "Message"
-  },
-  width: {
-    time: 180,
-    level: 80,
-    service: 150,
-    message: 400
-  },
-  rows: 15
-})
-```
-
-## 🌐 HTTP Request Analysis
-
-```js
-// Analyze HTTP requests from logs
-const httpLogs = recentLogs.filter(log =>
-  log.message?.includes("HTTP") ||
-  log.message?.includes("GET") ||
-  log.message?.includes("POST") ||
-  log.message?.includes("PUT") ||
-  log.message?.includes("DELETE")
-);
-
-const httpStats = {
-  total: httpLogs.length,
-  get: httpLogs.filter(log => log.message?.includes("GET")).length,
-  post: httpLogs.filter(log => log.message?.includes("POST")).length,
-  errors: httpLogs.filter(log => 
-    log.message?.includes("500") ||
-    log.message?.includes("404") ||
-    log.message?.includes("error")
-  ).length
+// Color mapping for log levels
+const levelColors = {
+  "CRITICAL": "#dc2626",
+  "ERROR": "#ea580c", 
+  "WARN": "#ca8a04",
+  "INFO": "#2563eb",
+  "DEBUG": "#6b7280"
 };
 ```
 
-<div class="metric-grid">
-  <div class="metric-card">
-    <h3>🌐 HTTP Requests</h3>
-    <div class="metric-value">${httpStats.total}</div>
-    <div class="metric-subtitle">Total requests</div>
-  </div>
-  
-  <div class="metric-card">
-    <h3>📥 GET Requests</h3>
-    <div class="metric-value">${httpStats.get}</div>
-    <div class="metric-subtitle">Read operations</div>
-  </div>
-  
-  <div class="metric-card">
-    <h3>📤 POST Requests</h3>
-    <div class="metric-value">${httpStats.post}</div>
-    <div class="metric-subtitle">Write operations</div>
-  </div>
-  
-  <div class="metric-card ${httpStats.errors > 0 ? 'critical' : ''}">
-    <h3>❌ HTTP Errors</h3>
-    <div class="metric-value">${httpStats.errors}</div>
-    <div class="metric-subtitle">Failed requests</div>
+<div class="grid grid-cols-1">
+  <div class="card">
+    ${Plot.plot({
+      title: "Log Levels Distribution",
+      width: 800,
+      height: 300,
+      x: {label: "Log Level"},
+      y: {label: "Count"},
+      color: {range: Object.values(levelColors)},
+      marks: [
+        Plot.barY(levelData, {
+          x: "level", 
+          y: "count", 
+          fill: (d) => levelColors[d.level] || "#6b7280"
+        }),
+        Plot.ruleY([0])
+      ]
+    })}
   </div>
 </div>
 
-## 📋 Recent System Events
+## 📋 Recent Log Activity
 
 ```js
-// Latest operational events
-const latestLogs = recentLogs
-  .map(log => ({
-    time: new Date(log.timestamp || log.time).toLocaleString(),
-    level: log.level?.toUpperCase() || "INFO",
-    service: log.service_name || log.service || "System",
-    type: log.log_type || "operational",
-    message: (log.message || "No message").substring(0, 80) + "..."
-  }))
-  .sort((a, b) => new Date(b.time) - new Date(a.time))
-  .slice(0, 20);
+// Process recent logs for table display
+const recentLogs = operationalData.logs.slice(0, 15).map(log => {
+  // Extract message from various possible fields
+  let message = log.message || log.body || log.msg || "";
+  if (!message && log.attributes && log.attributes.message) {
+    message = log.attributes.message;
+  }
+  if (!message) {
+    message = "Log entry recorded";
+  }
+  
+  return {
+    time: new Date(log.timestamp).toLocaleString(),
+    level: log.level || log.severity || "INFO",
+    service: log.service_name || "unknown",
+    category: log.category || "general",
+    message: message.length > 80 ? message.substring(0, 80) + "..." : message,
+    demo: log.is_demo ? "🎯" : ""
+  };
+});
 ```
 
-```js
-Inputs.table(latestLogs, {
-  columns: ["time", "level", "service", "type", "message"],
-  header: {
-    time: "Time",
-    level: "Level",
-    service: "Service",
-    type: "Type",
-    message: "Message"
-  },
-  width: {
-    time: 150,
-    level: 80,
-    service: 120,
-    type: 100,
-    message: 350
-  },
-  rows: 20
-})
-```
-
-## 🔗 Operations Links
-
-<div class="service-grid">
-  <a href="http://grafana.k3s.local" class="service-card" target="_blank">
-    <h3>📊 Grafana</h3>
-    <p>Operational dashboards and monitoring</p>
-  </a>
-  
-  <a href="http://loki.k3s.local" class="service-card" target="_blank">
-    <h3>📝 Loki</h3>
-    <p>Direct log query interface</p>
-  </a>
-  
-  <a href="/" class="service-card">
-    <h3>🏠 Main Dashboard</h3>
-    <p>Overview of all observability data</p>
-  </a>
-  
-  <a href="/security" class="service-card">
-    <h3>🛡️ Security</h3>
-    <p>Security event monitoring and analysis</p>
-  </a>
+<div class="card">
+  ${Inputs.table(recentLogs, {
+    columns: ["time", "level", "service", "category", "demo", "message"],
+    header: {
+      time: "Timestamp", 
+      level: "Level", 
+      service: "Service", 
+      category: "Category",
+      demo: "Demo",
+      message: "Message"
+    },
+    width: {
+      time: 140,
+      level: 80, 
+      service: 120,
+      category: 100,
+      demo: 50,
+      message: 400
+    }
+  })}
 </div>
+
+## 📊 Category Analysis
+
+```js
+// Prepare category data
+const categoryData = Object.entries(operationalData.summary.by_category)
+  .map(([category, count]) => ({category, count}))
+  .sort((a, b) => b.count - a.count);
+```
+
+<div class="grid grid-cols-1">
+  <div class="card">
+    ${Plot.plot({
+      title: "Log Categories",
+      width: 800,
+      height: 300,
+      x: {label: "Category"},
+      y: {label: "Count"},
+      marks: [
+        Plot.barY(categoryData, {x: "category", y: "count", fill: "#7c3aed"}),
+        Plot.ruleY([0])
+      ]
+    })}
+  </div>
+</div>
+
+## 🔍 System Health Overview
+
+```js
+// Calculate health metrics
+const errorCount = operationalData.summary.by_level.ERROR || 0;
+const criticalCount = operationalData.summary.by_level.CRITICAL || 0;
+const warnCount = operationalData.summary.by_level.WARN || 0;
+const totalIssues = errorCount + criticalCount + warnCount;
+
+const healthScore = Math.max(0, 100 - (criticalCount * 10 + errorCount * 5 + warnCount * 2));
+const healthStatus = healthScore >= 90 ? "Excellent" : 
+                    healthScore >= 70 ? "Good" : 
+                    healthScore >= 50 ? "Warning" : "Critical";
+```
+
+<div class="grid grid-cols-3">
+  <div class="card health-excellent">
+    <h3>System Health Score</h3>
+    <span class="big-number">${healthScore.toFixed(0)}%</span>
+    <p class="status">${healthStatus}</p>
+  </div>
+  <div class="card">
+    <h3>Issues Found</h3>
+    <span class="big-number error">${totalIssues}</span>
+    <p>Critical: ${criticalCount}, Error: ${errorCount}, Warning: ${warnCount}</p>
+  </div>
+  <div class="card">
+    <h3>Data Freshness</h3>
+    <span class="small-text">Last Updated</span>
+    <p>${new Date(operationalData.last_updated).toLocaleString()}</p>
+  </div>
+</div>
+
+## 🔄 Real-time Updates
+
+This dashboard automatically refreshes with live data from the Loki API. The Python data loader (`loki-logs.py`) fetches the latest operational logs and provides comprehensive analytics.
+
+### Key Features:
+- **Live Data**: Real-time log ingestion from Loki API
+- **Demo vs Live**: Clear distinction between demo and production logs  
+- **Multi-dimensional Analysis**: Service, time, level, and category breakdowns
+- **Health Monitoring**: Automated system health scoring
+- **Interactive Charts**: Powered by Observable Plot for responsive visualizations
 
 <style>
-.metric-grid {
+.grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
   margin: 1rem 0;
 }
 
-.metric-card {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border: 1px solid #dee2e6;
+.grid-cols-1 { grid-template-columns: 1fr; }
+.grid-cols-2 { grid-template-columns: 1fr 1fr; }
+.grid-cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.grid-cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+.card {
+  background: white;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 1rem;
-  text-align: center;
-  transition: transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-.metric-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-.metric-card.critical {
-  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-  border-color: #f1aeb5;
-}
-
-.metric-card.warning {
-  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-  border-color: #ffeaa7;
-}
-
-.metric-value {
+.big-number {
   font-size: 2rem;
   font-weight: bold;
-  color: #495057;
-  margin: 0.5rem 0;
+  color: #1f2937;
 }
 
-.metric-subtitle {
+.big-number.demo { color: #f59e0b; }
+.big-number.live { color: #059669; }
+.big-number.error { color: #dc2626; }
+
+.small-text {
   font-size: 0.875rem;
-  color: #6c757d;
+  color: #6b7280;
 }
 
-.service-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
-  margin: 2rem 0;
+.status {
+  font-weight: 600;
+  margin-top: 0.5rem;
 }
 
-.service-card {
-  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-  padding: 1.5rem;
-  text-decoration: none;
-  color: inherit;
-  transition: all 0.2s ease;
+.health-excellent {
+  border-left: 4px solid #059669;
 }
 
-.service-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  border-color: #007bff;
-}
-
-.service-card h3 {
+h2, h3 {
   margin: 0 0 0.5rem 0;
-  color: #495057;
-}
-
-.service-card p {
-  margin: 0;
-  color: #6c757d;
-  font-size: 0.875rem;
+  color: #374151;
 }
 </style>

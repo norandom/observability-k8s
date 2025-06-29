@@ -17,17 +17,48 @@ spec:
     spec:
       containers:
       - name: observable
-        image: node:20-alpine
-        command: ["/bin/sh", "-c"]
+        image: continuumio/miniconda3:latest
+        command: ["/bin/bash", "-c"]
         args:
         - |
-          echo "🚀 Setting up Observable Framework Development Environment..."
+          echo "🚀 Setting up Observable Framework Development Environment with Conda..."
           
-          # Install bash and other development tools
-          apk add --no-cache bash curl python3 py3-pip git
+          # Add conda-forge channel for better package availability
+          conda config --add channels conda-forge
+          conda config --set channel_priority flexible
           
-          # Install Observable Framework
+          # Install Node.js and npm using standard package manager (more reliable than conda)
+          apt-get update && apt-get install -y curl
+          curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+          apt-get install -y nodejs
+          
+          # Verify nodejs and npm installation
+          node --version && npm --version
+          
+          # Install Observable Framework globally
           npm install -g @observablehq/framework@latest
+          
+          # Create conda environment with base packages
+          conda create -n observable -c conda-forge python=3.11 pandas requests matplotlib seaborn numpy scipy python-dateutil -y
+          
+          # Install polars separately as it may not be in all channels
+          conda install -n observable -c conda-forge polars -y || echo "Warning: polars not installed"
+          
+          # Install orjson via pip in the conda environment
+          conda run -n observable pip install orjson
+          
+          echo "Conda environment 'observable' created with base packages"
+          
+          # User can later copy environment.yml and recreate environment:
+          # kubectl cp environment.yml observable/pod-name:/workspace/environment.yml
+          # kubectl exec -it observable/pod-name -- conda env update -f /workspace/environment.yml
+          
+          # Activate conda environment for shell sessions
+          echo "conda activate observable" >> ~/.bashrc
+          echo "export PATH=/opt/conda/envs/observable/bin:$PATH" >> ~/.bashrc
+          
+          # Initialize conda for bash
+          conda init bash
           
           # Create app directory structure
           mkdir -p /app/src/{data,components}
@@ -86,24 +117,21 @@ spec:
           
           echo "📊 Starting Observable Framework in development mode..."
           echo "💡 Use 'kubectl cp' to copy files and 'kubectl exec -it <pod> -- bash' to develop"
+          echo "💡 Conda environment 'observable' is available with pandas, polars, and data science packages"
+          
+          # Activate conda environment and start Observable Framework
+          source /opt/conda/etc/profile.d/conda.sh
+          conda activate observable
+          
+          # Ensure PATH includes conda binaries
+          export PATH="/opt/conda/bin:$PATH"
           
           # Create package.json with dev script
-          cat > package.json << 'EOF'
-{
-  "name": "observability-dashboard",
-  "type": "module",
-  "scripts": {
-    "dev": "observable preview --host 0.0.0.0 --port 3000",
-    "build": "observable build",
-    "start": "npm run dev"
-  },
-  "dependencies": {
-    "@observablehq/framework": "latest"
-  }
-}
-EOF
+          echo '{"name":"observability-dashboard","type":"module","scripts":{"dev":"observable preview --host 0.0.0.0 --port 3000","build":"observable build","start":"npm run dev"},"dependencies":{"@observablehq/framework":"latest"}}' > package.json
           
+          # Install and start Observable Framework
           npm install
+          echo "🚀 Observable Framework starting on port 3000..."
           exec npm run dev
         ports:
         - containerPort: 3000

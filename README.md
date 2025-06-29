@@ -5,14 +5,18 @@ Complete observability stack managed by ArgoCD for learning GitOps principles wi
 ## Table of Contents
 
 1. [Overview & Architecture](#overview--architecture)
-2. [Prerequisites](#prerequisites)
-3. [Quick Start](#quick-start)
-4. [GitOps Workflow](#gitops-workflow)
-5. [Access Points](#access-points)
-6. [Log Routing & Data Processing](#log-routing--data-processing)
-7. [Testing the Log Pipeline](#testing-the-log-pipeline)
-8. [Search API Endpoints](#search-api-endpoints)
-9. [Cluster Configuration](#cluster-configuration)
+2. [System Architecture Diagram](#system-architecture-diagram)
+3. [Python Data Loaders & Observable Integration](#python-data-loaders--observable-integration)
+4. [Prerequisites](#prerequisites)
+5. [Quick Start](#quick-start)
+6. [GitOps Workflow](#gitops-workflow)
+7. [Access Points](#access-points)
+8. [Dashboard Development](#dashboard-development-workflow-simplified)
+9. [Log Routing & Data Processing](#log-routing--data-processing)
+10. [Testing the Log Pipeline](#testing-the-log-pipeline)
+11. [Search API Endpoints](#search-api-endpoints)
+12. [Cluster Configuration](#cluster-configuration)
+13. [📋 Example Usage Guide](Example-Usage.md) - **Complete demo and development workflow**
 
 ## Overview & Architecture
 
@@ -28,14 +32,218 @@ This observability stack implements a **dual-pipeline log routing architecture**
 - **Observable Framework** - Python-powered data analysis and markdown reports
 - **ArgoCD** - GitOps automation and deployment management
 
-### **Architecture Flow**
+## System Architecture Diagram
+
+```mermaid
+graph TB
+    %% Data Sources
+    subgraph "📊 Data Sources"
+        VS[Vector DaemonSet]
+        VC[Vector Clients]
+        AL[Application Logs]
+        SL[System Logs]
+        AU[Audit Logs]
+    end
+
+    %% Log Collection & Routing
+    subgraph "🔄 Log Processing Pipeline"
+        OTEL[OpenTelemetry Collector<br/>Central Log Router]
+    end
+
+    %% Storage Systems
+    subgraph "💾 Storage Systems"
+        LOKI[Loki<br/>📝 Operational Logs<br/>6GB + 7-day retention]
+        QW[Quickwit<br/>🛡️ Security Logs<br/>6GB + auto cleanup]
+    end
+
+    %% Analysis & Visualization
+    subgraph "📊 Visualization & Analysis"
+        GRAF[Grafana<br/>📈 Operational Dashboards]
+        QWUI[Quickwit UI<br/>🔍 Security Search]
+        OBS[Observable Framework<br/>🐍 Python Analytics]
+    end
+
+    %% Data Analytics
+    subgraph "🐍 Python Data Processing"
+        LL[loki-logs.py<br/>Operational Data Loader]
+        QL[quickwit-logs.py<br/>Security Data Loader] 
+        JSON[JSON Data Files]
+    end
+
+    %% Interactive Dashboards
+    subgraph "🖥️ Interactive Dashboards"
+        MAIN[Main Dashboard<br/>📋 System Overview]
+        OPSD[Operations Dashboard<br/>⚙️ System Monitoring]
+        SECD[Security Dashboard<br/>🛡️ Threat Analysis]
+    end
+
+    %% GitOps Management
+    subgraph "🚀 GitOps Management"
+        ARGO[ArgoCD<br/>📦 Deployment Management]
+        GIT[Git Repository<br/>📂 Configuration Source]
+    end
+
+    %% Monitoring
+    subgraph "📊 Metrics & Monitoring"
+        PROM[Prometheus<br/>📈 Metrics Collection]
+    end
+
+    %% Data Flow
+    VS --> OTEL
+    VC --> OTEL
+    AL --> VS
+    SL --> VS
+    AU --> VS
+
+    OTEL --> LOKI
+    OTEL --> QW
+
+    LOKI --> GRAF
+    LOKI --> LL
+    QW --> QWUI
+    QW --> QL
+
+    LL --> JSON
+    QL --> JSON
+    JSON --> OBS
+
+    OBS --> MAIN
+    OBS --> OPSD
+    OBS --> SECD
+
+    %% GitOps Flow
+    GIT --> ARGO
+    ARGO -.-> LOKI
+    ARGO -.-> QW
+    ARGO -.-> GRAF
+    ARGO -.-> OBS
+    ARGO -.-> PROM
+    ARGO -.-> OTEL
+
+    %% Styling
+    classDef storage fill:#e1f5fe
+    classDef analysis fill:#f3e5f5
+    classDef processing fill:#e8f5e8
+    classDef gitops fill:#fff3e0
+    classDef dashboards fill:#fce4ec
+
+    class LOKI,QW storage
+    class GRAF,QWUI,OBS analysis
+    class OTEL,LL,QL,JSON processing
+    class ARGO,GIT gitops
+    class MAIN,OPSD,SECD dashboards
 ```
-Vector/Clients → OpenTelemetry Collector → {Loki (operational), Quickwit (security)}
-                           ↓                    ↓                    ↓
-                   Grafana (dashboards)  Quickwit UI (search)  Observable (reports)
-                           ↓                                        ↓
-                  Prometheus (metrics)                    Python data analysis
+
+## Python Data Loaders & Observable Integration
+
+This observability stack features a unique **hybrid architecture** that combines **Python data processing** with **JavaScript visualization** to create powerful, real-time analytics dashboards.
+
+### **🐍 Python Data Processing Layer**
+
+**Purpose**: Extract, transform, and analyze log data from APIs before visualization
+
+#### **Loki Data Loader (`loki-logs.py`)**
+```python
+# Fetches operational logs from Loki API
+# Processes time-series data, service metrics, health scores
+# Outputs structured JSON for Observable Framework
 ```
+
+**Key Features**:
+- **API Integration**: Direct queries to Loki's LogQL API
+- **Data Aggregation**: Groups logs by service, time, level, category
+- **Health Metrics**: Calculates system health scores and operational insights
+- **Demo Detection**: Distinguishes demo data from live production logs
+
+#### **Quickwit Data Loader (`quickwit-logs.py`)**
+```python
+# Fetches security logs from Quickwit search API
+# Analyzes threat patterns, authentication events, attacks
+# Provides security intelligence and risk assessment
+```
+
+**Key Features**:
+- **Security Analytics**: Threat detection, risk scoring, attack vector analysis
+- **Authentication Monitoring**: Failed login tracking, account security events
+- **Forensic Data**: Detailed event logs for security investigations
+- **Real-time Intelligence**: Live threat source identification and categorization
+
+### **🔄 Data Flow Architecture**
+
+```mermaid
+sequenceDiagram
+    participant APIs as Log APIs<br/>(Loki + Quickwit)
+    participant Python as Python Loaders<br/>(Data Processing)
+    participant JSON as JSON Files<br/>(Data Layer)
+    participant Observable as Observable Framework<br/>(JavaScript + Visualization)
+    participant Browser as Dashboard<br/>(User Interface)
+
+    APIs->>Python: 1. HTTP API Calls
+    Note over Python: Data extraction, aggregation,<br/>analytics, health scoring
+    Python->>JSON: 2. Structured Data Output
+    Note over JSON: loki-logs.json<br/>quickwit-logs.json
+    JSON->>Observable: 3. FileAttachment().json()
+    Note over Observable: JavaScript data processing,<br/>Observable Plot charts
+    Observable->>Browser: 4. Rendered Dashboard
+    Note over Browser: Interactive visualizations,<br/>real-time updates
+```
+
+### **🎯 Why This Hybrid Approach?**
+
+**Python Strengths**:
+- **Data Processing**: Advanced analytics, aggregation, statistical analysis
+- **API Integration**: Robust HTTP clients, error handling, data transformation
+- **Scientific Computing**: pandas, numpy for complex data operations
+- **Flexibility**: Easy to extend with ML models, custom algorithms
+
+**Observable Framework Strengths**:
+- **Visualization**: Interactive charts, responsive design, real-time updates
+- **Web Performance**: Fast rendering, optimized JavaScript execution
+- **User Experience**: Smooth interactions, progressive loading
+- **Markdown Integration**: Narrative dashboards with embedded visualizations
+
+### **🔧 Development Workflow**
+
+1. **Data Loader Development**:
+   ```bash
+   # Test Python loaders locally
+   kubectl exec -it -n observable <pod> -- bash
+   conda activate observable
+   python /app/src/data/loki-logs.py > loki-logs.json
+   ```
+
+2. **Dashboard Development**:
+   ```bash
+   # Copy updated dashboards
+   kubectl cp security.md observable/<pod>:/app/src/security.md
+   # Observable Framework auto-reloads with new data
+   ```
+
+3. **Live Development**:
+   - Python loaders run every few minutes (or on-demand)
+   - Observable Framework serves updated dashboards instantly
+   - Real-time data flows from APIs → Python → JSON → JavaScript → Browser
+
+### **📊 Observable Framework Integration**
+
+**Data Loading Pattern**:
+```javascript
+// Load processed data from Python loaders
+const operationalData = FileAttachment("data/loki-logs.json").json();
+const securityData = FileAttachment("data/quickwit-logs.json").json();
+
+// JavaScript processes the pre-aggregated data
+const chartData = operationalData.summary.by_hour;
+const riskScore = securityData.summary.risk_assessment;
+```
+
+**Visualization Benefits**:
+- **Pre-processed Data**: Python handles heavy analytics, JavaScript focuses on visualization
+- **Optimized Performance**: Structured JSON enables fast chart rendering
+- **Real-time Updates**: File changes trigger automatic dashboard refreshes
+- **Interactive Features**: Observable Plot provides rich user interactions
+
+This architecture provides the **best of both worlds**: Python's data processing power combined with JavaScript's visualization capabilities, resulting in fast, interactive, and analytically sophisticated observability dashboards.
 
 ### **Data Retention & Storage**
 - **Loki**: 6GB persistent storage with 7-day retention policy
@@ -488,6 +696,15 @@ apps/observable/
 - ✅ **Hot Reload**: Changes appear immediately in browser
 - ✅ **No Rebuilds**: Edit markdown files without container rebuilds
 - ✅ **Volume Persistence**: Files persist during container restarts
+
+## 📋 Complete Development and Demo Guide
+
+For detailed instructions on dashboard development, container access, and demo workflows, see **[Example-Usage.md](Example-Usage.md)** which includes:
+- Finding the right Observable container for kubectl cp operations
+- Live development workflow with conda environment
+- Data loader development and testing
+- Comprehensive demo scenarios for both security and operations dashboards
+- Troubleshooting guide for common issues
 
 ## Dashboard Development Workflow (Simplified)
 

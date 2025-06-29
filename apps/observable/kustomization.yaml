@@ -2,16 +2,14 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  # Observable Framework deployment with ConfigMap dashboards
+  # Simplified Observable Framework deployment (no ConfigMaps)
   - observable-deployment.yaml
-  - observable-configmap.yaml
   - observable-service.yaml
   - observable-ingress.yaml
-  - observable-pvc.yaml
   
-  # Auto-building system (optional)
-  - tekton-pipeline.yaml
-  - simple-pipeline.yaml
+  # Auto-building system with OTEL integration
+  - tekton-pipeline-otel.yaml
+  - tekton-logs-forwarder.yaml
 
 namespace: observable
 

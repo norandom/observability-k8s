@@ -1,0 +1,70 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: observable-build-pipeline
+  namespace: observable
+spec:
+  description: Build Observable Framework with OTEL log forwarding
+  params:
+  - name: git-url
+    type: string
+    default: "https://github.com/norandom/observability-k8s.git"
+  - name: git-revision
+    type: string
+    default: "main"
+  tasks:
+  - name: git-clone
+    taskRef:
+      name: git-clone
+      kind: ClusterTask
+    params:
+    - name: url
+      value: $(params.git-url)
+    - name: revision
+      value: $(params.git-revision)
+    workspaces:
+    - name: output
+      workspace: shared-data
+  - name: build-image
+    taskRef:
+      name: buildah
+      kind: ClusterTask
+    runAfter:
+    - git-clone
+    params:
+    - name: IMAGE
+      value: "192.168.122.27:30500/observable-conda:latest"
+    - name: DOCKERFILE
+      value: "./apps/observable/Dockerfile"
+    - name: CONTEXT
+      value: "./apps/observable"
+    workspaces:
+    - name: source
+      workspace: shared-data
+    env:
+    - name: OTEL_EXPORTER_OTLP_ENDPOINT
+      value: "http://otel-collector.otel-system.svc.cluster.local:4318"
+    - name: OTEL_SERVICE_NAME
+      value: "tekton-observable-build"
+    - name: OTEL_RESOURCE_ATTRIBUTES
+      value: "service.namespace=observable,pipeline.name=observable-build"
+  workspaces:
+  - name: shared-data
+---
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  generateName: observable-pipeline-run-
+  namespace: observable
+spec:
+  pipelineRef:
+    name: observable-build-pipeline
+  workspaces:
+  - name: shared-data
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi

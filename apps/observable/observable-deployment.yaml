@@ -21,22 +21,25 @@ spec:
         command: ["/bin/sh", "-c"]
         args:
         - |
-          echo "🚀 Setting up Observable Framework..."
+          echo "🚀 Setting up Observable Framework Development Environment..."
+          
+          # Install bash and other development tools
+          apk add --no-cache bash curl python3 py3-pip git
+          
+          # Install Observable Framework
           npm install -g @observablehq/framework@latest
           
-          mkdir -p /app/src/data
+          # Create app directory structure
+          mkdir -p /app/src/{data,components}
           cd /app
           
-          # Copy dashboard files from mounted volume
-          cp -r /dashboard-src/* /app/src/ 2>/dev/null || echo "No dashboard files to copy"
-          
-          # Create sample data files if they don't exist
-          test -f src/data/quickwit-logs.json || echo '[]' > src/data/quickwit-logs.json
-          test -f src/data/loki-logs.json || echo '[]' > src/data/loki-logs.json  
-          test -f src/data/metrics.json || echo '{}' > src/data/metrics.json
-          
+          # Initialize Observable project
           npm init -y
           npm install @observablehq/framework
+          
+          # Copy initial dashboard files from the project
+          mkdir -p /workspace
+          cp -r /app/src/* /workspace/ 2>/dev/null || echo "Initial setup complete"
           
           # Create Observable config
           cat > observablehq.config.js << 'EOF'
@@ -53,8 +56,55 @@ spec:
           };
           EOF
           
-          echo "📊 Starting Observable Framework..."
-          exec npx @observablehq/framework preview --host 0.0.0.0 --port 3000
+          # Create initial markdown files if they don't exist
+          test -f src/index.md || cat > src/index.md << 'EOF'
+          # 🔍 Observability Dashboard
+          
+          Welcome to the real-time observability dashboard.
+          
+          ## Quick Links
+          - [Security Logs](/security)
+          - [Operations Monitoring](/operations)
+          EOF
+          
+          test -f src/security.md || cat > src/security.md << 'EOF'
+          # 🛡️ Security Dashboard
+          
+          Security event monitoring and analysis.
+          EOF
+          
+          test -f src/operations.md || cat > src/operations.md << 'EOF'
+          # ⚙️ Operations Dashboard
+          
+          Operational metrics and logs monitoring.
+          EOF
+          
+          # Create sample data files
+          echo '[]' > src/data/quickwit-logs.json
+          echo '[]' > src/data/loki-logs.json  
+          echo '{}' > src/data/metrics.json
+          
+          echo "📊 Starting Observable Framework in development mode..."
+          echo "💡 Use 'kubectl cp' to copy files and 'kubectl exec -it <pod> -- bash' to develop"
+          
+          # Create package.json with dev script
+          cat > package.json << 'EOF'
+{
+  "name": "observability-dashboard",
+  "type": "module",
+  "scripts": {
+    "dev": "observable preview --host 0.0.0.0 --port 3000",
+    "build": "observable build",
+    "start": "npm run dev"
+  },
+  "dependencies": {
+    "@observablehq/framework": "latest"
+  }
+}
+EOF
+          
+          npm install
+          exec npm run dev
         ports:
         - containerPort: 3000
         env:
@@ -66,10 +116,13 @@ spec:
           value: "http://192.168.122.27:7280"
         - name: PROMETHEUS_ENDPOINT
           value: "http://192.168.122.27:9090"
+        - name: OTEL_ENDPOINT
+          value: "http://192.168.122.27:4318"
         volumeMounts:
-        - name: dashboard-files
-          mountPath: /dashboard-src
-          readOnly: true
+        - name: workspace
+          mountPath: /workspace
+        - name: app-data
+          mountPath: /app/src
         resources:
           requests:
             memory: "512Mi"
@@ -78,6 +131,7 @@ spec:
             memory: "2Gi"
             cpu: "1000m"
       volumes:
-      - name: dashboard-files
-        configMap:
-          name: observable-dashboards
+      - name: workspace
+        emptyDir: {}
+      - name: app-data
+        emptyDir: {}

@@ -1,0 +1,117 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tekton-otel-config
+  namespace: observable
+data:
+  log-forwarder.sh: |
+    #!/bin/bash
+    # Tekton build logs to OTEL forwarder
+    
+    OTEL_ENDPOINT="${OTEL_ENDPOINT:-http://otel-collector.otel-system.svc.cluster.local:4318}"
+    SERVICE_NAME="${OTEL_SERVICE_NAME:-tekton-logs}"
+    
+    # Function to send logs to OTEL
+    send_log_to_otel() {
+        local log_message="$1"
+        local log_level="${2:-INFO}"
+        local timestamp=$(date -u +"%Y-%m-%dT%H:%M:%S.%3NZ")
+        
+        curl -s -X POST "$OTEL_ENDPOINT/v1/logs" \
+        -H "Content-Type: application/json" \
+        -d "{
+            \"resourceLogs\": [{
+                \"resource\": {
+                    \"attributes\": [
+                        {\"key\": \"service.name\", \"value\": {\"stringValue\": \"$SERVICE_NAME\"}},
+                        {\"key\": \"service.namespace\", \"value\": {\"stringValue\": \"observable\"}},
+                        {\"key\": \"log.source\", \"value\": {\"stringValue\": \"tekton-pipeline\"}},
+                        {\"key\": \"k8s.namespace.name\", \"value\": {\"stringValue\": \"observable\"}},
+                        {\"key\": \"k8s.pod.name\", \"value\": {\"stringValue\": \"$HOSTNAME\"}}
+                    ]
+                },
+                \"scopeLogs\": [{
+                    \"scope\": {
+                        \"name\": \"tekton-log-forwarder\",
+                        \"version\": \"1.0.0\"
+                    },
+                    \"logRecords\": [{
+                        \"timeUnixNano\": \"$(date +%s%N)\",
+                        \"severityText\": \"$log_level\",
+                        \"body\": {\"stringValue\": \"$log_message\"},
+                        \"attributes\": [
+                            {\"key\": \"pipeline.type\", \"value\": {\"stringValue\": \"observable-build\"}},
+                            {\"key\": \"component\", \"value\": {\"stringValue\": \"dashboard\"}}
+                        ]
+                    }]
+                }]
+            }]
+        }" || echo "Failed to send log to OTEL"
+    }
+    
+    # Send build start log
+    send_log_to_otel "Tekton Observable Framework build started" "INFO"
+    
+    # Monitor and forward container logs
+    if [ -n "$1" ]; then
+        # Forward specific log message
+        send_log_to_otel "$1" "${2:-INFO}"
+    else
+        # Monitor mode - forward stdin
+        while IFS= read -r line; do
+            send_log_to_otel "$line" "INFO"
+        done
+    fi
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: tekton-log-collector
+  namespace: observable
+spec:
+  schedule: "*/5 * * * *"  # Every 5 minutes
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: log-collector
+            image: curlimages/curl:latest
+            command: ["/bin/sh"]
+            args:
+            - -c
+            - |
+              # Collect Tekton pipeline logs and forward to OTEL
+              OTEL_ENDPOINT="http://otel-collector.otel-system.svc.cluster.local:4318"
+              
+              # Get recent Tekton pipeline runs
+              kubectl get pipelineruns -n observable --sort-by=.metadata.creationTimestamp -o json | \
+              jq -r '.items[] | select(.status.completionTime != null) | 
+                "Pipeline: " + .metadata.name + " | Status: " + .status.conditions[0].reason + " | Message: " + (.status.conditions[0].message // "No message")' | \
+              while IFS= read -r log_line; do
+                timestamp=$(date -u +"%Y-%m-%dT%H:%M:%S.%3NZ")
+                curl -s -X POST "$OTEL_ENDPOINT/v1/logs" \
+                -H "Content-Type: application/json" \
+                -d "{
+                  \"resourceLogs\": [{
+                    \"resource\": {
+                      \"attributes\": [
+                        {\"key\": \"service.name\", \"value\": {\"stringValue\": \"tekton-collector\"}},
+                        {\"key\": \"service.namespace\", \"value\": {\"stringValue\": \"observable\"}},
+                        {\"key\": \"log.source\", \"value\": {\"stringValue\": \"tekton-pipeline-status\"}}
+                      ]
+                    },
+                    \"scopeLogs\": [{
+                      \"logRecords\": [{
+                        \"timeUnixNano\": \"$(date +%s%N)\",
+                        \"severityText\": \"INFO\",
+                        \"body\": {\"stringValue\": \"$log_line\"}
+                      }]
+                    }]
+                  }]
+                }"
+              done
+            env:
+            - name: OTEL_ENDPOINT
+              value: "http://otel-collector.otel-system.svc.cluster.local:4318"

@@ -88,15 +88,16 @@ data:
     .deployment_environment = "production"
     '''
     
-    # Sinks: Send to OpenTelemetry Collector
+    # Sinks: Send to OpenTelemetry Collector via HTTP
     [sinks.otel_logs]
-    type = "opentelemetry"
+    type = "http"
     inputs = ["enrich_logs"]
-    endpoint = "http://otel-collector.otel-system.svc.cluster.local:4318/v1/logs"
+    uri = "http://otel-collector.otel-system.svc.cluster.local:4318/v1/logs"
     compression = "gzip"
     
     [sinks.otel_logs.encoding]
     codec = "json"
+    
     
     [sinks.otel_logs.buffer]
     max_events = 1000

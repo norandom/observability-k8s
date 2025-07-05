@@ -95,9 +95,6 @@ data:
     endpoint = "http://otel-collector.otel-system.svc.cluster.local:4318/v1/logs"
     compression = "gzip"
     
-    [sinks.otel_logs.protocol]
-    version = "0.18.0"
-    
     [sinks.otel_logs.encoding]
     codec = "json"
     

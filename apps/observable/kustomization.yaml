@@ -8,7 +8,7 @@ resources:
   - observable-ingress.yaml
   
   # Auto-building system with OTEL integration
-  - tekton-pipeline-otel.yaml
+  - tekton-pipeline.yaml
   - tekton-logs-forwarder.yaml
   - tekton-rbac.yaml
 

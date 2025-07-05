@@ -3,10 +3,12 @@ kind: Application
 metadata:
   name: grafana
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
-    repoURL: https://github.com/norandom/observability-k8s.git
+    repoURL: https://github.com/yourusername/observability-k8s.git
     targetRevision: HEAD
     path: apps/grafana
   destination:

@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: quickwit
+  namespace: quickwit-system
 spec:
   replicas: 1
   selector:
@@ -12,10 +13,21 @@ spec:
       labels:
         app: quickwit
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
       containers:
       - name: quickwit
-        image: quickwit/quickwit:latest
+        image: quickwit/quickwit:0.7.1
         command: ["quickwit", "run"]
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
         ports:
         - containerPort: 7280
         volumeMounts:

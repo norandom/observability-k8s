@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: quickwit
+  namespace: quickwit-system
 spec:
   selector:
     app: quickwit

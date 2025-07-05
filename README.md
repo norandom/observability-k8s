@@ -278,32 +278,37 @@ This architecture provides the **best of both worlds**: Python's data processing
 
 ### **🔨 Container Build Process (Tekton Integration)**
 
-**Important**: The Observable Framework container requires a **build process** when first deployed or when major updates are made to the conda environment or dependencies.
+**Important**: The Observable Framework now uses **live development** for dashboard changes. Container rebuilds are **only triggered** for infrastructure changes.
 
-**Build Process**:
-1. **Tekton Pipeline**: Automatically triggered by ArgoCD deployment changes
-2. **Container Setup**: 
+**When Builds Are Triggered**:
+- ✅ **Infrastructure Changes**: `conda-environment.yml`, `Dockerfile`, `requirements.txt`, `package.json`
+- ✅ **Configuration Changes**: YAML deployment files  
+- ❌ **Dashboard Changes**: Markdown files use live development (`kubectl cp`)
+
+**Build Process** (Infrastructure Changes Only):
+1. **Git Poller**: Monitors repository every 2 minutes for infrastructure changes
+2. **Tekton Pipeline**: Automatically triggered only for qualifying changes
+3. **Container Setup**: 
    - Node.js and npm installation (30-60 seconds)
    - Conda environment creation with data science packages (2-5 minutes)
    - Observable Framework installation and startup (10-30 seconds)
-3. **Total Build Time**: 3-7 minutes for complete environment setup
+4. **Total Build Time**: 3-7 minutes for complete environment setup
+
+**Live Development** (Dashboard Changes):
+- **No Builds Required**: Use `kubectl cp` for instant dashboard updates
+- **Hot Reload**: Observable Framework automatically refreshes on file changes
+- **Instant Updates**: Changes appear immediately in browser
 
 **Monitoring Build Status**:
 ```bash
-# Check build logs and progress
+# Check build logs and progress (only for infrastructure changes)
 kubectl logs -n observable <pod-name> -f
 
 # Monitor build phases
 kubectl get pods -n observable -w
 ```
 
-**Build Completion Indicators**:
-- ✅ Node.js and npm versions displayed
-- ✅ Conda environment "observable" created
-- ✅ Observable Framework listening on port 3000
-- ✅ Dashboard accessible at http://observable.k3s.local
-
-The build process is **automated** and **only required** during initial deployment or major dependency updates. Normal dashboard development using `kubectl cp` does not trigger rebuilds.
+The build process is **optimized** and **only required** for infrastructure updates. Normal dashboard development using `kubectl cp` provides instant updates without rebuilds.
 
 ### **Data Retention & Storage**
 - **Loki**: 6GB persistent storage with 7-day retention policy
@@ -610,13 +615,23 @@ sleep 30
 
 ## GitOps Workflow
 
-This project demonstrates **GitOps principles** with ArgoCD managing all deployments declaratively.
+This project demonstrates **GitOps principles** with ArgoCD managing all deployments declaratively. The workflow is **optimized** for different types of changes.
 
 ### **Making Changes**
-1. **Edit** any YAML in `apps/` directories
+
+#### **Dashboard Changes** (Live Development)
+1. **Edit** markdown files locally
+2. **Copy** to running container: `kubectl cp dashboard.md observable/$POD_NAME:/app/src/`
+3. **View** changes instantly at http://observable.k3s.local (hot reload)
+4. **Commit** when ready for permanent storage
+
+#### **Infrastructure Changes** (GitOps Pipeline)
+1. **Edit** YAML, Dockerfile, or dependency files in `apps/` directories
 2. **Commit** and push to your Git repository  
-3. **ArgoCD automatically syncs** changes to cluster
-4. **Monitor** in ArgoCD UI - see deployment status, health, sync status
+3. **Git Poller** detects infrastructure changes (every 2 minutes)
+4. **Tekton Pipeline** automatically builds and deploys container
+5. **ArgoCD syncs** configuration changes to cluster
+6. **Monitor** in ArgoCD UI - see deployment status, health, sync status
 
 ### **Available Deployment Scripts**
 ```bash

@@ -2,6 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: grafana-ingress
+  namespace: my-grafana
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:

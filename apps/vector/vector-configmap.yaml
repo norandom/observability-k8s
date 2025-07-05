@@ -93,7 +93,6 @@ data:
     type = "opentelemetry"
     inputs = ["enrich_logs"]
     endpoint = "http://otel-collector.otel-system.svc.cluster.local:4318/v1/logs"
-    protocol = "http"
     compression = "gzip"
     
     [sinks.otel_logs.encoding]

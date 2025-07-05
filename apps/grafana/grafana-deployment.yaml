@@ -4,6 +4,7 @@ metadata:
   labels:
     app: grafana
   name: grafana
+  namespace: my-grafana
 spec:
   selector:
     matchLabels:
@@ -14,6 +15,8 @@ spec:
         app: grafana
     spec:
       securityContext:
+        runAsNonRoot: true
+        runAsUser: 472
         fsGroup: 472
         supplementalGroups:
           - 0
@@ -54,6 +57,9 @@ spec:
             requests:
               cpu: 250m
               memory: 750Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
           volumeMounts:
             - mountPath: /var/lib/grafana
               name: grafana-pv

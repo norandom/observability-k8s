@@ -52,9 +52,9 @@ spec:
       # Markdown files use live development with kubectl cp - no rebuild needed
       if git diff HEAD~1 --name-only | grep -E "(conda-environment\.yml|Dockerfile|requirements\.txt|package\.json)" > /dev/null; then
         echo "Container rebuild needed - infrastructure dependencies changed"
-        echo "true" > /tmp/should-build
+        echo "true" > $(workspaces.source.path)/should-build
       else
-        echo "false" > /tmp/should-build
+        echo "false" > $(workspaces.source.path)/should-build
         echo "No infrastructure changes detected - skipping rebuild"
         echo "Note: Markdown dashboard changes use live development (kubectl cp)"
       fi
@@ -86,14 +86,6 @@ spec:
       echo "Image built and pushed successfully:"
       echo "  Internal: $(params.image-url)"
       echo "  External: $(params.external-image-url)"
-    volumeMounts:
-    - name: docker-config
-      mountPath: /kaniko/.docker
-      readOnly: true
-  
-  volumes:
-  - name: docker-config
-    emptyDir: {}
 ---
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline

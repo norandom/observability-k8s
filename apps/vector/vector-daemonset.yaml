@@ -27,7 +27,7 @@ spec:
           effect: NoSchedule
       containers:
         - name: vector
-          image: vectordotdev/vector:0.34.1-debian
+          image: vectordotdev/vector:0.41.1-debian
           args:
             - --config-dir
             - /etc/vector/

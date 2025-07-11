@@ -33,6 +33,24 @@ Experience powerful analytics with **Python data processing** and **Interactive 
 - 🎯 **Demo vs Live Data** - Clear distinction between demonstration and production events
 - 📈 **Health Monitoring** - Automated system health scoring and risk assessment
 
+## 🆕 Recent Updates & Improvements
+
+### **Log Collection Reliability** ✅
+- **Replaced Vector with Fluent Bit** for improved stability and Kubernetes integration
+- **Enhanced metadata enrichment** with automatic log classification
+- **Better resource efficiency** and self-healing capabilities
+
+### **Pipeline Automation** ✅  
+- **Fixed Tekton pipeline execution issues** that were causing script failures
+- **Improved conditional builds** that only trigger for infrastructure changes
+- **Enhanced RBAC configuration** for proper service account permissions
+
+### **Developer Experience** 🚀
+- **New Teleport integration scripts** for secure container access with audit logging
+- **Auto-detection capabilities** that work with both kubectl and Teleport
+- **Dashboard templates and creation tools** for rapid development
+- **Live development workflow** with instant hot reload capabilities
+
 ## Table of Contents
 
 1. [Overview & Architecture](#overview--architecture)
@@ -54,7 +72,7 @@ Experience powerful analytics with **Python data processing** and **Interactive 
 This observability stack implements a **dual-pipeline log routing architecture** with 8 main components:
 
 ### **Core Services**
-- **Vector** - Log collection (DaemonSet + client installations)
+- **Fluent Bit** - Reliable log collection (DaemonSet) - *Replaced Vector for improved stability*
 - **OpenTelemetry Collector** - Central log routing hub
 - **Loki** - Time-series log storage for operational monitoring
 - **Quickwit** - Full-text search engine for security analysis
@@ -69,11 +87,11 @@ This observability stack implements a **dual-pipeline log routing architecture**
 graph TB
     %% Data Sources
     subgraph "📊 Data Sources"
-        VS[Vector DaemonSet]
-        VC[Vector Clients]
+        FB[Fluent Bit DaemonSet]
         AL[Application Logs]
         SL[System Logs]
         AU[Audit Logs]
+        KL[Kubernetes Logs]
     end
 
     %% Log Collection & Routing
@@ -120,11 +138,11 @@ graph TB
     end
 
     %% Data Flow
-    VS --> OTEL
-    VC --> OTEL
-    AL --> VS
-    SL --> VS
-    AU --> VS
+    FB --> OTEL
+    AL --> FB
+    SL --> FB
+    AU --> FB
+    KL --> FB
 
     OTEL --> LOKI
     OTEL --> QW
@@ -150,6 +168,7 @@ graph TB
     ARGO -.-> OBS
     ARGO -.-> PROM
     ARGO -.-> OTEL
+    ARGO -.-> FB
 
     %% Styling
     classDef storage fill:#e1f5fe
@@ -287,12 +306,18 @@ This architecture provides the **best of both worlds**: Python's data processing
 
 **Build Process** (Infrastructure Changes Only):
 1. **Git Poller**: Monitors repository every 2 minutes for infrastructure changes
-2. **Tekton Pipeline**: Automatically triggered only for qualifying changes
+2. **Tekton Pipeline**: Automatically triggered only for qualifying changes (✅ **Fixed script execution issues**)
 3. **Container Setup**: 
    - Node.js and npm installation (30-60 seconds)
    - Conda environment creation with data science packages (2-5 minutes)
    - Observable Framework installation and startup (10-30 seconds)
 4. **Total Build Time**: 3-7 minutes for complete environment setup
+
+**✅ Recent Pipeline Improvements:**
+- **Fixed script execution errors** that were causing "fork/exec" failures
+- **Improved conditional logic** to skip builds when only markdown files change
+- **Enhanced error handling** with proper shell compatibility
+- **RBAC permissions** properly configured for Tekton service accounts
 
 **Live Development** (Dashboard Changes):
 - **No Builds Required**: Use `kubectl cp` for instant dashboard updates
@@ -371,7 +396,7 @@ The build process is **optimized** and **only required** for infrastructure upda
 - **OpenTelemetry Collector** (`apps/otel/`) - Log routing hub
 - **Quickwit** (`apps/quickwit/`) - Security log search
 - **Prometheus** (`apps/prometheus/`) - Metrics collection
-- **Vector** (`apps/vector/`) - Log collection DaemonSet
+- **Fluent Bit** (`apps/fluent-bit/`) - Reliable log collection DaemonSet
 
 ## Log Routing & Data Processing
 
@@ -405,17 +430,19 @@ The OTEL Collector automatically routes all logs to both destinations:
 - **HTTP Ingestion**: `http://[CLUSTER_IP]:4318/v1/logs`
 - **gRPC Ingestion**: `http://[CLUSTER_IP]:4317` 
 
-### **Vector Client Configuration**
+### **Fluent Bit Log Collection**
 
-Vector clients collect logs from multiple sources and forward to OTEL:
-- **journald**: System service logs  
-- **docker**: Container logs
-- **auditd**: Security audit logs (`/var/log/audit/audit.log`)
+Fluent Bit collects logs from multiple Kubernetes sources and forwards to OTEL:
+- **Container logs**: `/var/log/containers/*.log`
+- **Kubernetes metadata**: Automatically enriched with pod/service information
+- **System logs**: Systemd journal logs
+- **Log classification**: Automatic categorization (infrastructure, security, operational)
 
-**Installation**: 
-1. Configure cluster IP: `vi config/cluster-config.env`
-2. Generate config: `./scripts/configure-vector.sh`  
-3. Install: `./scripts/vector-install.sh`
+**Features**:
+- **Reliable delivery**: Built-in retry and buffering mechanisms
+- **Kubernetes native**: Deep integration with K8s metadata
+- **Resource efficient**: Minimal memory and CPU footprint
+- **Auto-restart**: Self-healing on failures
 
 ## Search API Endpoints
 
@@ -645,7 +672,7 @@ This project demonstrates **GitOps principles** with ArgoCD managing all deploym
 ./scripts/deploy-otel.sh
 ./scripts/deploy-quickwit.sh
 ./scripts/deploy-prometheus.sh
-./scripts/deploy-vector.sh
+./scripts/deploy-fluent-bit.sh    # Deploy Fluent Bit log collector
 ```
 
 ### **Making Changes Example**
@@ -783,7 +810,44 @@ For detailed instructions on dashboard development, container access, and demo w
 
 ## Dashboard Development Workflow (Simplified)
 
-> **New**: Observable Framework now supports live development with direct file copying - no more ConfigMaps or rebuilds needed!
+> **New**: Observable Framework now supports live development with Teleport scripts and direct file copying - no more ConfigMaps or rebuilds needed!
+
+### **🚀 Teleport Container Access Scripts**
+
+Two powerful scripts are available for seamless Observable Framework container access:
+
+#### **Full-Featured Access: `scripts/teleport-observable-connect.sh`**
+```bash
+# Interactive shell with guided prompts
+./scripts/teleport-observable-connect.sh edit-dashboard
+
+# Sync latest files from git repository  
+./scripts/teleport-observable-connect.sh sync-from-git
+
+# File operations with full audit logging
+./scripts/teleport-observable-connect.sh copy-to ./local-file.md /app/src/remote-file.md
+```
+
+#### **Quick Operations: `scripts/observable-dashboard-manager.sh`**
+```bash
+# Auto-detects kubectl vs Teleport availability
+./scripts/observable-dashboard-manager.sh quick-edit index.md
+
+# Create new dashboards from templates
+./scripts/observable-dashboard-manager.sh create-dashboard security-metrics
+
+# File upload/download operations
+./scripts/observable-dashboard-manager.sh upload-file ./my-dashboard.md
+```
+
+**Key Features:**
+- ✅ **Teleport Integration** - Full audit logging and secure access
+- ✅ **Auto-Detection** - Works with both `kubectl` and `tsh kubectl`
+- ✅ **Live Development** - Instant dashboard updates with hot reload
+- ✅ **Template Creation** - Pre-configured dashboard templates
+- ✅ **Error Handling** - Comprehensive validation and helpful error messages
+
+See **[scripts/README.md](scripts/README.md)** for complete documentation.
 
 ### **Quick Dashboard Development**
 

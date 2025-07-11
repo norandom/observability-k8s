@@ -4,10 +4,13 @@ This directory contains scripts for local development with the Observable Framew
 
 ## Scripts Overview
 
-### 1. `telepresence-observable-connect.sh`
+### 1. `telepresence-markdown-editor.sh` ⭐ **RECOMMENDED**
+Streamlined script specifically for editing markdown files with Telepresence. Perfect for quick dashboard development and content editing.
+
+### 2. `telepresence-observable-connect.sh`
 Advanced Telepresence-based local development script with traffic interception and seamless local-to-remote workflows.
 
-### 2. `observable-dashboard-manager.sh`
+### 3. `observable-dashboard-manager.sh`
 Simplified dashboard management script for quick file operations and container access.
 
 ## Prerequisites
@@ -39,12 +42,23 @@ Simplified dashboard management script for quick file operations and container a
 
 ## Quick Start
 
-### Using Telepresence (Advanced Local Development)
+### Using Markdown Editor (Recommended for Dashboard Development)
 
 ```bash
 # Make scripts executable
 chmod +x scripts/*.sh
 
+# Complete setup and start editing workflow
+./scripts/telepresence-markdown-editor.sh quick-start
+
+# Edit specific markdown files
+./scripts/telepresence-markdown-editor.sh edit index.md
+./scripts/telepresence-markdown-editor.sh new security-dashboard
+```
+
+### Using Telepresence (Advanced Local Development)
+
+```bash
 # Start intercepted development (traffic routed to local machine)
 ./scripts/telepresence-observable-connect.sh intercept
 
@@ -73,7 +87,25 @@ chmod +x scripts/*.sh
 
 ## Common Use Cases
 
-### 1. Local Development with Telepresence
+### 1. Markdown Editing (Recommended)
+```bash
+# Complete setup and start editing
+./scripts/telepresence-markdown-editor.sh quick-start
+
+# Edit existing dashboard
+./scripts/telepresence-markdown-editor.sh edit index.md
+
+# Create new dashboard from template
+./scripts/telepresence-markdown-editor.sh new metrics-overview
+
+# List all markdown files
+./scripts/telepresence-markdown-editor.sh list
+
+# Sync changes to container
+./scripts/telepresence-markdown-editor.sh sync-all
+```
+
+### 2. Local Development with Telepresence
 ```bash
 # Start full local development with traffic interception
 ./scripts/telepresence-observable-connect.sh intercept
@@ -83,7 +115,7 @@ chmod +x scripts/*.sh
 # Access at: http://localhost:3000
 ```
 
-### 2. Quick File Operations
+### 3. Quick File Operations
 ```bash
 # Upload a dashboard file to remote container
 ./scripts/observable-dashboard-manager.sh upload-file ./my-dashboard.md
@@ -92,7 +124,7 @@ chmod +x scripts/*.sh
 ./scripts/observable-dashboard-manager.sh quick-edit index.md
 ```
 
-### 3. Create New Dashboards
+### 4. Create New Dashboards
 ```bash
 # Create from template
 ./scripts/observable-dashboard-manager.sh create-dashboard metrics-overview
@@ -101,7 +133,7 @@ chmod +x scripts/*.sh
 ./scripts/observable-dashboard-manager.sh quick-edit metrics-overview.md
 ```
 
-### 4. Backup Dashboard Files
+### 5. Backup Dashboard Files
 ```bash
 # Download specific file from remote container
 ./scripts/observable-dashboard-manager.sh download-file index.md
@@ -110,7 +142,7 @@ chmod +x scripts/*.sh
 ls ./observable-workspace/
 ```
 
-### 5. Sync Workflows
+### 6. Sync Workflows
 ```bash
 # Telepresence: Setup local workspace and sync
 ./scripts/telepresence-observable-connect.sh local-dev

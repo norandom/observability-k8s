@@ -5,7 +5,7 @@ metadata:
   namespace: quickwit-system
 data:
   quickwit.yaml: |
-    version: 0.8
+    version: 0.7
     node_id: quickwit-node
     listen_address: 0.0.0.0:7280
     rest_listen_port: 7280

@@ -1,0 +1,116 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluent-bit-config
+  namespace: vector-system  # Using same namespace for easy replacement
+data:
+  fluent-bit.conf: |
+    [SERVICE]
+        Daemon Off
+        Flush 1
+        Log_Level info
+        Parsers_File parsers.conf
+        HTTP_Server On
+        HTTP_Listen 0.0.0.0
+        HTTP_Port 2020
+        Health_Check On
+
+    # Collect all container logs
+    [INPUT]
+        Name tail
+        Path /var/log/containers/*.log
+        Parser docker
+        Tag kube.*
+        Refresh_Interval 5
+        Mem_Buf_Limit 50MB
+        Skip_Long_Lines On
+        Exclude_Path /var/log/containers/*_kube-system_*.log,/var/log/containers/*_vector-system_*.log
+
+    # Enrich logs with Kubernetes metadata
+    [FILTER]
+        Name kubernetes
+        Match kube.*
+        Kube_URL https://kubernetes.default:443
+        Kube_CA_File /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        Kube_Token_File /var/run/secrets/kubernetes.io/serviceaccount/token
+        Kube_Tag_Prefix kube.var.log.containers.
+        Merge_Log On
+        Keep_Log Off
+        K8S-Logging.Parser On
+        K8S-Logging.Exclude On
+
+    # Add log classification and fields (similar to Vector's enrichment)
+    [FILTER]
+        Name modify
+        Match kube.*
+        Add cluster_name k3s-observability
+        Add deployment_environment production
+        
+    # Add log type based on namespace
+    [FILTER]
+        Name lua
+        Match kube.*
+        script /fluent-bit/scripts/classify.lua
+        call classify_logs
+
+    # Send to OTEL Collector (same endpoint as Vector was using)
+    [OUTPUT]
+        Name opentelemetry
+        Match kube.*
+        Host otel-collector.otel-system.svc.cluster.local
+        Port 4318
+        logs_uri /v1/logs
+        tls Off
+
+  parsers.conf: |
+    [PARSER]
+        Name docker
+        Format json
+        Time_Key time
+        Time_Format %Y-%m-%dT%H:%M:%S.%LZ
+        Time_Keep On
+
+  classify.lua: |
+    function classify_logs(tag, timestamp, record)
+        -- Add log classification based on namespace
+        local namespace = record["kubernetes"]["namespace_name"]
+        
+        -- Set log type and category
+        if namespace and (namespace:match("kube%-system") or namespace:match("monitoring") or namespace:match("logging")) then
+            record["log_type"] = "infrastructure"
+            record["category"] = "system"
+        elseif namespace and (namespace:match("security") or namespace:match("auth") or namespace:match("audit")) then
+            record["log_type"] = "security"
+            record["category"] = "security"
+        else
+            record["log_type"] = "operational"
+            record["category"] = "application"
+        end
+        
+        -- Extract service name
+        if record["kubernetes"] and record["kubernetes"]["labels"] and record["kubernetes"]["labels"]["app"] then
+            record["service_name"] = record["kubernetes"]["labels"]["app"]
+        elseif record["kubernetes"] and record["kubernetes"]["container_name"] then
+            record["service_name"] = record["kubernetes"]["container_name"]
+        else
+            record["service_name"] = "unknown"
+        end
+        
+        -- Set severity level
+        local message = record["log"] or record["message"] or ""
+        if string.match(string.lower(message), "error") or string.match(string.lower(message), "exception") then
+            record["severity_text"] = "ERROR"
+        elseif string.match(string.lower(message), "warn") then
+            record["severity_text"] = "WARN"
+        else
+            record["severity_text"] = "INFO"
+        end
+        
+        -- Ensure message is in body field for OTEL compatibility
+        if not record["body"] then
+            record["body"] = message
+        end
+        
+        return 2, timestamp, record
+    end

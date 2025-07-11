@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: vector
+  name: fluent-bit
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
@@ -10,10 +10,10 @@ spec:
   source:
     repoURL: https://github.com/norandom/observability-k8s.git
     targetRevision: HEAD
-    path: apps/vector
+    path: apps/fluent-bit
   destination:
     server: https://kubernetes.default.svc
-    namespace: vector-system
+    namespace: vector-system  # Using same namespace for easy replacement
   syncPolicy:
     automated:
       prune: true

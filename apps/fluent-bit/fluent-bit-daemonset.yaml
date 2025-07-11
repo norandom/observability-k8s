@@ -1,0 +1,110 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluent-bit
+  namespace: vector-system  # Using same namespace for easy replacement
+  labels:
+    app: fluent-bit
+    component: log-collector
+spec:
+  selector:
+    matchLabels:
+      app: fluent-bit
+  template:
+    metadata:
+      labels:
+        app: fluent-bit
+        component: log-collector
+    spec:
+      serviceAccountName: vector  # Reuse existing service account
+      tolerations:
+        # Allow running on master nodes
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: fluent-bit
+          image: fluent/fluent-bit:2.2.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 2020
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "100Mi"
+              cpu: "100m"
+            limits:
+              memory: "500Mi"
+              cpu: "500m"
+          volumeMounts:
+            # Fluent Bit configuration
+            - name: config
+              mountPath: /fluent-bit/etc/
+            - name: scripts
+              mountPath: /fluent-bit/scripts/
+            # Log directories
+            - name: varlog
+              mountPath: /var/log
+              readOnly: true
+            - name: varlibdockercontainers
+              mountPath: /var/lib/docker/containers
+              readOnly: true
+            - name: systemd
+              mountPath: /run/log/journal
+              readOnly: true
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+      volumes:
+        - name: config
+          configMap:
+            name: fluent-bit-config
+            items:
+              - key: fluent-bit.conf
+                path: fluent-bit.conf
+              - key: parsers.conf
+                path: parsers.conf
+        - name: scripts
+          configMap:
+            name: fluent-bit-config
+            items:
+              - key: classify.lua
+                path: classify.lua
+        - name: varlog
+          hostPath:
+            path: /var/log
+        - name: varlibdockercontainers
+          hostPath:
+            path: /var/lib/docker/containers
+        - name: systemd
+          hostPath:
+            path: /run/log/journal
+      hostNetwork: false
+      dnsPolicy: ClusterFirst

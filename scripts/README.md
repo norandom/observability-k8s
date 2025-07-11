@@ -40,6 +40,17 @@ Simplified dashboard management script for quick file operations and container a
   npm install -g @observablehq/framework
   ```
 
+- **Editor Configuration** (optional):
+  ```bash
+  # Set your preferred editor (markdown editor script only)
+  export EDITOR=vim                    # Use vim
+  export EDITOR=emacs                  # Use emacs  
+  export EDITOR="code --wait"          # Use VS Code and wait for closure
+  export EDITOR="subl --wait"          # Use Sublime Text and wait
+  
+  # If EDITOR is not set, auto-detects: VS Code > nano > vim
+  ```
+
 ## Quick Start
 
 ### Using Markdown Editor (Recommended for Dashboard Development)
@@ -103,6 +114,10 @@ chmod +x scripts/*.sh
 
 # Sync changes to container
 ./scripts/telepresence-markdown-editor.sh sync-all
+
+# Use custom editor
+export EDITOR="code --wait"
+./scripts/telepresence-markdown-editor.sh edit dashboard.md
 ```
 
 ### 2. Local Development with Telepresence

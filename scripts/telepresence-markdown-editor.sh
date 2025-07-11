@@ -152,8 +152,11 @@ edit_markdown_file() {
     log_info "Opening '$filename' for editing..."
     log_info "File location: $local_file"
     
-    # Detect available editor
-    if command -v code &> /dev/null; then
+    # Use EDITOR environment variable if set, otherwise auto-detect
+    if [ -n "$EDITOR" ]; then
+        log_info "Using editor from EDITOR variable: $EDITOR"
+        $EDITOR "$local_file"
+    elif command -v code &> /dev/null; then
         log_info "Opening in VS Code..."
         code "$local_file"
     elif command -v nano &> /dev/null; then
@@ -163,7 +166,8 @@ edit_markdown_file() {
         log_info "Opening in vim..."
         vim "$local_file"
     else
-        log_error "No suitable editor found (tried: code, nano, vim)"
+        log_error "No suitable editor found (tried: \$EDITOR, code, nano, vim)"
+        log_info "Set the EDITOR environment variable to specify your preferred editor"
         exit 1
     fi
     
@@ -379,6 +383,11 @@ show_help() {
     echo "  - Telepresence installed"
     echo "  - kubectl configured for cluster access"
     echo "  - Observable pod running in '$NAMESPACE' namespace"
+    echo
+    echo "Editor Selection:"
+    echo "  - Set EDITOR environment variable for custom editor (e.g., export EDITOR=vim)"
+    echo "  - Auto-detects: VS Code > nano > vim (if EDITOR not set)"
+    echo "  - Examples: export EDITOR=emacs, export EDITOR='code --wait'"
 }
 
 # Main function

@@ -1,0 +1,24 @@
+---
+# This job can be applied manually if Quickwit has data corruption issues
+# It will clean the indexes directory to allow a fresh start
+# Usage: kubectl apply -f quickwit-data-cleanup-job.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: quickwit-data-cleanup
+  namespace: quickwit-system
+spec:
+  template:
+    spec:
+      containers:
+      - name: cleanup
+        image: busybox:1.35
+        command: ['sh', '-c', 'rm -rf /quickwit/qwdata/indexes/* && echo "Quickwit data cleaned"']
+        volumeMounts:
+        - mountPath: /quickwit/qwdata
+          name: data
+      restartPolicy: Never
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: quickwit-pvc

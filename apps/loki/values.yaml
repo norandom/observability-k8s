@@ -1,3 +1,4 @@
+---
 # Efficient single-node Loki configuration
 deploymentMode: SingleBinary
 

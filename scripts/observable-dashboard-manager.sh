@@ -34,14 +34,13 @@ log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
 log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
-# Detect kubectl command (teleport or direct)
+# Detect kubectl command (telepresence or direct)
 detect_kubectl() {
-    if command -v tsh &> /dev/null && tsh status &> /dev/null 2>&1; then
-        echo "tsh kubectl"
-    elif command -v kubectl &> /dev/null; then
+    if command -v kubectl &> /dev/null; then
         echo "kubectl"
     else
-        log_error "Neither 'kubectl' nor 'tsh kubectl' is available"
+        log_error "kubectl is not available"
+        log_info "Please install kubectl or ensure it's in your PATH"
         exit 1
     fi
 }
@@ -242,7 +241,7 @@ show_help() {
     echo "  $0 download-file data/metrics.json"
     echo "  $0 create-dashboard security-metrics"
     echo
-    echo "Note: Auto-detects kubectl vs tsh kubectl based on availability"
+    echo "Note: Works with kubectl and integrates with Telepresence workflows"
 }
 
 # Main function
@@ -257,6 +256,11 @@ main() {
     local kubectl_cmd
     kubectl_cmd=$(detect_kubectl)
     log_info "Using: $kubectl_cmd"
+    
+    # Check if we're in a Telepresence environment
+    if command -v telepresence &> /dev/null && telepresence status &> /dev/null 2>&1; then
+        log_info "Telepresence connection detected - enhanced workflows available"
+    fi
     
     local pod_name
     pod_name=$(get_pod "$kubectl_cmd")

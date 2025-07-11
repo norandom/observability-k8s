@@ -1,83 +1,95 @@
-# Observable Framework Container Access Scripts
+# Observable Framework Development Scripts
 
-This directory contains scripts for connecting to and managing the Observable Framework container for live dashboard editing.
+This directory contains scripts for local development with the Observable Framework using Telepresence and direct container access.
 
 ## Scripts Overview
 
-### 1. `teleport-observable-connect.sh`
-Full-featured Teleport-based container access script with comprehensive functionality.
+### 1. `telepresence-observable-connect.sh`
+Advanced Telepresence-based local development script with traffic interception and seamless local-to-remote workflows.
 
 ### 2. `observable-dashboard-manager.sh`
-Simplified dashboard management script that auto-detects kubectl vs Teleport.
+Simplified dashboard management script for quick file operations and container access.
 
 ## Prerequisites
 
-- **Teleport Client** (for teleport-observable-connect.sh):
+- **Telepresence** (for telepresence-observable-connect.sh):
   ```bash
-  # Install Teleport client
-  curl -O https://get.gravitational.com/teleport-v12.4.8-linux-amd64-bin.tar.gz
-  tar -xzf teleport-v12.4.8-linux-amd64-bin.tar.gz
-  sudo mv teleport/tsh /usr/local/bin/
+  # Install Telepresence
+  # macOS
+  brew install datawire/blackbird/telepresence
   
-  # Login to your Teleport cluster
-  tsh login --proxy=your-teleport-proxy.com --user=your-username
+  # Linux
+  sudo curl -fL https://app.getambassador.io/download/tel2/linux/amd64/latest/telepresence -o /usr/local/bin/telepresence
+  sudo chmod a+x /usr/local/bin/telepresence
+  
+  # Windows - see https://www.telepresence.io/docs/latest/install/
   ```
 
-- **kubectl** (alternative to Teleport):
+- **kubectl** (required for both scripts):
   ```bash
   # Standard kubectl access to the cluster
   kubectl get pods -n observable
   ```
 
+- **Observable Framework** (for local development):
+  ```bash
+  # Install Observable Framework locally
+  npm install -g @observablehq/framework
+  ```
+
 ## Quick Start
 
-### Using Teleport (Recommended)
+### Using Telepresence (Advanced Local Development)
 
 ```bash
 # Make scripts executable
 chmod +x scripts/*.sh
 
-# Interactive shell access
-./scripts/teleport-observable-connect.sh bash
+# Start intercepted development (traffic routed to local machine)
+./scripts/telepresence-observable-connect.sh intercept
 
-# Start editing session with helpful prompts
-./scripts/teleport-observable-connect.sh edit-dashboard
+# Setup local workspace with manual sync
+./scripts/telepresence-observable-connect.sh local-dev
 
-# Sync files from git repository
-./scripts/teleport-observable-connect.sh sync-from-git
+# Check connection status
+./scripts/telepresence-observable-connect.sh status
+
+# Disconnect when done
+./scripts/telepresence-observable-connect.sh disconnect
 ```
 
-### Using Standard kubectl
+### Using Direct Container Access
 
 ```bash
-# Quick file editing
+# Quick file editing in remote container
 ./scripts/observable-dashboard-manager.sh quick-edit index.md
 
 # List all dashboard files
 ./scripts/observable-dashboard-manager.sh list-files
 
-# Create new dashboard
+# Create new dashboard from template
 ./scripts/observable-dashboard-manager.sh create-dashboard security-metrics
 ```
 
 ## Common Use Cases
 
-### 1. Edit Main Dashboard
+### 1. Local Development with Telepresence
 ```bash
-# Method 1: Full Teleport session
-./scripts/teleport-observable-connect.sh edit-dashboard
+# Start full local development with traffic interception
+./scripts/telepresence-observable-connect.sh intercept
 
-# Method 2: Quick edit
-./scripts/observable-dashboard-manager.sh quick-edit index.md
+# Edit files locally in: ./observable-workspace/
+# Changes automatically sync to cluster
+# Access at: http://localhost:3000
 ```
 
-### 2. Upload Local Files
+### 2. Quick File Operations
 ```bash
-# Upload a dashboard file
+# Upload a dashboard file to remote container
 ./scripts/observable-dashboard-manager.sh upload-file ./my-dashboard.md
 
-# Copy with Teleport (more control)
-./scripts/teleport-observable-connect.sh copy-to ./my-dashboard.md /app/src/dashboard.md
+# Edit files directly in remote container
+./scripts/observable-dashboard-manager.sh quick-edit index.md
 ```
 
 ### 3. Create New Dashboards
@@ -91,17 +103,21 @@ chmod +x scripts/*.sh
 
 ### 4. Backup Dashboard Files
 ```bash
-# Download specific file
+# Download specific file from remote container
 ./scripts/observable-dashboard-manager.sh download-file index.md
 
-# Download with Teleport
-./scripts/teleport-observable-connect.sh copy-from /app/src/index.md ./backup-index.md
+# Telepresence: Files are automatically local in ./observable-workspace/
+ls ./observable-workspace/
 ```
 
-### 5. Sync with Git Repository
+### 5. Sync Workflows
 ```bash
-# Pull latest dashboard files from git
-./scripts/teleport-observable-connect.sh sync-from-git
+# Telepresence: Setup local workspace and sync
+./scripts/telepresence-observable-connect.sh local-dev
+./scripts/telepresence-observable-connect.sh sync
+
+# Direct: Download files from cluster
+./scripts/observable-dashboard-manager.sh download-file index.md
 ```
 
 ## File Structure in Container

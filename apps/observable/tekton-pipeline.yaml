@@ -221,7 +221,13 @@ spec:
               
               # Check if changes are in observable directory
               if [ -n "$LAST_PROCESSED" ]; then
-                CHANGED_FILES=$(git diff --name-only $LAST_PROCESSED HEAD)
+                # Try to diff against last processed commit, fallback to HEAD~1 if it doesn't exist
+                if git cat-file -e $LAST_PROCESSED 2>/dev/null; then
+                  CHANGED_FILES=$(git diff --name-only $LAST_PROCESSED HEAD)
+                else
+                  echo "Last processed commit $LAST_PROCESSED not found, using HEAD~1"
+                  CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+                fi
               else
                 CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
               fi

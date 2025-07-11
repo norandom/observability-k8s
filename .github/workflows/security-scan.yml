@@ -1,0 +1,155 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  trufflehog:
+    name: TruffleHog Secret Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for comprehensive scanning
+
+    - name: Run TruffleHog
+      uses: trufflesecurity/trufflehog@main
+      with:
+        # Scan the entire repository history
+        path: ./
+        base: main
+        head: HEAD
+        extra_args: --debug --only-verified
+        
+    - name: Upload TruffleHog Results
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: trufflehog-results
+        path: |
+          trufflehog-results.json
+          trufflehog-report.sarif
+        retention-days: 30
+
+  kubernetes-security:
+    name: Kubernetes Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Run Kubesec Scan
+      uses: controlplaneio/kubesec-action@43d0ddff5ffee89a6bb9f29b64cd865411137b14
+      with:
+        input: "apps/**/*.yaml"
+        format: sarif
+        output: kubesec-results.sarif
+
+    - name: Upload Kubesec Results
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: kubesec-results.sarif
+
+  container-security:
+    name: Container Image Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Extract Container Images
+      id: extract-images
+      run: |
+        # Extract all container images from Kubernetes manifests
+        images=$(grep -r "image:" apps/ --include="*.yaml" | grep -v "#" | sed 's/.*image: *//' | sed 's/[[:space:]]*$//' | sort -u)
+        echo "Found images:"
+        echo "$images"
+        # Save for next step
+        echo "$images" > images.txt
+
+    - name: Run Trivy Security Scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'config'
+        scan-ref: './apps'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy Results
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  yaml-security:
+    name: YAML Security Lint
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install yamllint
+      run: pip install yamllint
+
+    - name: Run yamllint
+      run: |
+        yamllint -c .yamllint.yml apps/ || true
+
+    - name: Create yamllint config
+      run: |
+        cat > .yamllint.yml << 'EOF'
+        extends: default
+        rules:
+          line-length:
+            max: 120
+          comments:
+            min-spaces-from-content: 1
+          indentation:
+            spaces: 2
+          truthy:
+            allowed-values: ['true', 'false', 'yes', 'no']
+        ignore: |
+          .git/
+          node_modules/
+        EOF
+
+    - name: Run yamllint with config
+      run: yamllint -c .yamllint.yml apps/
+
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [trufflehog, kubernetes-security, container-security, yaml-security]
+    if: always()
+    
+    steps:
+    - name: Security Scan Summary
+      run: |
+        echo "## Security Scan Results" >> $GITHUB_STEP_SUMMARY
+        echo "| Scan Type | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| TruffleHog Secret Scan | ${{ needs.trufflehog.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Kubernetes Security | ${{ needs.kubernetes-security.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Container Security | ${{ needs.container-security.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| YAML Lint | ${{ needs.yaml-security.result }} |" >> $GITHUB_STEP_SUMMARY
+        
+        if [[ "${{ needs.trufflehog.result }}" == "failure" ]]; then
+          echo "⚠️ **Potential secrets detected!** Review TruffleHog results." >> $GITHUB_STEP_SUMMARY
+        fi

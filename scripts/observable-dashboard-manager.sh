@@ -4,7 +4,7 @@
 # Observable Dashboard Manager
 #
 # A simplified script for common Observable Framework dashboard operations
-# Works with both direct kubectl and Teleport (auto-detects)
+# Works with both direct kubectl and Telepresence (auto-detects)
 #
 # Usage:
 #   ./observable-dashboard-manager.sh quick-edit <filename>

@@ -194,7 +194,7 @@ Use these in your dashboards for data fetching.
 
 1. **Connect to container**:
    ```bash
-   ./scripts/teleport-observable-connect.sh bash
+   ./scripts/telepresence-markdown-editor.sh quick-start
    ```
 
 2. **Edit files** (in container):
@@ -210,17 +210,17 @@ Use these in your dashboards for data fetching.
 
 ## Script Features
 
-### teleport-observable-connect.sh
-- ✅ Interactive shell access
-- ✅ Guided dashboard editing
-- ✅ Git repository sync
-- ✅ File copy operations  
+### telepresence-observable-connect.sh
+- ✅ Traffic interception and forwarding
+- ✅ Local development server setup
+- ✅ Full Observable Framework integration
+- ✅ File synchronization workflows
 - ✅ Container logs viewing
 - ✅ Status checking
-- ✅ Full Teleport integration
+- ✅ Complete Telepresence integration
 
 ### observable-dashboard-manager.sh  
-- ✅ Auto-detects kubectl vs Teleport
+- ✅ Auto-detects kubectl vs Telepresence
 - ✅ Quick file editing with nano
 - ✅ File upload/download
 - ✅ Dashboard templates
@@ -238,13 +238,13 @@ kubectl get pods -n observable
 kubectl get namespaces | grep observable
 ```
 
-### "Teleport not logged in"
+### "Telepresence connection failed"
 ```bash
-# Login to Teleport
-tsh login
+# Check Telepresence status
+telepresence status
 
-# Check status
-tsh status
+# Reconnect if needed
+telepresence connect
 ```
 
 ### "Permission denied"
@@ -259,7 +259,7 @@ kubectl auth can-i create pods -n observable
 ### "Container not responding"
 ```bash
 # Check container logs
-./scripts/teleport-observable-connect.sh show-logs
+./scripts/telepresence-observable-connect.sh status
 
 # Restart service
 ./scripts/observable-dashboard-manager.sh restart-service
@@ -269,7 +269,7 @@ kubectl auth can-i create pods -n observable
 
 - Scripts use read-only operations by default
 - File modifications are contained within the Observable workspace
-- Teleport provides audit logging of all container access
+- Telepresence provides secure cluster access for development
 - No persistent changes to container images (volumes only)
 
 ## Integration with GitOps
@@ -278,3 +278,12 @@ kubectl auth can-i create pods -n observable
 - Use `kubectl cp` or these scripts for live development
 - Infrastructure changes (Dockerfile, conda-environment.yml) trigger automatic GitOps rebuilds
 - Best practice: develop with live editing, then commit final changes to git
+
+# Notes
+
+## Set your preferred editor
+
+export EDITOR=vim                    # Use vim
+export EDITOR=emacs                  # Use emacs
+export EDITOR="code --wait"          # Use VS Code and wait for file closure
+export EDITOR="subl --wait"          # Use Sublime Text and wait

@@ -65,11 +65,22 @@ spec:
     env:
     - name: DOCKER_CONFIG
       value: /kaniko/.docker
-    script: |
-      #!/busybox/sh
+    command: ["/busybox/sh"]
+    args: 
+    - -c
+    - |
       set -e
+      cd /workspace/source/source/apps/observable
       
-      cd $(workspaces.source.path)/source/apps/observable
+      # Check if we should build
+      if [ -f "/workspace/source/should-build" ]; then
+        SHOULD_BUILD=$(cat /workspace/source/should-build)
+        if [ "$SHOULD_BUILD" = "false" ]; then
+          echo "Skipping build - no infrastructure changes detected"
+          echo "Note: Use 'kubectl cp' for live markdown dashboard updates"
+          exit 0
+        fi
+      fi
       
       echo "Building Observable Framework image..."
       echo "Source files:"

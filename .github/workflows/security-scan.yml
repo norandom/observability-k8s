@@ -216,7 +216,7 @@ jobs:
         echo "Checking for critical YAML syntax errors..."
         find apps/ -name "*.yaml" -o -name "*.yml" | while read file; do
           echo "Checking: $file"
-          python3 -c "import yaml; yaml.safe_load(open('$file'))" || echo "⚠️ Syntax issue in $file"
+          python3 -c "import yaml; list(yaml.safe_load_all(open('$file')))" || echo "⚠️ Syntax issue in $file"
         done
 
   security-summary:

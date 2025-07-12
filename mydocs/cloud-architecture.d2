@@ -1,0 +1,259 @@
+# Cloud Architecture with Telepresence and Zscaler
+
+direction: down
+
+title: |md
+  # Enterprise Cloud Architecture
+  ## Kubernetes Development with Zero Trust Security
+|
+
+# Cloud Providers Section
+clouds: Cloud Infrastructure {
+  shape: rectangle
+  style: {
+    fill: "#f0f4f8"
+    stroke: "#1a73e8"
+    stroke-width: 2
+    stroke-dash: 3
+  }
+  
+  aws: AWS {
+    shape: cloud
+    style: {
+      fill: "#ff9900"
+      stroke: "#232f3e"
+      font-color: "#ffffff"
+      bold: true
+    }
+    
+    eks: EKS Cluster {
+      shape: hexagon
+      style: {
+        fill: "#ffffff"
+        stroke: "#ff9900"
+      }
+    }
+  }
+  
+  azure: Azure {
+    shape: cloud
+    style: {
+      fill: "#0078d4"
+      stroke: "#0078d4"
+      font-color: "#ffffff"
+      bold: true
+    }
+    
+    aks: AKS Cluster {
+      shape: hexagon
+      style: {
+        fill: "#ffffff"
+        stroke: "#0078d4"
+      }
+    }
+  }
+  
+  gcp: Google Cloud {
+    shape: cloud
+    style: {
+      fill: "#4285f4"
+      stroke: "#4285f4"
+      font-color: "#ffffff"
+      bold: true
+    }
+    
+    gke: GKE Cluster {
+      shape: hexagon
+      style: {
+        fill: "#ffffff"
+        stroke: "#4285f4"
+      }
+    }
+  }
+  
+  onprem: On-Premise {
+    shape: cloud
+    style: {
+      fill: "#607d8b"
+      stroke: "#455a64"
+      font-color: "#ffffff"
+      bold: true
+    }
+    
+    k3s: K3s/K8s {
+      shape: hexagon
+      style: {
+        fill: "#ffffff"
+        stroke: "#607d8b"
+      }
+    }
+  }
+}
+
+# Developer Environment
+dev_env: Developer Environment {
+  shape: rectangle
+  style: {
+    fill: "#e3f2fd"
+    stroke: "#1976d2"
+    stroke-width: 2
+    bold: true
+  }
+  
+  workstation: Developer Workstation {
+    shape: rectangle
+    style: {
+      3d: true
+    }
+    
+    telepresence: Telepresence {
+      shape: package
+      style: {
+        fill: "#4caf50"
+        font-color: "#ffffff"
+      }
+    }
+    
+    zscaler: Zscaler Client {
+      shape: package
+      style: {
+        fill: "#ff6900"
+        font-color: "#ffffff"
+      }
+    }
+  }
+}
+
+# Security Layer
+security: Security Layer {
+  shape: rectangle
+  style: {
+    fill: "#fff3e0"
+    stroke: "#f57c00"
+    stroke-width: 2
+    bold: true
+  }
+  
+  zscaler_cloud: Zscaler Cloud {
+    shape: cloud
+    style: {
+      fill: "#ff6900"
+      font-color: "#ffffff"
+      bold: true
+    }
+    
+    ztna: Zero Trust\nNetwork Access {
+      shape: rectangle
+      style: {
+        fill: "#ffffff"
+        stroke: "#ff6900"
+        stroke-width: 2
+        double-border: true
+      }
+    }
+  }
+  
+  identity: Identity Provider {
+    shape: cylinder
+    style: {
+      fill: "#0078d4"
+      font-color: "#ffffff"
+      bold: true
+    }
+    
+    entra: Microsoft\nEntra ID {
+      shape: rectangle
+      style: {
+        fill: "#ffffff"
+        stroke: "#0078d4"
+      }
+    }
+  }
+}
+
+# Network Flows
+flows: Network Flows {
+  shape: text
+  style: {
+    font-size: 16
+    bold: true
+  }
+}
+
+# Connections - Development Flow
+dev_env.workstation.telepresence -> clouds.aws.eks: Direct Access\n(Bypass Zscaler) {
+  style: {
+    stroke: "#4caf50"
+    stroke-width: 3
+    bold: true
+  }
+}
+
+dev_env.workstation.telepresence -> clouds.azure.aks: Direct Access\n(Bypass Zscaler) {
+  style: {
+    stroke: "#4caf50"
+    stroke-width: 3
+    bold: true
+  }
+}
+
+dev_env.workstation.telepresence -> clouds.gcp.gke: Direct Access\n(Bypass Zscaler) {
+  style: {
+    stroke: "#4caf50"
+    stroke-width: 3
+    bold: true
+  }
+}
+
+dev_env.workstation.telepresence -> clouds.onprem.k3s: Direct Access\n(Bypass Zscaler) {
+  style: {
+    stroke: "#4caf50"
+    stroke-width: 3
+    bold: true
+  }
+}
+
+# Connections - Security Flow
+dev_env.workstation.zscaler -> security.zscaler_cloud.ztna: Internet Traffic\n(Zero Trust) {
+  style: {
+    stroke: "#ff6900"
+    stroke-width: 3
+    bold: true
+  }
+}
+
+security.identity.entra -> security.zscaler_cloud: Policy\nEnforcement {
+  style: {
+    stroke: "#0078d4"
+    stroke-width: 2
+    stroke-dash: 3
+  }
+}
+
+# Architecture Benefits
+benefits: Architecture Benefits {
+  shape: rectangle
+  style: {
+    fill: "#e8f5e9"
+    stroke: "#4caf50"
+    stroke-width: 2
+    3d: true
+  }
+  
+  content: |md
+    **Multi-Cloud Support:**
+    • Works with any Kubernetes cluster
+    • AWS EKS, Azure AKS, Google GKE
+    • On-premise K8s/K3s
+    
+    **Security Maintained:**
+    • Zero Trust for internet
+    • Direct cluster access
+    • Identity-based policies
+    
+    **Developer Productivity:**
+    • No proxy latency
+    • Local development
+    • Live traffic interception
+  |
+}

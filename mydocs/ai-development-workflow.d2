@@ -16,7 +16,7 @@ classes: {
     style.fill: "#F8F9FA"
     style.font-color: "#1D1D1F" 
     style.border-radius: 16
-    style.font-size: 32
+    style.font-size: 48
     style.bold: true
     style.stroke: "#D1D1D6"
     style.stroke-width: 2
@@ -26,7 +26,7 @@ classes: {
     style.fill: "#5856D6"
     style.font-color: "#FFFFFF"
     style.border-radius: 12
-    style.font-size: 24
+    style.font-size: 36
     style.bold: true
     style.shadow: true
   }
@@ -34,7 +34,7 @@ classes: {
     style.fill: "#FF9500"
     style.font-color: "#FFFFFF" 
     style.border-radius: 12
-    style.font-size: 24
+    style.font-size: 36
     style.bold: true
     style.shadow: true
   }
@@ -42,7 +42,7 @@ classes: {
     style.fill: "#007AFF"
     style.font-color: "#FFFFFF"
     style.border-radius: 16
-    style.font-size: 32
+    style.font-size: 48
     style.bold: true
     style.shadow: true
   }
@@ -50,7 +50,7 @@ classes: {
     style.fill: "#34C759"
     style.font-color: "#FFFFFF"
     style.border-radius: 16
-    style.font-size: 32
+    style.font-size: 48
     style.bold: true
     style.shadow: true
   }
@@ -58,7 +58,7 @@ classes: {
     style.fill: "#FFFFFF"
     style.font-color: "#1D1D1F"
     style.border-radius: 8
-    style.font-size: 20
+    style.font-size: 30
     style.stroke: "#D1D1D6"
     style.stroke-width: 1
   }
@@ -111,29 +111,29 @@ live_dashboard: {
 # ⚡ The Magic Development Flow
 laptop_env.ai_tools -> laptop_env.local_files: "✨ AI writes\ndashboard code" {
   style.stroke: "#5856D6"
-  style.stroke-width: 5
-  style.font-size: 18
+  style.stroke-width: 6
+  style.font-size: 24
   style.bold: true
 }
 
 laptop_env.local_files -> telepresence: "📤 File changes\nsync instantly" {
   style.stroke: "#FF9500"
-  style.stroke-width: 5
-  style.font-size: 18
+  style.stroke-width: 6
+  style.font-size: 24
   style.bold: true
 }
 
 telepresence -> k8s_cluster.observable_pod: "🔄 Live mount\nto K8s pod" {
   style.stroke: "#FF9500"
-  style.stroke-width: 5
-  style.font-size: 18
+  style.stroke-width: 6
+  style.font-size: 24
   style.bold: true
 }
 
 k8s_cluster.observable_pod -> live_dashboard: "🚀 Hot reload\nwith real data" {
   style.stroke: "#34C759"
-  style.stroke-width: 5
-  style.font-size: 18
+  style.stroke-width: 6
+  style.font-size: 24
   style.bold: true
 }
 
@@ -142,12 +142,12 @@ result_box: {
   label: "🎯 Development Superpowers\n\n✅ Edit locally with Claude Code / Gemini CLI\n✅ Test against live Kubernetes data\n✅ See changes instantly in browser\n✅ No Docker, no local setup hassle\n✅ Production-like development environment"
   class: laptop
   style.fill: "#E8F4FD"
-  style.font-size: 16
+  style.font-size: 24
 }
 
 laptop_env -> result_box: "🌟 Experience" {
   style.stroke: "#34C759"
-  style.stroke-width: 3
-  style.font-size: 12
+  style.stroke-width: 5
+  style.font-size: 20
   style.stroke-dash: 5
 }

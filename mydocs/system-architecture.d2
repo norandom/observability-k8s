@@ -1,0 +1,219 @@
+# System Architecture - Complete Observability Stack
+
+direction: down
+
+# Data Sources Layer
+data_sources: {
+  label: "📊 Data Sources"
+  style.fill: "#e3f2fd"
+  
+  fluent_bit: {
+    label: "Fluent Bit\nDaemonSet"
+    icon: https://icons.getbootstrap.com/assets/icons/gear.svg
+  }
+  
+  app_logs: {
+    label: "Application\nLogs"
+    icon: https://icons.getbootstrap.com/assets/icons/file-text.svg
+  }
+  
+  sys_logs: {
+    label: "System\nLogs"
+    icon: https://icons.getbootstrap.com/assets/icons/terminal.svg
+  }
+  
+  audit_logs: {
+    label: "Audit\nLogs"
+    icon: https://icons.getbootstrap.com/assets/icons/shield-check.svg
+  }
+  
+  k8s_logs: {
+    label: "Kubernetes\nLogs"
+    icon: https://icons.getbootstrap.com/assets/icons/box.svg
+  }
+}
+
+# Log Processing Pipeline
+processing: {
+  label: "🔄 Log Processing Pipeline"
+  style.fill: "#e8f5e8"
+  
+  otel: {
+    label: "OpenTelemetry Collector\nCentral Log Router"
+    icon: https://icons.getbootstrap.com/assets/icons/shuffle.svg
+    style.font-size: 14
+  }
+}
+
+# Storage Systems
+storage: {
+  label: "💾 Storage Systems"
+  style.fill: "#fff3e0"
+  
+  loki: {
+    label: "Loki\n📝 Operational Logs\n6GB + 7-day retention"
+    icon: https://icons.getbootstrap.com/assets/icons/database.svg
+    style.fill: "#4caf50"
+    style.font-color: white
+  }
+  
+  quickwit: {
+    label: "Quickwit\n🛡️ Security Logs\n6GB + auto cleanup"
+    icon: https://icons.getbootstrap.com/assets/icons/search.svg
+    style.fill: "#f44336"
+    style.font-color: white
+  }
+}
+
+# Visualization & Analysis
+visualization: {
+  label: "📊 Visualization & Analysis"
+  style.fill: "#f3e5f5"
+  
+  grafana: {
+    label: "Grafana\n📈 Operational Dashboards"
+    icon: https://icons.getbootstrap.com/assets/icons/graph-up.svg
+  }
+  
+  quickwit_ui: {
+    label: "Quickwit UI\n🔍 Security Search"
+    icon: https://icons.getbootstrap.com/assets/icons/search.svg
+  }
+  
+  observable: {
+    label: "Observable Framework\n🐍 Python Analytics"
+    icon: https://icons.getbootstrap.com/assets/icons/code-square.svg
+    style.fill: "#2196f3"
+    style.font-color: white
+  }
+}
+
+# Python Data Processing
+python_processing: {
+  label: "🐍 Python Data Processing"
+  style.fill: "#e0f2f1"
+  
+  loki_loader: {
+    label: "loki-logs.py\nOperational Data Loader"
+    icon: https://icons.getbootstrap.com/assets/icons/download.svg
+  }
+  
+  quickwit_loader: {
+    label: "quickwit-logs.py\nSecurity Data Loader"
+    icon: https://icons.getbootstrap.com/assets/icons/download.svg
+  }
+  
+  json_data: {
+    label: "JSON Data Files"
+    icon: https://icons.getbootstrap.com/assets/icons/file-earmark-text.svg
+  }
+}
+
+# Interactive Dashboards
+dashboards: {
+  label: "🖥️ Interactive Dashboards"
+  style.fill: "#fce4ec"
+  
+  main_dash: {
+    label: "Main Dashboard\n📋 System Overview"
+    icon: https://icons.getbootstrap.com/assets/icons/house.svg
+  }
+  
+  ops_dash: {
+    label: "Operations Dashboard\n⚙️ System Monitoring"
+    icon: https://icons.getbootstrap.com/assets/icons/gear.svg
+  }
+  
+  sec_dash: {
+    label: "Security Dashboard\n🛡️ Threat Analysis"
+    icon: https://icons.getbootstrap.com/assets/icons/shield.svg
+  }
+}
+
+# GitOps Management
+gitops: {
+  label: "🚀 GitOps Management"
+  style.fill: "#e8eaf6"
+  
+  argocd: {
+    label: "ArgoCD\n📦 Deployment Management"
+    icon: https://icons.getbootstrap.com/assets/icons/box-arrow-in-down.svg
+    style.fill: "#ff9800"
+    style.font-color: white
+  }
+  
+  git_repo: {
+    label: "Git Repository\n📂 Configuration Source"
+    icon: https://icons.getbootstrap.com/assets/icons/folder.svg
+  }
+}
+
+# Monitoring
+monitoring: {
+  label: "📊 Metrics & Monitoring"
+  style.fill: "#e0f7fa"
+  
+  prometheus: {
+    label: "Prometheus\n📈 Metrics Collection"
+    icon: https://icons.getbootstrap.com/assets/icons/graph-up-arrow.svg
+    style.fill: "#e65100"
+    style.font-color: white
+  }
+}
+
+# Development Environment
+development: {
+  label: "🔧 Development Environment"
+  style.fill: "#f1f8e9"
+  
+  telepresence: {
+    label: "Telepresence\nLocal ↔ Remote Dev"
+    icon: https://icons.getbootstrap.com/assets/icons/arrow-left-right.svg
+    style.fill: "#795548"
+    style.font-color: white
+  }
+  
+  ai_tools: {
+    label: "AI Tools\nClaude Code, Gemini CLI"
+    icon: https://icons.getbootstrap.com/assets/icons/robot.svg
+    style.fill: "#9c27b0"
+    style.font-color: white
+  }
+}
+
+# Data Flow Connections
+data_sources.fluent_bit -> processing.otel
+data_sources.app_logs -> data_sources.fluent_bit
+data_sources.sys_logs -> data_sources.fluent_bit
+data_sources.audit_logs -> data_sources.fluent_bit
+data_sources.k8s_logs -> data_sources.fluent_bit
+
+processing.otel -> storage.loki
+processing.otel -> storage.quickwit
+
+storage.loki -> visualization.grafana
+storage.loki -> python_processing.loki_loader
+storage.quickwit -> visualization.quickwit_ui
+storage.quickwit -> python_processing.quickwit_loader
+
+python_processing.loki_loader -> python_processing.json_data
+python_processing.quickwit_loader -> python_processing.json_data
+python_processing.json_data -> visualization.observable
+
+visualization.observable -> dashboards.main_dash
+visualization.observable -> dashboards.ops_dash
+visualization.observable -> dashboards.sec_dash
+
+# GitOps Flow
+gitops.git_repo -> gitops.argocd
+gitops.argocd -> storage.loki: {style.stroke-dash: 5}
+gitops.argocd -> storage.quickwit: {style.stroke-dash: 5}
+gitops.argocd -> visualization.grafana: {style.stroke-dash: 5}
+gitops.argocd -> visualization.observable: {style.stroke-dash: 5}
+gitops.argocd -> monitoring.prometheus: {style.stroke-dash: 5}
+gitops.argocd -> processing.otel: {style.stroke-dash: 5}
+gitops.argocd -> data_sources.fluent_bit: {style.stroke-dash: 5}
+
+# Development Integration
+development.telepresence -> visualization.observable: {style.stroke: "#ff5722"; style.stroke-width: 3}
+development.ai_tools -> development.telepresence: {style.stroke: "#9c27b0"; style.stroke-width: 2}

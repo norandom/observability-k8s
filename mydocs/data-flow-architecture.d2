@@ -1,0 +1,165 @@
+# Data Flow Architecture - Python + JavaScript Hybrid
+
+direction: right
+
+# Log APIs
+apis: {
+  label: "Log APIs\n(Loki + Quickwit)"
+  style.fill: "#2196f3"
+  style.font-color: white
+  icon: https://icons.getbootstrap.com/assets/icons/cloud.svg
+  
+  loki_api: {
+    label: "Loki API\nOperational Logs"
+    style.fill: "#4caf50"
+    style.font-color: white
+  }
+  
+  quickwit_api: {
+    label: "Quickwit API\nSecurity Logs"
+    style.fill: "#f44336"
+    style.font-color: white
+  }
+}
+
+# Python Processing
+python: {
+  label: "Python Loaders\n(Data Processing)"
+  style.fill: "#ff9800"
+  style.font-color: white
+  icon: https://icons.getbootstrap.com/assets/icons/cpu.svg
+  
+  processing_note: {
+    label: "Data extraction, aggregation,\nanalytics, health scoring"
+    style.fill: "#fff3e0"
+    style.font-color: "#e65100"
+    style.font-size: 12
+  }
+}
+
+# JSON Data Layer
+json: {
+  label: "JSON Files\n(Data Layer)"
+  style.fill: "#9c27b0"
+  style.font-color: white
+  icon: https://icons.getbootstrap.com/assets/icons/file-earmark-code.svg
+  
+  files: {
+    label: "loki-logs.json\nquickwit-logs.json"
+    style.fill: "#e1bee7"
+    style.font-color: "#4a148c"
+    style.font-size: 12
+  }
+}
+
+# Observable Framework
+observable: {
+  label: "Observable Framework\n(JavaScript + Visualization)"
+  style.fill: "#607d8b"
+  style.font-color: white
+  icon: https://icons.getbootstrap.com/assets/icons/bar-chart.svg
+  
+  processing_note: {
+    label: "JavaScript data processing,\nObservable Plot charts"
+    style.fill: "#eceff1"
+    style.font-color: "#263238"
+    style.font-size: 12
+  }
+}
+
+# Browser Dashboard
+browser: {
+  label: "Dashboard\n(User Interface)"
+  style.fill: "#795548"
+  style.font-color: white
+  icon: https://icons.getbootstrap.com/assets/icons/display.svg
+  
+  features: {
+    label: "Interactive visualizations,\nreal-time updates"
+    style.fill: "#d7ccc8"
+    style.font-color: "#3e2723"
+    style.font-size: 12
+  }
+}
+
+# Development Environment
+development: {
+  label: "🔧 Development Tools"
+  style.fill: "#e0f2f1"
+  
+  telepresence: {
+    label: "Telepresence\nLocal ↔ Remote"
+    style.fill: "#00695c"
+    style.font-color: white
+  }
+  
+  ai_tools: {
+    label: "Claude Code\nGemini CLI"
+    style.fill: "#1976d2"
+    style.font-color: white
+  }
+  
+  local_edit: {
+    label: "Local Editing\nLive Sync"
+    style.fill: "#388e3c"
+    style.font-color: white
+  }
+}
+
+# Data Flow Steps
+apis -> python: {
+  label: "1. HTTP API Calls"
+  style.stroke: "#2196f3"
+  style.stroke-width: 3
+}
+
+python -> json: {
+  label: "2. Structured Data Output"
+  style.stroke: "#ff9800"
+  style.stroke-width: 3
+}
+
+json -> observable: {
+  label: "3. FileAttachment().json()"
+  style.stroke: "#9c27b0"
+  style.stroke-width: 3
+}
+
+observable -> browser: {
+  label: "4. Rendered Dashboard"
+  style.stroke: "#607d8b"
+  style.stroke-width: 3
+}
+
+# Development Flow
+development.ai_tools -> development.local_edit: {
+  label: "AI Assistance"
+  style.stroke: "#1976d2"
+  style.stroke-width: 2
+}
+
+development.local_edit -> development.telepresence: {
+  label: "File Changes"
+  style.stroke: "#388e3c"
+  style.stroke-width: 2
+}
+
+development.telepresence -> observable: {
+  label: "Live Sync"
+  style.stroke: "#00695c"
+  style.stroke-width: 3
+  style.stroke-dash: 5
+}
+
+# API Details
+apis.loki_api -> python: {
+  label: "LogQL Queries\nTime-series data"
+  style.stroke: "#4caf50"
+  style.stroke-width: 2
+}
+
+apis.quickwit_api -> python: {
+  label: "Search API\nSecurity events"
+  style.stroke: "#f44336"
+  style.stroke-width: 2
+}

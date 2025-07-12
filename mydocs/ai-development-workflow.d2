@@ -1,0 +1,230 @@
+# AI-Powered Development Workflow
+
+direction: down
+
+# Local Development Environment
+local_env: {
+  label: "💻 Local Development Environment"
+  style.fill: "#e3f2fd"
+  
+  ai_tools: {
+    label: "AI Tools"
+    style.fill: "#1976d2"
+    style.font-color: white
+    
+    claude_code: {
+      label: "Claude Code\nVS Code Extension"
+      icon: https://icons.getbootstrap.com/assets/icons/code-square.svg
+    }
+    
+    gemini_cli: {
+      label: "Gemini CLI\nCommand Line AI"
+      icon: https://icons.getbootstrap.com/assets/icons/terminal.svg
+    }
+  }
+  
+  local_files: {
+    label: "Local Filesystem\nsrc/dashboards/"
+    style.fill: "#4caf50"
+    style.font-color: white
+    icon: https://icons.getbootstrap.com/assets/icons/folder.svg
+  }
+  
+  editors: {
+    label: "Development Tools"
+    style.fill: "#ff9800"
+    style.font-color: white
+    
+    vscode: {
+      label: "VS Code\nFull IDE"
+    }
+    
+    terminal: {
+      label: "Terminal\nCommand Line"
+    }
+  }
+}
+
+# Telepresence Bridge
+telepresence: {
+  label: "🌉 Telepresence Sync"
+  style.fill: "#795548"
+  style.font-color: white
+  
+  intercept: {
+    label: "Traffic Intercept\nCluster → Local"
+    style.fill: "#8d6e63"
+    style.font-color: white
+  }
+  
+  filesystem_mount: {
+    label: "Filesystem Mount\nLocal ↔ Remote"
+    style.fill: "#6d4c41"
+    style.font-color: white
+  }
+}
+
+# Kubernetes Container
+k8s_container: {
+  label: "☸️ Kubernetes Container"
+  style.fill: "#326ce5"
+  style.font-color: white
+  
+  observable_pod: {
+    label: "Observable Framework Pod\n/app/src/"
+    style.fill: "#1565c0"
+    style.font-color: white
+    icon: https://icons.getbootstrap.com/assets/icons/box.svg
+  }
+  
+  hot_reload: {
+    label: "Hot Reload\nAutomatic Updates"
+    style.fill: "#0d47a1"
+    style.font-color: white
+  }
+}
+
+# Live Dashboard
+dashboard: {
+  label: "🖥️ Live Dashboard"
+  style.fill: "#e1f5fe"
+  
+  web_interface: {
+    label: "observable.k3s.local\nLive Dashboard"
+    style.fill: "#03a9f4"
+    style.font-color: white
+    icon: https://icons.getbootstrap.com/assets/icons/display.svg
+  }
+  
+  real_time_data: {
+    label: "Real-time Data\nKubernetes APIs"
+    style.fill: "#0288d1"
+    style.font-color: white
+  }
+}
+
+# Cluster Data Sources
+cluster_data: {
+  label: "📊 Cluster Data Sources"
+  style.fill: "#f3e5f5"
+  
+  loki_api: {
+    label: "Loki API\nOperational Logs"
+    style.fill: "#4caf50"
+    style.font-color: white
+  }
+  
+  quickwit_api: {
+    label: "Quickwit API\nSecurity Logs"
+    style.fill: "#f44336"
+    style.font-color: white
+  }
+  
+  prometheus: {
+    label: "Prometheus\nMetrics Data"
+    style.fill: "#ff9800"
+    style.font-color: white
+  }
+}
+
+# Development Flow
+local_env.ai_tools.claude_code -> local_env.local_files: {
+  label: "AI-Generated Code"
+  style.stroke: "#1976d2"
+  style.stroke-width: 3
+}
+
+local_env.ai_tools.gemini_cli -> local_env.local_files: {
+  label: "CLI Assistance"
+  style.stroke: "#9c27b0"
+  style.stroke-width: 2
+}
+
+local_env.local_files -> telepresence.filesystem_mount: {
+  label: "File Changes"
+  style.stroke: "#4caf50"
+  style.stroke-width: 3
+}
+
+telepresence.filesystem_mount -> k8s_container.observable_pod: {
+  label: "Live Sync"
+  style.stroke: "#795548"
+  style.stroke-width: 3
+}
+
+k8s_container.hot_reload -> dashboard.web_interface: {
+  label: "Automatic Refresh"
+  style.stroke: "#326ce5"
+  style.stroke-width: 3
+}
+
+# Data Access
+telepresence.intercept -> cluster_data.loki_api: {
+  label: "Local API Access"
+  style.stroke: "#4caf50"
+  style.stroke-width: 2
+  style.stroke-dash: 5
+}
+
+telepresence.intercept -> cluster_data.quickwit_api: {
+  label: "Local API Access"
+  style.stroke: "#f44336"
+  style.stroke-width: 2
+  style.stroke-dash: 5
+}
+
+telepresence.intercept -> cluster_data.prometheus: {
+  label: "Local API Access"
+  style.stroke: "#ff9800"
+  style.stroke-width: 2
+  style.stroke-dash: 5
+}
+
+# Real-time Data Flow
+cluster_data.loki_api -> dashboard.real_time_data: {
+  label: "Live Data"
+  style.stroke: "#4caf50"
+  style.stroke-width: 2
+}
+
+cluster_data.quickwit_api -> dashboard.real_time_data: {
+  label: "Live Data"
+  style.stroke: "#f44336"
+  style.stroke-width: 2
+}
+
+cluster_data.prometheus -> dashboard.real_time_data: {
+  label: "Live Data"
+  style.stroke: "#ff9800"
+  style.stroke-width: 2
+}
+
+# Development Benefits
+benefits: {
+  label: "✅ Development Benefits"
+  style.fill: "#e8f5e8"
+  
+  instant_feedback: {
+    label: "Instant Feedback\nSee changes immediately"
+    style.fill: "#66bb6a"
+    style.font-color: white
+  }
+  
+  ai_integration: {
+    label: "AI Integration\nClaude Code + Gemini CLI"
+    style.fill: "#ab47bc"
+    style.font-color: white
+  }
+  
+  live_data: {
+    label: "Live Data Access\nReal Kubernetes APIs"
+    style.fill: "#42a5f5"
+    style.font-color: white
+  }
+  
+  local_tools: {
+    label: "Local Tools\nFull IDE capabilities"
+    style.fill: "#ff7043"
+    style.font-color: white
+  }
+}

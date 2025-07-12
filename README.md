@@ -4,8 +4,8 @@
 
 ![AI-Powered Dashboard Development](mydocs/output/ai-development-workflow.png)
 
-**🎬 [View Interactive Animation Demo →](https://norandom.github.io/observability-k8s/mydocs/animated-workflow.html)**
-*See the AI + Telepresence + Kubernetes workflow in action*
+**🎬 Interactive Animation Demo: `mydocs/animated-workflow.html`**
+*Open locally to see the AI + Telepresence + Kubernetes workflow in action*
 
 ## 🚀 Quick Start: Live Development
 
@@ -50,7 +50,7 @@ Experience **Python data processing** with **Interactive JavaScript visualizatio
 ## 📋 Table of Contents
 
 ### **🚀 Development Workflows**
-1. [🎬 Interactive Animation Demo](https://norandom.github.io/observability-k8s/mydocs/animated-workflow.html) - **See the workflow in action**
+1. [🎬 Interactive Animation Demo](mydocs/animated-workflow.html) - **See the workflow in action**
 2. [Live Development Setup](#live-development-setup) - **Start here for hands-on development**
 3. [Telepresence Integration](#telepresence-integration) - **Mount remote containers locally**
 4. [AI Tools Integration](#ai-tools-integration) - **Claude Code + Gemini CLI workflows**

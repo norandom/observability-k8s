@@ -10,6 +10,9 @@ on:
     paths:
       - 'mydocs/**'
 
+permissions:
+  contents: write
+
 jobs:
   build-diagrams:
     runs-on: ubuntu-latest

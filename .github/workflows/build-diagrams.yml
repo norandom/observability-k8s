@@ -68,6 +68,14 @@ jobs:
         git config --local user.signingkey ~/.ssh/id_rsa.pub
         git config --local commit.gpgsign true
         
+        # Debug: Show git config
+        echo "Git configuration:"
+        git config --list | grep -E "(user\.|gpg\.|signing)"
+        
+        # Test SSH key
+        echo "Testing SSH key:"
+        ssh-keygen -l -f ~/.ssh/id_rsa.pub
+        
     - name: Commit and push built diagrams
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       run: |
@@ -77,7 +85,13 @@ jobs:
         if git diff --staged --quiet; then
           echo "No changes to commit"
         else
-          git commit -m "Auto-build D2 diagrams
+          echo "Creating signed commit..."
+          
+          # Debug: Check git signing config before commit
+          echo "Final git config check:"
+          git config --get-regexp "^(user|gpg|commit)" || true
+          
+          git commit -S -m "Auto-build D2 diagrams
 
           Generated from D2 source files in mydocs/
           
@@ -85,6 +99,10 @@ jobs:
           
           Files updated:
           $(ls mydocs/output/ 2>/dev/null | sed 's/^/- /' || echo '- No files generated')"
+          
+          # Debug: Verify the commit was signed
+          echo "Verifying commit signature:"
+          git log --show-signature -1 --pretty=format:"%h %s" || true
           
           git push
         fi

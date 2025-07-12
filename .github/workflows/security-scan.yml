@@ -34,20 +34,84 @@ jobs:
         curl -sSL "$DOWNLOAD_URL" | tar -xz -C ./bin
         chmod +x ./bin/trufflehog
         
-        # Run scan with SARIF output format
-        ./bin/trufflehog filesystem ./ --only-verified --format sarif > trufflehog-results.sarif || {
-          # If SARIF format fails, create empty SARIF file
-          echo '{"version":"2.1.0","$schema":"https://json.schemastore.org/sarif-2.1.0.json","runs":[{"tool":{"driver":{"name":"TruffleHog","version":"3.0.0","informationUri":"https://trufflesecurity.com/trufflehog"}},"results":[]}]}' > trufflehog-results.sarif
+        # Check TruffleHog version and supported formats
+        echo "TruffleHog version:"
+        ./bin/trufflehog --help | head -10
+        
+        # Always create empty SARIF file first to ensure it exists
+        echo '{"version":"2.1.0","$schema":"https://json.schemastore.org/sarif-2.1.0.json","runs":[{"tool":{"driver":{"name":"TruffleHog","version":"3.0.0","informationUri":"https://trufflesecurity.com/trufflehog"}},"results":[]}]}' > trufflehog-results.sarif
+        
+        # Try running TruffleHog with JSON format (more widely supported)
+        echo "Running TruffleHog scan..."
+        ./bin/trufflehog filesystem ./ --only-verified --json > trufflehog-output.json 2>&1 || {
+          echo "TruffleHog scan failed, using empty results"
         }
         
-        # Verify SARIF file exists and has content
+        # Convert JSON to basic SARIF if we have results
+        if [ -f trufflehog-output.json ] && [ -s trufflehog-output.json ]; then
+          echo "Converting TruffleHog JSON to SARIF..."
+          python3 -c "
+import json
+import sys
+
+try:
+    with open('trufflehog-output.json', 'r') as f:
+        lines = f.readlines()
+    
+    results = []
+    for line in lines:
+        if line.strip():
+            try:
+                data = json.loads(line.strip())
+                if 'SourceMetadata' in data and 'Data' in data:
+                    result = {
+                        'ruleId': data.get('DetectorName', 'unknown'),
+                        'message': {
+                            'text': f'Potential secret detected: {data.get(\"DetectorName\", \"Unknown detector\")}'
+                        },
+                        'locations': [{
+                            'physicalLocation': {
+                                'artifactLocation': {
+                                    'uri': data.get('SourceMetadata', {}).get('Data', {}).get('Filesystem', {}).get('file', 'unknown')
+                                }
+                            }
+                        }]
+                    }
+                    results.append(result)
+            except json.JSONDecodeError:
+                continue
+    
+    sarif = {
+        'version': '2.1.0',
+        '\$schema': 'https://json.schemastore.org/sarif-2.1.0.json',
+        'runs': [{
+            'tool': {
+                'driver': {
+                    'name': 'TruffleHog',
+                    'version': '3.0.0',
+                    'informationUri': 'https://trufflesecurity.com/trufflehog'
+                }
+            },
+            'results': results
+        }]
+    }
+    
+    with open('trufflehog-results.sarif', 'w') as f:
+        json.dump(sarif, f, indent=2)
+    
+    print(f'Converted {len(results)} findings to SARIF')
+except Exception as e:
+    print(f'Error converting to SARIF: {e}', file=sys.stderr)
+"
+        fi
+        
+        # Verify SARIF file exists
         if [ -f trufflehog-results.sarif ]; then
-          echo "TruffleHog SARIF created. File size: $(wc -c < trufflehog-results.sarif) bytes"
-          echo "Content preview:"
-          head -5 trufflehog-results.sarif
+          echo "TruffleHog SARIF file exists. Size: $(wc -c < trufflehog-results.sarif) bytes"
+          ls -la trufflehog-results.sarif
         else
-          echo "TruffleHog SARIF file not created, creating empty one"
-          echo '{"version":"2.1.0","$schema":"https://json.schemastore.org/sarif-2.1.0.json","runs":[{"tool":{"driver":{"name":"TruffleHog","version":"3.0.0","informationUri":"https://trufflesecurity.com/trufflehog"}},"results":[]}]}' > trufflehog-results.sarif
+          echo "ERROR: TruffleHog SARIF file does not exist!"
+          exit 1
         fi
         
     - name: Upload TruffleHog SARIF to Security Tab

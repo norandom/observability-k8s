@@ -53,22 +53,13 @@ github_actions: {
     style.font-color: white
     
     trufflehog: {
-      label: "TruffleHog\nSecret Scan"
+      label: "TruffleHog\nSecret Detection"
       icon: https://icons.getbootstrap.com/assets/icons/shield-lock.svg
     }
     
-    kubesec: {
-      label: "Kubesec\nK8s Security"
-    }
-    
     trivy: {
-      label: "Trivy\nContainer Scan"
+      label: "Trivy\nKubernetes Security"
       icon: https://icons.getbootstrap.com/assets/icons/box.svg
-    }
-    
-    yamllint: {
-      label: "YAML\nLint Check"
-      icon: https://icons.getbootstrap.com/assets/icons/file-text.svg
     }
     
     summary: {
@@ -138,7 +129,7 @@ artifacts: {
   style.stroke: "#dee2e6"
   
   sarif: {
-    label: "SARIF Security\nReports"
+    label: "SARIF Security\nReports (GitHub)"
     icon: https://icons.getbootstrap.com/assets/icons/file-code.svg
     style.fill: "#dc3545"
     style.font-color: white
@@ -151,10 +142,10 @@ artifacts: {
     style.font-color: white
   }
   
-  fixed_yaml: {
-    label: "Fixed YAML\nFiles"
-    icon: https://icons.getbootstrap.com/assets/icons/file-check.svg
-    style.fill: "#6f42c1"
+  github_security: {
+    label: "GitHub Security\nTab Integration"
+    icon: https://icons.getbootstrap.com/assets/icons/shield-check.svg
+    style.fill: "#28a745"
     style.font-color: white
   }
   
@@ -275,9 +266,7 @@ triggers.manual -> github_actions.yaml_fix
 
 # Security workflow flows
 github_actions.security_scan.trufflehog -> github_actions.security_scan.summary
-github_actions.security_scan.kubesec -> github_actions.security_scan.summary
 github_actions.security_scan.trivy -> github_actions.security_scan.summary
-github_actions.security_scan.yamllint -> github_actions.security_scan.summary
 
 # Workflow to outputs
 github_actions.security_scan.summary -> artifacts.sarif
@@ -286,6 +275,9 @@ github_actions.build_diagrams.commit -> artifacts.diagrams
 github_actions.yaml_fix.commit_fixes -> artifacts.fixed_yaml
 github_actions.standalone_trufflehog.report -> artifacts.pr_comments
 github_actions.build_diagrams.commit -> artifacts.pr_comments
+
+# Security integration
+artifacts.sarif -> artifacts.github_security: "SARIF Upload"
 
 # Git integration
 artifacts.diagrams -> github: "Auto-commit"
@@ -322,37 +314,31 @@ github_actions.standalone_trufflehog.scan -> github_actions.standalone_truffleho
 
 # Add legend
 legend: {
-  label: "Legend"
+  label: "Legend & Key Features"
   style.fill: "#f8f9fa"
   style.stroke: "#dee2e6"
   
-  ci_cd: {
-    label: "CI/CD Automation"
-    style.fill: "#007bff"
-    style.font-color: white
-  }
-  
   security: {
-    label: "Security Scanning"
+    label: "Streamlined Security\n(TruffleHog + Trivy)"
     style.fill: "#dc3545"
     style.font-color: white
   }
   
-  build: {
-    label: "Build & Deploy"
+  github_integration: {
+    label: "GitHub Security\nTab Integration"
     style.fill: "#28a745"
     style.font-color: white
   }
   
-  gitops: {
-    label: "GitOps Flow"
-    style.fill: "#326ce5"
+  automation: {
+    label: "Full CI/CD\nAutomation"
+    style.fill: "#007bff"
     style.font-color: white
   }
   
-  running: {
-    label: "Running Apps"
-    style.fill: "#20c997"
+  gitops: {
+    label: "GitOps\nDeployment"
+    style.fill: "#326ce5"
     style.font-color: white
   }
 }

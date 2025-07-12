@@ -2,7 +2,7 @@
 
 **Live dashboard development with Kubernetes-hosted containers and AI-powered tools**
 
-![CI/CD Pipeline](mydocs/output/cicd-pipeline.png)
+![AI-Powered Dashboard Development](mydocs/output/ai-development-workflow.png)
 
 ## 🚀 Quick Start: Live Development
 

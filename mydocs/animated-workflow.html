@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Development Workflow - Animated</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            max-width: 1000px;
+            text-align: center;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #1D1D1F;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        .diagram-container {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            margin: 20px 0;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .diagram-frame {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .diagram-frame.active {
+            opacity: 1;
+        }
+        
+        .diagram-frame img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,122,255,0.3);
+        }
+        
+        .btn:hover {
+            background: #0056CC;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,122,255,0.4);
+        }
+        
+        .btn.secondary {
+            background: #5856D6;
+            box-shadow: 0 4px 12px rgba(88,86,214,0.3);
+        }
+        
+        .btn.secondary:hover {
+            background: #4B4ACB;
+            box-shadow: 0 6px 16px rgba(88,86,214,0.4);
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #E5E5EA;
+            border-radius: 3px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #007AFF, #5856D6);
+            transition: width 0.8s ease;
+            border-radius: 3px;
+        }
+        
+        .step-info {
+            background: #F8F9FA;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #007AFF;
+        }
+        
+        .step-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #1D1D1F;
+            margin-bottom: 8px;
+        }
+        
+        .step-description {
+            color: #6C6C70;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 AI-Powered Dashboard Development</h1>
+        <p style="color: #6C6C70; font-size: 1.2em; margin-bottom: 30px;">
+            Watch how AI tools, Telepresence, and Kubernetes create the ultimate development experience
+        </p>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <div class="diagram-container">
+            <div class="diagram-frame active" data-step="0">
+                <img src="output/ai-workflow-animated-step1.png" alt="Step 1: AI Development Environment" />
+            </div>
+            <div class="diagram-frame" data-step="1">
+                <img src="output/ai-workflow-animated-step2.png" alt="Step 2: Telepresence Bridge" />
+            </div>
+            <div class="diagram-frame" data-step="2">
+                <img src="output/ai-workflow-animated-step3.png" alt="Step 3: Kubernetes Integration" />
+            </div>
+            <div class="diagram-frame" data-step="3">
+                <img src="output/ai-development-workflow.png" alt="Step 4: Complete Flow" />
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn secondary" onclick="prevStep()">⬅ Previous</button>
+            <button class="btn" onclick="toggleAutoPlay()" id="playBtn">▶ Auto Play</button>
+            <button class="btn secondary" onclick="nextStep()">Next ➡</button>
+        </div>
+        
+        <div class="step-info" id="stepInfo">
+            <div class="step-title">Step 1: AI Development Environment</div>
+            <div class="step-description">Start with your laptop and AI tools like Claude Code or Gemini CLI. The AI helps you write Observable Framework dashboard code locally.</div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 0;
+        let isAutoPlaying = false;
+        let autoPlayInterval;
+        
+        const steps = [
+            {
+                title: "Step 1: AI Development Environment",
+                description: "Start with your laptop and AI tools like Claude Code or Gemini CLI. The AI helps you write Observable Framework dashboard code locally."
+            },
+            {
+                title: "Step 2: Telepresence Bridge Connection", 
+                description: "Telepresence creates a magic bridge that syncs your local file changes instantly to the remote Kubernetes environment."
+            },
+            {
+                title: "Step 3: Kubernetes Integration",
+                description: "Your code changes are mounted directly into the Observable Framework pod running in Kubernetes with live data."
+            },
+            {
+                title: "Step 4: Complete Development Flow",
+                description: "The complete flow: AI writes code → Local files sync → Kubernetes mounts → Live dashboard with real data. Development superpowers unlocked! 🚀"
+            }
+        ];
+        
+        function updateDisplay() {
+            // Update diagram frames
+            document.querySelectorAll('.diagram-frame').forEach((frame, index) => {
+                frame.classList.toggle('active', index === currentStep);
+            });
+            
+            // Update progress bar
+            const progress = ((currentStep + 1) / steps.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            
+            // Update step info
+            const stepInfo = document.getElementById('stepInfo');
+            stepInfo.querySelector('.step-title').textContent = steps[currentStep].title;
+            stepInfo.querySelector('.step-description').textContent = steps[currentStep].description;
+        }
+        
+        function nextStep() {
+            currentStep = (currentStep + 1) % steps.length;
+            updateDisplay();
+        }
+        
+        function prevStep() {
+            currentStep = (currentStep - 1 + steps.length) % steps.length;
+            updateDisplay();
+        }
+        
+        function toggleAutoPlay() {
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isAutoPlaying) {
+                clearInterval(autoPlayInterval);
+                playBtn.textContent = '▶ Auto Play';
+                isAutoPlaying = false;
+            } else {
+                autoPlayInterval = setInterval(nextStep, 3000);
+                playBtn.textContent = '⏸ Pause';
+                isAutoPlaying = true;
+            }
+        }
+        
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                nextStep();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                prevStep();
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                toggleAutoPlay();
+            }
+        });
+        
+        // Initialize
+        updateDisplay();
+    </script>
+</body>
+</html>

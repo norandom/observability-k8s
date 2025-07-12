@@ -1,0 +1,117 @@
+# AI Development Workflow - Animation Step 3: Add Kubernetes
+# Third frame: Add Kubernetes cluster
+
+direction: down
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+    elk-node-spacing: 80
+    elk-layer-spacing: 100
+  }
+}
+
+classes: {
+  laptop: {
+    style.fill: "#F8F9FA"
+    style.font-color: "#1D1D1F" 
+    style.border-radius: 16
+    style.font-size: 20
+    style.bold: true
+    style.stroke: "#D1D1D6"
+    style.stroke-width: 2
+    style.shadow: true
+  }
+  ai: {
+    style.fill: "#5856D6"
+    style.font-color: "#FFFFFF"
+    style.border-radius: 12
+    style.font-size: 16
+    style.bold: true
+    style.shadow: true
+  }
+  bridge: {
+    style.fill: "#FF9500"
+    style.font-color: "#FFFFFF" 
+    style.border-radius: 12
+    style.font-size: 16
+    style.bold: true
+    style.shadow: true
+  }
+  cluster: {
+    style.fill: "#007AFF"
+    style.font-color: "#FFFFFF"
+    style.border-radius: 16
+    style.font-size: 20
+    style.bold: true
+    style.shadow: true
+  }
+  tool: {
+    style.fill: "#FFFFFF"
+    style.font-color: "#1D1D1F"
+    style.border-radius: 8
+    style.font-size: 14
+    style.stroke: "#D1D1D6"
+    style.stroke-width: 1
+  }
+}
+
+# 💻 Your Development Environment
+laptop_env: {
+  label: "💻 Your Laptop"
+  class: laptop
+
+  ai_tools: {
+    label: "🤖 AI Development Tools"
+    class: ai
+  }
+  
+  local_files: {
+    label: "📁 Dashboard Code\n(Observable Framework)"
+    class: tool
+  }
+  
+  vs_code: {
+    label: "⚡ VS Code / IDE"
+    class: tool
+  }
+}
+
+# 🌉 Telepresence Bridge
+telepresence: {
+  label: "🌉 Telepresence Bridge\n\"Mount Remote as Local\""
+  class: bridge
+}
+
+# ☸️ Kubernetes Cluster
+k8s_cluster: {
+  label: "☸️ Kubernetes Cluster"
+  class: cluster
+  
+  observable_pod: {
+    label: "📊 Observable Pod\n(Live Data + Processing)"
+    class: tool
+  }
+}
+
+# Animation flow
+laptop_env.ai_tools -> laptop_env.local_files: "✨ AI writes\ndashboard code" {
+  style.stroke: "#5856D6"
+  style.stroke-width: 4
+  style.font-size: 14
+  style.bold: true
+}
+
+laptop_env.local_files -> telepresence: "📤 File changes\nsync instantly" {
+  style.stroke: "#FF9500"
+  style.stroke-width: 4
+  style.font-size: 14
+  style.bold: true
+}
+
+telepresence -> k8s_cluster.observable_pod: "🔄 Live mount\nto K8s pod" {
+  style.stroke: "#FF9500"
+  style.stroke-width: 4
+  style.font-size: 14
+  style.bold: true
+}

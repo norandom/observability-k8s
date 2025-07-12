@@ -23,8 +23,8 @@ jobs:
     - name: Install D2
       run: |
         curl -fsSL https://d2lang.com/install.sh | sh -s --
-        sudo mv d2 /usr/local/bin/
-        d2 --version
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+        ~/.local/bin/d2 --version
         
     - name: Create output directory
       run: mkdir -p mydocs/output
@@ -47,6 +47,7 @@ jobs:
       run: |
         echo "Generated files:"
         ls -la mydocs/output/ || echo "No output files generated"
+        echo "File count: $(ls mydocs/output/ 2>/dev/null | wc -l)"
         
     - name: Configure Git
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'

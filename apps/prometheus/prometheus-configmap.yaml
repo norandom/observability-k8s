@@ -146,7 +146,7 @@ data:
         metrics_path: /metrics
         scrape_interval: 30s
 
-      # Quickwit metrics  
+      # Quickwit metrics
       - job_name: 'quickwit'
         static_configs:
           - targets: ['quickwit.quickwit-system.svc.cluster.local:7280']

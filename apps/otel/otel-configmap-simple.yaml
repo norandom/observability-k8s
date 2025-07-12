@@ -19,7 +19,7 @@ data:
     exporters:
       debug:
         verbosity: basic
-      
+
       loki:
         endpoint: http://loki.loki-system.svc.cluster.local:3100/loki/api/v1/push
 

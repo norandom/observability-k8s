@@ -46,8 +46,8 @@ Experience powerful analytics with **Python data processing** and **Interactive 
 - **Enhanced RBAC configuration** for proper service account permissions
 
 ### **Developer Experience** 🚀
-- **New Teleport integration scripts** for secure container access with audit logging
-- **Auto-detection capabilities** that work with both kubectl and Teleport
+- **New Telepresence integration scripts** for seamless local-to-remote development
+- **Traffic interception capabilities** for true local development experience
 - **Dashboard templates and creation tools** for rapid development
 - **Live development workflow** with instant hot reload capabilities
 
@@ -810,27 +810,27 @@ For detailed instructions on dashboard development, container access, and demo w
 
 ## Dashboard Development Workflow (Simplified)
 
-> **New**: Observable Framework now supports live development with Teleport scripts and direct file copying - no more ConfigMaps or rebuilds needed!
+> **New**: Observable Framework now supports live development with Telepresence scripts and direct file copying - no more ConfigMaps or rebuilds needed!
 
-### **🚀 Teleport Container Access Scripts**
+### **🚀 Telepresence Development Scripts**
 
-Two powerful scripts are available for seamless Observable Framework container access:
+Two powerful scripts are available for seamless Observable Framework development:
 
-#### **Full-Featured Access: `scripts/teleport-observable-connect.sh`**
+#### **Advanced Local Development: `scripts/telepresence-observable-connect.sh`**
 ```bash
-# Interactive shell with guided prompts
-./scripts/teleport-observable-connect.sh edit-dashboard
+# Start intercepted development (traffic routed to local machine)
+./scripts/telepresence-observable-connect.sh intercept
 
-# Sync latest files from git repository  
-./scripts/teleport-observable-connect.sh sync-from-git
+# Setup local workspace with file sync
+./scripts/telepresence-observable-connect.sh local-dev
 
-# File operations with full audit logging
-./scripts/teleport-observable-connect.sh copy-to ./local-file.md /app/src/remote-file.md
+# Sync local changes to cluster
+./scripts/telepresence-observable-connect.sh sync
 ```
 
 #### **Quick Operations: `scripts/observable-dashboard-manager.sh`**
 ```bash
-# Auto-detects kubectl vs Teleport availability
+# Direct container file editing
 ./scripts/observable-dashboard-manager.sh quick-edit index.md
 
 # Create new dashboards from templates
@@ -841,11 +841,11 @@ Two powerful scripts are available for seamless Observable Framework container a
 ```
 
 **Key Features:**
-- ✅ **Teleport Integration** - Full audit logging and secure access
-- ✅ **Auto-Detection** - Works with both `kubectl` and `tsh kubectl`
+- ✅ **Telepresence Integration** - Seamless local-to-remote development workflows
+- ✅ **Traffic Interception** - Route cluster traffic to your local development server
 - ✅ **Live Development** - Instant dashboard updates with hot reload
 - ✅ **Template Creation** - Pre-configured dashboard templates
-- ✅ **Error Handling** - Comprehensive validation and helpful error messages
+- ✅ **Local Workspace** - Edit files locally while syncing to remote cluster
 
 See **[scripts/README.md](scripts/README.md)** for complete documentation.
 

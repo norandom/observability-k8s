@@ -11,7 +11,7 @@ data:
     npm install -g http-server
     cd /app
     mkdir -p public
-    
+
     # Create main index page
     cat > public/index.html << 'EOF'
     <!DOCTYPE html>
@@ -32,13 +32,13 @@ data:
     <body>
         <div class="container">
             <h1>🔍 Observability Dashboard</h1>
-            
+
             <div class="nav">
                 <a href="/">Home</a>
                 <a href="/security">Security Analysis</a>
                 <a href="/operations">Operations</a>
             </div>
-            
+
             <h2>Quick Access</h2>
             <div class="links">
                 <a href="http://grafana.k3s.local" class="link-card">
@@ -58,14 +58,14 @@ data:
                     <p>Log aggregation</p>
                 </a>
             </div>
-            
+
             <h2>Data Sources</h2>
             <ul>
                 <li><strong>Loki:</strong> http://192.168.122.27:3100 - Operational logs</li>
                 <li><strong>Quickwit:</strong> http://192.168.122.27:7280 - Security logs</li>
                 <li><strong>Prometheus:</strong> http://192.168.122.27:9090 - Metrics</li>
             </ul>
-            
+
             <h2>GitOps Workflow</h2>
             <p><strong>To add new dashboards:</strong></p>
             <ol>
@@ -74,7 +74,7 @@ data:
                 <li>Commit and push to trigger ArgoCD deployment</li>
                 <li>Access at <code>http://observable.k3s.local/your-page</code></li>
             </ol>
-            
+
             <footer style="margin-top: 40px; text-align: center; color: #7f8c8d;">
                 <p>Built with Observable Framework for observability-k8s</p>
                 <p>GitOps enabled - Add dashboards via ConfigMap</p>
@@ -83,7 +83,7 @@ data:
     </body>
     </html>
     EOF
-    
+
     # Create security dashboard
     cat > public/security.html << 'EOF'
     <!DOCTYPE html>
@@ -103,18 +103,18 @@ data:
     <body>
         <div class="container">
             <h1>🛡️ Security Analysis Dashboard</h1>
-            
+
             <div class="nav">
                 <a href="/">Home</a>
                 <a href="/security">Security Analysis</a>
                 <a href="/operations">Operations</a>
             </div>
-            
+
             <div class="status loading">
-                <strong>Note:</strong> This is a static placeholder. For full Python-powered analytics with real-time data from Quickwit, 
+                <strong>Note:</strong> This is a static placeholder. For full Python-powered analytics with real-time data from Quickwit,
                 follow the GitOps workflow in the README to implement Observable Framework with data loaders.
             </div>
-            
+
             <div class="metric-card">
                 <h3>Security Event Analysis</h3>
                 <p>Real-time security event analysis using Quickwit logs and advanced Python analytics.</p>
@@ -126,7 +126,7 @@ data:
                     <li>Automated security recommendations</li>
                 </ul>
             </div>
-            
+
             <div class="metric-card">
                 <h3>Quick Access</h3>
                 <ul>
@@ -134,7 +134,7 @@ data:
                     <li><a href="http://grafana.k3s.local">Grafana Security Dashboards</a></li>
                 </ul>
             </div>
-            
+
             <div class="metric-card">
                 <h3>To Enable Full Analytics</h3>
                 <p>Follow the complete workflow in the README:</p>
@@ -149,7 +149,7 @@ data:
     </body>
     </html>
     EOF
-    
+
     # Create operations dashboard
     cat > public/operations.html << 'EOF'
     <!DOCTYPE html>
@@ -169,18 +169,18 @@ data:
     <body>
         <div class="container">
             <h1>⚙️ Operations Dashboard</h1>
-            
+
             <div class="nav">
                 <a href="/">Home</a>
                 <a href="/security">Security Analysis</a>
                 <a href="/operations">Operations</a>
             </div>
-            
+
             <div class="status loading">
-                <strong>Note:</strong> This is a static placeholder. For full Python-powered analytics with real-time data from Loki and Prometheus, 
+                <strong>Note:</strong> This is a static placeholder. For full Python-powered analytics with real-time data from Loki and Prometheus,
                 follow the GitOps workflow in the README to implement Observable Framework with data loaders.
             </div>
-            
+
             <div class="metric-card">
                 <h3>System Performance Analysis</h3>
                 <p>Advanced operational analytics using Loki logs and Prometheus metrics with Python processing.</p>
@@ -192,7 +192,7 @@ data:
                     <li>Performance metrics and recommendations</li>
                 </ul>
             </div>
-            
+
             <div class="metric-card">
                 <h3>Quick Access</h3>
                 <ul>
@@ -201,7 +201,7 @@ data:
                     <li><a href="http://192.168.122.27:9090">Prometheus Metrics</a></li>
                 </ul>
             </div>
-            
+
             <div class="metric-card">
                 <h3>To Enable Full Analytics</h3>
                 <p>Follow the complete workflow in the README:</p>
@@ -216,5 +216,5 @@ data:
     </body>
     </html>
     EOF
-    
+
     http-server public -p 3000 -a 0.0.0.0

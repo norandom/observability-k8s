@@ -32,7 +32,7 @@ data:
               matcherRegex: "trace_id=(\w+)"
               name: TraceID
               url: "$${__value.raw}"
-      
+
       - name: Prometheus
         type: prometheus
         access: proxy
@@ -48,7 +48,7 @@ data:
           prometheusType: Prometheus
           prometheusVersion: 2.40.0
           cacheLevel: 'High'
-      
+
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -89,7 +89,7 @@ data:
         {
           "id": 2,
           "title": "Memory Usage",
-          "type": "stat", 
+          "type": "stat",
           "targets": [
             {
               "datasource": {

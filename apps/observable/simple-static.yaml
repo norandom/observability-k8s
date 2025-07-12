@@ -13,7 +13,7 @@ data:
     mkdir -p public
     cp /config/index.html public/
     http-server public -p 3000 -a 0.0.0.0
-  
+
   index.html: |+
     <!DOCTYPE html>
     <html>
@@ -33,7 +33,7 @@ data:
         <div class="container">
             <h1>🔍 Observability Dashboard</h1>
             <p>Welcome to your observability stack dashboard</p>
-            
+
             <h2>Quick Access</h2>
             <div class="links">
                 <a href="http://grafana.k3s.local" class="link-card">
@@ -53,7 +53,7 @@ data:
                     <p>Log aggregation</p>
                 </a>
             </div>
-            
+
             <h2>Architecture</h2>
             <div class="architecture">
                 <pre>
@@ -64,14 +64,14 @@ Vector/Clients → OpenTelemetry Collector → {Loki (operational), Quickwit (se
                   Prometheus (metrics)                    Data analysis
                 </pre>
             </div>
-            
+
             <h2>Data Sources</h2>
             <ul>
                 <li><strong>Loki:</strong> http://192.168.122.27:3100 - Operational logs</li>
                 <li><strong>Quickwit:</strong> http://192.168.122.27:7280 - Security logs</li>
                 <li><strong>Prometheus:</strong> http://192.168.122.27:9090 - Metrics</li>
             </ul>
-            
+
             <footer style="margin-top: 40px; text-align: center; color: #7f8c8d;">
                 <p>Built with Observable Framework for observability-k8s</p>
                 <p>Last updated: <span id="timestamp"></span></p>

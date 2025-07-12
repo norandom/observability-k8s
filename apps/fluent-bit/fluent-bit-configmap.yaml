@@ -46,7 +46,7 @@ data:
         Match kube.*
         Add cluster_name k3s-observability
         Add deployment_environment production
-        
+
     # Add log type based on namespace
     [FILTER]
         Name lua
@@ -75,7 +75,7 @@ data:
     function classify_logs(tag, timestamp, record)
         -- Add log classification based on namespace
         local namespace = record["kubernetes"]["namespace_name"]
-        
+
         -- Set log type and category
         if namespace and (namespace:match("kube%-system") or namespace:match("monitoring") or namespace:match("logging")) then
             record["log_type"] = "infrastructure"
@@ -87,7 +87,7 @@ data:
             record["log_type"] = "operational"
             record["category"] = "application"
         end
-        
+
         -- Extract service name
         if record["kubernetes"] and record["kubernetes"]["labels"] and record["kubernetes"]["labels"]["app"] then
             record["service_name"] = record["kubernetes"]["labels"]["app"]
@@ -96,7 +96,7 @@ data:
         else
             record["service_name"] = "unknown"
         end
-        
+
         -- Set severity level
         local message = record["log"] or record["message"] or ""
         if string.match(string.lower(message), "error") or string.match(string.lower(message), "exception") then
@@ -106,11 +106,11 @@ data:
         else
             record["severity_text"] = "INFO"
         end
-        
+
         -- Ensure message is in body field for OTEL compatibility
         if not record["body"] then
             record["body"] = message
         end
-        
+
         return 2, timestamp, record
     end

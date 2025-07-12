@@ -8,19 +8,19 @@ data:
   start.sh: |
     #!/bin/sh
     set -e
-    
+
     # Install simple HTTP server
     npm install -g http-server
-    
+
     # Create web content
     cd /app
     mkdir -p public
     cp /config/index.html public/
     cp /config/style.css public/
-    
+
     # Start HTTP server
     http-server public -p 3000 -a 0.0.0.0
-  
+
   index.html: |
     <!DOCTYPE html>
     <html lang="en">
@@ -36,7 +36,7 @@ data:
             <h1>🔍 Observability Dashboard</h1>
             <p>Real-time monitoring and analysis for your observability stack</p>
         </header>
-        
+
         <main>
             <section class="quick-links">
                 <h2>Quick Access</h2>
@@ -59,7 +59,7 @@ data:
                     </a>
                 </div>
             </section>
-            
+
             <section class="data-sources">
                 <h2>Data Sources</h2>
                 <div class="sources-grid">
@@ -80,7 +80,7 @@ data:
                     </div>
                 </div>
             </section>
-            
+
             <section class="architecture">
                 <h2>Architecture Flow</h2>
                 <div class="architecture-diagram">
@@ -93,7 +93,7 @@ Vector/Clients → OpenTelemetry Collector → {Loki (operational), Quickwit (se
                     </pre>
                 </div>
             </section>
-            
+
             <section class="status">
                 <h2>System Status</h2>
                 <div id="status-indicators">
@@ -116,16 +116,16 @@ Vector/Clients → OpenTelemetry Collector → {Loki (operational), Quickwit (se
                 </div>
             </section>
         </main>
-        
+
         <footer>
             <p>🔗 Built with Observable Framework for observability-k8s</p>
             <p>📅 Last updated: <span id="timestamp"></span></p>
         </footer>
-        
+
         <script>
             // Update timestamp
             document.getElementById('timestamp').textContent = new Date().toLocaleString();
-            
+
             // Simple status checking (basic implementation)
             function checkServiceStatus(service, elementId) {
                 // This is a simplified status indicator
@@ -134,21 +134,21 @@ Vector/Clients → OpenTelemetry Collector → {Loki (operational), Quickwit (se
                     document.getElementById(elementId).className = 'status-dot online';
                 }, Math.random() * 2000 + 1000);
             }
-            
+
             checkServiceStatus('grafana', 'grafana-status');
             checkServiceStatus('quickwit', 'quickwit-status');
             checkServiceStatus('loki', 'loki-status');
         </script>
     </body>
     </html>
-  
+
   style.css: |
     * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
     }
-    
+
     body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         line-height: 1.6;
@@ -156,7 +156,7 @@ Vector/Clients → OpenTelemetry Collector → {Loki (operational), Quickwit (se
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         min-height: 100vh;
     }
-    
+
     header {
         background: rgba(255,255,255,0.95);
         padding: 2rem;
@@ -164,19 +164,19 @@ Vector/Clients → OpenTelemetry Collector → {Loki (operational), Quickwit (se
         margin-bottom: 2rem;
         backdrop-filter: blur(10px);
     }
-    
+
     header h1 {
         font-size: 2.5rem;
         margin-bottom: 0.5rem;
         color: #2c3e50;
     }
-    
+
     main {
         max-width: 1200px;
         margin: 0 auto;
         padding: 0 2rem;
     }
-    
+
     section {
         background: rgba(255,255,255,0.95);
         margin-bottom: 2rem;
@@ -185,19 +185,19 @@ Vector/Clients → OpenTelemetry Collector → {Loki (operational), Quickwit (se
         backdrop-filter: blur(10px);
         box-shadow: 0 8px 32px rgba(0,0,0,0.1);
     }
-    
+
     h2 {
         color: #2c3e50;
         margin-bottom: 1.5rem;
         font-size: 1.8rem;
     }
-    
+
     .links-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         gap: 1.5rem;
     }
-    
+
     .service-link {
         display: block;
         padding: 1.5rem;
@@ -206,34 +206,34 @@ Vector/Clients → OpenTelemetry Collector → {Loki (operational), Quickwit (se
         border-radius: 8px;
         transition: transform 0.2s ease;
     }
-    
+
     .service-link:hover {
         transform: translateY(-4px);
     }
-    
+
     .grafana { background: linear-gradient(135deg, #ff6b35, #f7931e); }
     .quickwit { background: linear-gradient(135deg, #4facfe, #00f2fe); }
     .argocd { background: linear-gradient(135deg, #43e97b, #38f9d7); }
     .loki { background: linear-gradient(135deg, #667eea, #764ba2); }
-    
+
     .service-link h3 {
         margin-bottom: 0.5rem;
         font-size: 1.2rem;
     }
-    
+
     .sources-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 1rem;
     }
-    
+
     .source-card {
         padding: 1.5rem;
         border-left: 4px solid #667eea;
         background: #f8f9fa;
         border-radius: 4px;
     }
-    
+
     .endpoint {
         font-family: 'Courier New', monospace;
         background: #e9ecef;
@@ -241,7 +241,7 @@ Vector/Clients → OpenTelemetry Collector → {Loki (operational), Quickwit (se
         border-radius: 4px;
         font-size: 0.9rem;
     }
-    
+
     .architecture-diagram pre {
         background: #f8f9fa;
         padding: 1.5rem;
@@ -250,45 +250,45 @@ Vector/Clients → OpenTelemetry Collector → {Loki (operational), Quickwit (se
         font-family: 'Courier New', monospace;
         color: #495057;
     }
-    
+
     #status-indicators {
         display: flex;
         flex-wrap: wrap;
         gap: 2rem;
     }
-    
+
     .status-item {
         display: flex;
         align-items: center;
         gap: 0.5rem;
     }
-    
+
     .status-dot {
         width: 12px;
         height: 12px;
         border-radius: 50%;
         display: inline-block;
     }
-    
+
     .status-dot.online { background: #28a745; }
     .status-dot.offline { background: #dc3545; }
-    .status-dot.checking { 
-        background: #ffc107; 
+    .status-dot.checking {
+        background: #ffc107;
         animation: pulse 1.5s infinite;
     }
-    
+
     @keyframes pulse {
         0%, 100% { opacity: 1; }
         50% { opacity: 0.5; }
     }
-    
+
     footer {
         text-align: center;
         padding: 2rem;
         color: white;
         margin-top: 2rem;
     }
-    
+
     @media (max-width: 768px) {
         header h1 { font-size: 2rem; }
         main { padding: 0 1rem; }

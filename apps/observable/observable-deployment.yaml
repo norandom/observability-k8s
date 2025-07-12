@@ -23,56 +23,56 @@ spec:
         args:
         - |
           echo "🚀 Setting up Observable Framework Development Environment with Conda..."
-          
+
           # Add conda-forge channel for better package availability
           conda config --add channels conda-forge
           conda config --set channel_priority flexible
-          
+
           # Install Node.js and npm using standard package manager (more reliable than conda)
           apt-get update && apt-get install -y curl
           curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
           apt-get install -y nodejs
-          
+
           # Verify nodejs and npm installation
           node --version && npm --version
-          
+
           # Install Observable Framework globally
           npm install -g @observablehq/framework@latest
-          
+
           # Create conda environment with base packages
           conda create -n observable -c conda-forge python=3.11 pandas requests matplotlib seaborn numpy scipy python-dateutil -y
-          
+
           # Install polars separately as it may not be in all channels
           conda install -n observable -c conda-forge polars -y || echo "Warning: polars not installed"
-          
+
           # Install orjson via pip in the conda environment
           conda run -n observable pip install orjson
-          
+
           echo "Conda environment 'observable' created with base packages"
-          
+
           # User can later copy environment.yml and recreate environment:
           # kubectl cp environment.yml observable/pod-name:/workspace/environment.yml
           # kubectl exec -it observable/pod-name -- conda env update -f /workspace/environment.yml
-          
+
           # Activate conda environment for shell sessions
           echo "conda activate observable" >> ~/.bashrc
           echo "export PATH=/opt/conda/envs/observable/bin:$PATH" >> ~/.bashrc
-          
+
           # Initialize conda for bash
           conda init bash
-          
+
           # Create app directory structure
           mkdir -p /app/src/{data,components}
           cd /app
-          
+
           # Initialize Observable project
           npm init -y
           npm install @observablehq/framework
-          
+
           # Copy initial dashboard files from the project
           mkdir -p /workspace
           cp -r /app/src/* /workspace/ 2>/dev/null || echo "Initial setup complete"
-          
+
           # Create Observable config
           cat > observablehq.config.js << 'EOF'
           export default {
@@ -87,49 +87,49 @@ spec:
             }
           };
           EOF
-          
+
           # Create initial markdown files if they don't exist
           test -f src/index.md || cat > src/index.md << 'EOF'
           # 🔍 Observability Dashboard
-          
+
           Welcome to the real-time observability dashboard.
-          
+
           ## Quick Links
           - [Security Logs](/security)
           - [Operations Monitoring](/operations)
           EOF
-          
+
           test -f src/security.md || cat > src/security.md << 'EOF'
           # 🛡️ Security Dashboard
-          
+
           Security event monitoring and analysis.
           EOF
-          
+
           test -f src/operations.md || cat > src/operations.md << 'EOF'
           # ⚙️ Operations Dashboard
-          
+
           Operational metrics and logs monitoring.
           EOF
-          
+
           # Create sample data files
           echo '[]' > src/data/quickwit-logs.json
-          echo '[]' > src/data/loki-logs.json  
+          echo '[]' > src/data/loki-logs.json
           echo '{}' > src/data/metrics.json
-          
+
           echo "📊 Starting Observable Framework in development mode..."
           echo "💡 Use 'kubectl cp' to copy files and 'kubectl exec -it <pod> -- bash' to develop"
           echo "💡 Conda environment 'observable' is available with pandas, polars, and data science packages"
-          
+
           # Activate conda environment and start Observable Framework
           source /opt/conda/etc/profile.d/conda.sh
           conda activate observable
-          
+
           # Ensure PATH includes conda binaries
           export PATH="/opt/conda/bin:$PATH"
-          
+
           # Create package.json with dev script
           echo '{"name":"observability-dashboard","type":"module","scripts":{"dev":"observable preview --host 0.0.0.0 --port 3000","build":"observable build","start":"npm run dev"},"dependencies":{"@observablehq/framework":"latest"}}' > package.json
-          
+
           # Install and start Observable Framework
           npm install
           echo "🚀 Observable Framework starting on port 3000..."

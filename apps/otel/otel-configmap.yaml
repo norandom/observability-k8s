@@ -27,10 +27,10 @@ data:
         verbosity: basic
         sampling_initial: 5
         sampling_thereafter: 200
-      
+
       loki:
         endpoint: http://loki.loki-system.svc.cluster.local:3100/loki/api/v1/push
-      
+
       otlp/quickwit:
         endpoint: quickwit.quickwit-system.svc.cluster.local:7281
         tls:
@@ -50,9 +50,9 @@ data:
           receivers: [otlp]
           processors: [memory_limiter, batch]
           exporters: [debug]
-      
+
       extensions: []
-      
+
       telemetry:
         logs:
           level: "info"

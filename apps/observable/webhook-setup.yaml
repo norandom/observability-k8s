@@ -8,10 +8,10 @@ data:
   setup-webhook.sh: |
     #!/bin/bash
     set -e
-    
+
     # Get the EventListener service URL
     WEBHOOK_URL="http://$(kubectl get service el-observable-listener -n tekton-pipelines -o jsonpath='{.spec.clusterIP}'):8080"
-    
+
     echo "🔗 Webhook URL: $WEBHOOK_URL"
     echo ""
     echo "To complete the GitOps automation setup:"

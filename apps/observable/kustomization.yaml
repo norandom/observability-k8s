@@ -7,7 +7,7 @@ resources:
   - observable-deployment.yaml
   - observable-service.yaml
   - observable-ingress.yaml
-  
+
   # Auto-building system with OTEL integration
   - tekton-pipeline.yaml
   - tekton-logs-forwarder.yaml

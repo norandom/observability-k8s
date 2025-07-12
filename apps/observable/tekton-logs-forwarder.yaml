@@ -8,16 +8,16 @@ data:
   log-forwarder.sh: |
     #!/bin/bash
     # Tekton build logs to OTEL forwarder
-    
+
     OTEL_ENDPOINT="${OTEL_ENDPOINT:-http://otel-collector.otel-system.svc.cluster.local:4318}"
     SERVICE_NAME="${OTEL_SERVICE_NAME:-tekton-logs}"
-    
+
     # Function to send logs to OTEL
     send_log_to_otel() {
         local log_message="$1"
         local log_level="${2:-INFO}"
         local timestamp=$(date -u +"%Y-%m-%dT%H:%M:%S.%3NZ")
-        
+
         curl -s -X POST "$OTEL_ENDPOINT/v1/logs" \
         -H "Content-Type: application/json" \
         -d "{
@@ -49,10 +49,10 @@ data:
             }]
         }" || echo "Failed to send log to OTEL"
     }
-    
+
     # Send build start log
     send_log_to_otel "Tekton Observable Framework build started" "INFO"
-    
+
     # Monitor and forward container logs
     if [ -n "$1" ]; then
         # Forward specific log message
@@ -85,10 +85,10 @@ spec:
             - |
               # Collect Tekton pipeline logs and forward to OTEL
               OTEL_ENDPOINT="http://otel-collector.otel-system.svc.cluster.local:4318"
-              
+
               # Get recent Tekton pipeline runs
               kubectl get pipelineruns -n observable --sort-by=.metadata.creationTimestamp -o json | \
-              jq -r '.items[] | select(.status.completionTime != null) | 
+              jq -r '.items[] | select(.status.completionTime != null) |
                 "Pipeline: " + .metadata.name + " | Status: " + .status.conditions[0].reason + " | Message: " + (.status.conditions[0].message // "No message")' | \
               while IFS= read -r log_line; do
                 timestamp=$(date -u +"%Y-%m-%dT%H:%M:%S.%3NZ")

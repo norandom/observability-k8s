@@ -41,14 +41,14 @@ spec:
       cd $(workspaces.source.path)/source
       git checkout $(params.git-revision)
       ls -la apps/observable/
-  
+
   - name: check-changes
     image: alpine/git:latest
     script: |
       #!/bin/sh
       set -e
       cd $(workspaces.source.path)/source/apps/observable
-      
+
       # Only rebuild for infrastructure changes (not markdown dashboard changes)
       # Markdown files use live development with kubectl cp - no rebuild needed
       if git diff HEAD~1 --name-only | grep -E "(conda-environment\.yml|Dockerfile|requirements\.txt|package\.json)" > /dev/null; then
@@ -59,19 +59,19 @@ spec:
         echo "No infrastructure changes detected - skipping rebuild"
         echo "Note: Markdown dashboard changes use live development (kubectl cp)"
       fi
-      
+
   - name: build-and-push
     image: gcr.io/kaniko-project/executor:latest
     env:
     - name: DOCKER_CONFIG
       value: /kaniko/.docker
     command: ["/busybox/sh"]
-    args: 
+    args:
     - -c
     - |
       set -e
       cd /workspace/source/source/apps/observable
-      
+
       # Check if we should build
       if [ -f "/workspace/source/should-build" ]; then
         SHOULD_BUILD=$(cat /workspace/source/should-build)
@@ -81,11 +81,11 @@ spec:
           exit 0
         fi
       fi
-      
+
       echo "Building Observable Framework image..."
       echo "Source files:"
       ls -la
-      
+
       echo "Building image $(params.image-url)"
       /kaniko/executor \
         --context=. \
@@ -94,7 +94,7 @@ spec:
         --destination=$(params.external-image-url) \
         --insecure \
         --skip-tls-verify
-        
+
       echo "Image built and pushed successfully:"
       echo "  Internal: $(params.image-url)"
       echo "  External: $(params.external-image-url)"
@@ -125,11 +125,11 @@ spec:
     type: string
     description: Namespace for deployment
     default: "observable"
-  
+
   workspaces:
   - name: shared-data
     description: Shared workspace
-  
+
   tasks:
   - name: build-image
     taskRef:
@@ -146,7 +146,7 @@ spec:
     workspaces:
     - name: source
       workspace: shared-data
-      
+
   - name: update-deployment
     runAfter: ["build-image"]
     taskSpec:
@@ -161,17 +161,17 @@ spec:
         script: |
           #!/bin/bash
           set -e
-          
+
           # Update deployment image to use external registry URL
           echo "Updating deployment image to: $(params.external-image-url)"
           kubectl set image deployment/observable \
             observable=$(params.external-image-url) \
             -n $(params.deployment-namespace)
-          
+
           # Wait for rollout to complete
           echo "Waiting for deployment rollout..."
           kubectl rollout status deployment/observable -n $(params.deployment-namespace) --timeout=300s
-          
+
           # Show updated pod status
           echo "Deployment updated successfully!"
           kubectl get pods -n $(params.deployment-namespace) -l app=observable
@@ -206,23 +206,23 @@ spec:
             - |
               set -e
               echo "Checking for changes in Observable Framework..."
-              
+
               # Install git
               apt-get update && apt-get install -y git
-              
+
               # Clone repo to check for changes
               git clone --depth 2 $GIT_REPO_URL /tmp/repo
               cd /tmp/repo
-              
+
               # Get latest commit hash
               LATEST_COMMIT=$(git rev-parse HEAD)
               echo "Latest commit: $LATEST_COMMIT"
-              
+
               # Check if we've processed this commit already
               if kubectl get configmap observable-last-commit -n tekton-pipelines >/dev/null 2>&1; then
                 LAST_PROCESSED=$(kubectl get configmap observable-last-commit -n tekton-pipelines -o jsonpath='{.data.commit}')
                 echo "Last processed: $LAST_PROCESSED"
-                
+
                 if [ "$LATEST_COMMIT" = "$LAST_PROCESSED" ]; then
                   echo "No new commits, skipping..."
                   exit 0
@@ -230,7 +230,7 @@ spec:
               else
                 echo "No previous commit record found, this is first run"
               fi
-              
+
               # Check if changes are in observable directory
               if [ -n "$LAST_PROCESSED" ]; then
                 # Try to diff against last processed commit, fallback to HEAD~1 if it doesn't exist
@@ -243,13 +243,13 @@ spec:
               else
                 CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
               fi
-              
+
               echo "Changed files: $CHANGED_FILES"
-              
+
               # Only trigger for infrastructure changes (not markdown dashboard changes)
               # Markdown files use live development with kubectl cp - no rebuild needed
               OBSERVABLE_CHANGES=$(echo "$CHANGED_FILES" | grep -E "^apps/observable/(conda-environment\.yml|Dockerfile|requirements\.txt|package\.json|.*\.ya?ml)$" | grep -v "\.md$" || true)
-              
+
               if [ -z "$OBSERVABLE_CHANGES" ]; then
                 echo "No infrastructure changes detected"
                 echo "Note: Markdown dashboard changes use live development (kubectl cp)"
@@ -257,10 +257,10 @@ spec:
                 kubectl create configmap observable-last-commit --from-literal=commit=$LATEST_COMMIT -n tekton-pipelines --dry-run=client -o yaml | kubectl apply -f -
                 exit 0
               fi
-              
+
               echo "Infrastructure changes detected (requiring container rebuild):"
               echo "$OBSERVABLE_CHANGES"
-              
+
               # Trigger pipeline
               echo "Triggering Observable Framework pipeline..."
               cat <<EOF | kubectl create -f -
@@ -287,10 +287,10 @@ spec:
                         requests:
                           storage: 1Gi
               EOF
-              
+
               # Update last processed commit
               kubectl create configmap observable-last-commit --from-literal=commit=$LATEST_COMMIT -n tekton-pipelines --dry-run=client -o yaml | kubectl apply -f -
-              
+
               echo "Pipeline triggered for commit: $LATEST_COMMIT"
           restartPolicy: OnFailure
           serviceAccountName: tekton-triggers-sa

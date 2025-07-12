@@ -14,7 +14,7 @@ data:
 
     ### **Available Dashboards:**
     - **[🏠 Home](/)** - This main dashboard
-    - **[🛡️ Security](/security)** - Security analysis and threat monitoring  
+    - **[🛡️ Security](/security)** - Security analysis and threat monitoring
     - **[⚙️ Operations](/operations)** - System performance and operational metrics
 
     ## 🌐 External Services
@@ -51,12 +51,12 @@ data:
     ```js
     // Load security data from Quickwit API
     const quickwitEndpoint = "http://192.168.122.27:7280";
-    
+
     // Sample security data for demonstration
     const securityLogs = [
       {
         timestamp: "2025-06-28T19:00:00Z",
-        level: "warning", 
+        level: "warning",
         message: "Authentication attempt from unknown IP",
         is_security_relevant: true,
         source_ip: "192.168.1.100"
@@ -64,7 +64,7 @@ data:
       {
         timestamp: "2025-06-28T19:01:00Z",
         level: "info",
-        message: "User login successful", 
+        message: "User login successful",
         is_security_relevant: false,
         user: "admin"
       },
@@ -124,41 +124,41 @@ data:
     </table>
 
     <style>
-    .security-overview { 
-      display: flex; 
-      gap: 1rem; 
-      margin: 1rem 0; 
+    .security-overview {
+      display: flex;
+      gap: 1rem;
+      margin: 1rem 0;
     }
-    .metric-card { 
-      background: #f8f9fa; 
-      padding: 1.5rem; 
-      border-radius: 8px; 
+    .metric-card {
+      background: #f8f9fa;
+      padding: 1.5rem;
+      border-radius: 8px;
       flex: 1;
       text-align: center;
       border-left: 4px solid #dc3545;
     }
-    .metric-value { 
-      font-size: 2rem; 
-      font-weight: bold; 
-      color: #dc3545; 
+    .metric-value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #dc3545;
       margin: 0.5rem 0;
     }
-    .metric-label { 
-      color: #6c757d; 
+    .metric-label {
+      color: #6c757d;
       font-size: 0.9rem;
     }
-    table { 
-      width: 100%; 
-      border-collapse: collapse; 
+    table {
+      width: 100%;
+      border-collapse: collapse;
       margin-top: 1rem;
     }
-    th, td { 
-      padding: 0.5rem; 
-      text-align: left; 
+    th, td {
+      padding: 0.5rem;
+      text-align: left;
       border-bottom: 1px solid #dee2e6;
     }
-    th { 
-      background-color: #f8f9fa; 
+    th {
+      background-color: #f8f9fa;
       font-weight: bold;
     }
     .level-warning { color: #ffc107; font-weight: bold; }
@@ -175,21 +175,21 @@ data:
     // Load operational data from APIs
     const lokiEndpoint = "http://192.168.122.27:3100";
     const prometheusEndpoint = "http://192.168.122.27:9090";
-    
+
     // Sample operational data for demonstration
     const systemMetrics = {
       cpu_usage: "15%",
-      memory_usage: "2.1GB", 
+      memory_usage: "2.1GB",
       disk_usage: "45%",
       uptime: "5d 12h",
       requests_per_second: 127,
       error_rate: "0.1%"
     };
-    
+
     const operationalLogs = [
       {
         timestamp: "2025-06-28T19:00:00Z",
-        service: "nginx", 
+        service: "nginx",
         level: "info",
         message: "Request processed successfully",
         response_time: "15ms"
@@ -197,7 +197,7 @@ data:
       {
         timestamp: "2025-06-28T19:01:00Z",
         service: "api",
-        level: "info", 
+        level: "info",
         message: "Database connection established",
         response_time: "5ms"
       },
@@ -205,7 +205,7 @@ data:
         timestamp: "2025-06-28T19:02:00Z",
         service: "worker",
         level: "warning",
-        message: "High memory usage detected", 
+        message: "High memory usage detected",
         response_time: "200ms"
       }
     ];
@@ -262,41 +262,41 @@ data:
     </table>
 
     <style>
-    .health-overview { 
-      display: grid; 
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-      gap: 1rem; 
-      margin: 1rem 0; 
+    .health-overview {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
     }
-    .metric-card { 
-      background: #f8f9fa; 
-      padding: 1.5rem; 
-      border-radius: 8px; 
+    .metric-card {
+      background: #f8f9fa;
+      padding: 1.5rem;
+      border-radius: 8px;
       text-align: center;
       border-left: 4px solid #007bff;
     }
-    .metric-value { 
-      font-size: 2rem; 
-      font-weight: bold; 
-      color: #007bff; 
+    .metric-value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #007bff;
       margin: 0.5rem 0;
     }
-    .metric-label { 
-      color: #6c757d; 
+    .metric-label {
+      color: #6c757d;
       font-size: 0.9rem;
     }
-    table { 
-      width: 100%; 
-      border-collapse: collapse; 
+    table {
+      width: 100%;
+      border-collapse: collapse;
       margin-top: 1rem;
     }
-    th, td { 
-      padding: 0.75rem 0.5rem; 
-      text-align: left; 
+    th, td {
+      padding: 0.75rem 0.5rem;
+      text-align: left;
       border-bottom: 1px solid #dee2e6;
     }
-    th { 
-      background-color: #f8f9fa; 
+    th {
+      background-color: #f8f9fa;
       font-weight: bold;
     }
     .level-info { color: #007bff; }

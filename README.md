@@ -1,6 +1,6 @@
-# Observable Framework Development Environment
+# Observability k8s - speedy insights
 
-**Live dashboard development with Kubernetes-hosted containers and AI-powered tools**
+**Rapid dashboard development with Kubernetes, GitOps and AI-powered tools**
 
 ![AI-Powered Dashboard Development](mydocs/output/ai-development-workflow.png)
 

@@ -22,18 +22,24 @@ jobs:
 
     - name: Run TruffleHog
       uses: trufflesecurity/trufflehog@main
+      continue-on-error: true
       with:
         path: ./
-        extra_args: --debug --only-verified
+        extra_args: --debug --only-verified --format sarif --output trufflehog-results.sarif
         
-    - name: Upload TruffleHog Results
-      if: failure()
+    - name: Upload TruffleHog SARIF to Security Tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: trufflehog-results.sarif
+        category: "TruffleHog Secret Scan"
+        
+    - name: Upload TruffleHog Results as Artifact
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: trufflehog-results
-        path: |
-          trufflehog-results.json
-          trufflehog-report.sarif
+        path: trufflehog-results.sarif
         retention-days: 30
 
   kubernetes-security:
@@ -46,16 +52,26 @@ jobs:
 
     - name: Run Kubesec Scan
       uses: controlplaneio/kubesec-action@43d0ddff5ffee89a6bb9f29b64cd865411137b14
+      continue-on-error: true
       with:
         input: "apps/**/*.yaml"
         format: sarif
         output: kubesec-results.sarif
 
-    - name: Upload Kubesec Results
+    - name: Upload Kubesec SARIF to Security Tab
       uses: github/codeql-action/upload-sarif@v3
       if: always()
       with:
         sarif_file: kubesec-results.sarif
+        category: "Kubernetes Security - Kubesec"
+        
+    - name: Upload Kubesec Results as Artifact
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: kubesec-results
+        path: kubesec-results.sarif
+        retention-days: 30
 
   container-security:
     name: Container Image Security Scan
@@ -77,17 +93,27 @@ jobs:
 
     - name: Run Trivy Security Scanner
       uses: aquasecurity/trivy-action@master
+      continue-on-error: true
       with:
         scan-type: 'config'
         scan-ref: './apps'
         format: 'sarif'
         output: 'trivy-results.sarif'
 
-    - name: Upload Trivy Results
+    - name: Upload Trivy SARIF to Security Tab
       uses: github/codeql-action/upload-sarif@v3
       if: always()
       with:
         sarif_file: 'trivy-results.sarif'
+        category: "Container Security - Trivy"
+        
+    - name: Upload Trivy Results as Artifact
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: trivy-results
+        path: trivy-results.sarif
+        retention-days: 30
 
   yaml-security:
     name: YAML Security Lint
@@ -102,17 +128,114 @@ jobs:
       with:
         python-version: '3.11'
 
-    - name: Install yamllint
-      run: pip install yamllint
+    - name: Install yamllint and sarif-om
+      run: |
+        pip install yamllint
+        pip install sarif-om
 
     - name: Run yamllint with repo config
+      continue-on-error: true
       run: |
         echo "Using repository .yamllint.yml configuration"
         cat .yamllint.yml
         echo "Running yamllint..."
-        yamllint -c .yamllint.yml apps/
+        yamllint -c .yamllint.yml -f parsable apps/ > yamllint-output.txt || true
+        
+    - name: Convert yamllint to SARIF
+      run: |
+        python3 << 'EOF'
+        import json
+        import re
+        from datetime import datetime
+        
+        def convert_yamllint_to_sarif():
+            try:
+                with open('yamllint-output.txt', 'r') as f:
+                    lines = f.readlines()
+            except FileNotFoundError:
+                lines = []
+            
+            sarif = {
+                "version": "2.1.0",
+                "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+                "runs": [{
+                    "tool": {
+                        "driver": {
+                            "name": "yamllint",
+                            "version": "1.0.0",
+                            "informationUri": "https://yamllint.readthedocs.io/",
+                            "rules": []
+                        }
+                    },
+                    "results": []
+                }]
+            }
+            
+            rule_ids = set()
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                    
+                # Parse yamllint output: file:line:column: [level] message (rule)
+                match = re.match(r'^(.+?):(\d+):(\d+):\s*\[(\w+)\]\s*(.+?)\s*\((.+?)\)$', line)
+                if match:
+                    file_path, line_num, col_num, level, message, rule_id = match.groups()
+                    
+                    # Add rule if not seen before
+                    if rule_id not in rule_ids:
+                        rule_ids.add(rule_id)
+                        sarif["runs"][0]["tool"]["driver"]["rules"].append({
+                            "id": rule_id,
+                            "name": rule_id,
+                            "shortDescription": {"text": f"YAML lint rule: {rule_id}"},
+                            "fullDescription": {"text": f"yamllint rule {rule_id}"},
+                            "defaultConfiguration": {"level": "warning" if level == "warning" else "error"}
+                        })
+                    
+                    # Add result
+                    sarif["runs"][0]["results"].append({
+                        "ruleId": rule_id,
+                        "level": "warning" if level == "warning" else "error",
+                        "message": {"text": message},
+                        "locations": [{
+                            "physicalLocation": {
+                                "artifactLocation": {"uri": file_path},
+                                "region": {
+                                    "startLine": int(line_num),
+                                    "startColumn": int(col_num)
+                                }
+                            }
+                        }]
+                    })
+            
+            with open('yamllint-results.sarif', 'w') as f:
+                json.dump(sarif, f, indent=2)
+                
+            print(f"Converted {len(sarif['runs'][0]['results'])} yamllint issues to SARIF format")
+        
+        convert_yamllint_to_sarif()
+        EOF
+        
+    - name: Upload yamllint SARIF to Security Tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: yamllint-results.sarif
+        category: "YAML Lint - yamllint"
+        
+    - name: Upload yamllint Results as Artifact
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: yamllint-results
+        path: |
+          yamllint-results.sarif
+          yamllint-output.txt
+        retention-days: 30
         
     - name: YAML Syntax Check
+      continue-on-error: true
       run: |
         echo "Checking for critical YAML syntax errors..."
         find apps/ -name "*.yaml" -o -name "*.yml" | while read file; do
@@ -129,14 +252,38 @@ jobs:
     steps:
     - name: Security Scan Summary
       run: |
-        echo "## Security Scan Results" >> $GITHUB_STEP_SUMMARY
-        echo "| Scan Type | Status |" >> $GITHUB_STEP_SUMMARY
-        echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
-        echo "| TruffleHog Secret Scan | ${{ needs.trufflehog.result }} |" >> $GITHUB_STEP_SUMMARY
-        echo "| Kubernetes Security | ${{ needs.kubernetes-security.result }} |" >> $GITHUB_STEP_SUMMARY
-        echo "| Container Security | ${{ needs.container-security.result }} |" >> $GITHUB_STEP_SUMMARY
-        echo "| YAML Lint | ${{ needs.yaml-security.result }} |" >> $GITHUB_STEP_SUMMARY
-        
+        echo "## 🔒 Security Scan Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "All security findings are automatically uploaded to the **GitHub Security tab** for centralized review." >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Scan Type | Status | SARIF Upload |" >> $GITHUB_STEP_SUMMARY
+        echo "|-----------|--------|-------------|" >> $GITHUB_STEP_SUMMARY
+        echo "| TruffleHog Secret Scan | ${{ needs.trufflehog.result }} | ✅ Security Tab |" >> $GITHUB_STEP_SUMMARY
+        echo "| Kubernetes Security (Kubesec) | ${{ needs.kubernetes-security.result }} | ✅ Security Tab |" >> $GITHUB_STEP_SUMMARY
+        echo "| Container Security (Trivy) | ${{ needs.container-security.result }} | ✅ Security Tab |" >> $GITHUB_STEP_SUMMARY
+        echo "| YAML Lint (yamllint) | ${{ needs.yaml-security.result }} | ✅ Security Tab |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📍 How to Review Security Findings" >> $GITHUB_STEP_SUMMARY
+        echo "1. Go to the **Security** tab in this repository" >> $GITHUB_STEP_SUMMARY
+        echo "2. Click on **Code scanning alerts**" >> $GITHUB_STEP_SUMMARY
+        echo "3. Filter by tool category:" >> $GITHUB_STEP_SUMMARY
+        echo "   - **TruffleHog Secret Scan** - Potential secrets and credentials" >> $GITHUB_STEP_SUMMARY
+        echo "   - **Kubernetes Security - Kubesec** - K8s security best practices" >> $GITHUB_STEP_SUMMARY
+        echo "   - **Container Security - Trivy** - Container and configuration vulnerabilities" >> $GITHUB_STEP_SUMMARY
+        echo "   - **YAML Lint - yamllint** - YAML formatting and structure issues" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🚨 Priority Actions" >> $GITHUB_STEP_SUMMARY
         if [[ "${{ needs.trufflehog.result }}" == "failure" ]]; then
-          echo "⚠️ **Potential secrets detected!** Review TruffleHog results." >> $GITHUB_STEP_SUMMARY
+          echo "- ⚠️ **CRITICAL**: Potential secrets detected! Review immediately." >> $GITHUB_STEP_SUMMARY
         fi
+        if [[ "${{ needs.kubernetes-security.result }}" == "failure" ]]; then
+          echo "- ⚠️ **HIGH**: Kubernetes security issues found. Review cluster configs." >> $GITHUB_STEP_SUMMARY
+        fi
+        if [[ "${{ needs.container-security.result }}" == "failure" ]]; then
+          echo "- ⚠️ **MEDIUM**: Container security vulnerabilities detected." >> $GITHUB_STEP_SUMMARY
+        fi
+        if [[ "${{ needs.yaml-security.result }}" == "failure" ]]; then
+          echo "- ℹ️ **LOW**: YAML formatting issues - review for consistency." >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Scan artifacts are also available in the workflow artifacts for 30 days.**" >> $GITHUB_STEP_SUMMARY

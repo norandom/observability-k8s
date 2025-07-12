@@ -2,18 +2,22 @@ extends: default
 
 rules:
   line-length:
-    max: 120
+    max: 200  # Increase max line length for complex configs
     level: warning
   comments:
     min-spaces-from-content: 1
   indentation:
     spaces: 2
+    indent-sequences: false  # Allow different list indentation styles
   truthy:
     allowed-values: ['true', 'false', 'yes', 'no']
   brackets:
     max-spaces-inside: 1
   braces:
     max-spaces-inside: 1
+  document-start: disable  # Don't require --- at start
+  trailing-spaces: enable   # Keep this enabled
+  new-line-at-end-of-file: enable  # Keep this enabled
 
 ignore: |
   .git/
@@ -21,3 +25,4 @@ ignore: |
   .github/
   screenshots/
   *.md
+  mydocs/

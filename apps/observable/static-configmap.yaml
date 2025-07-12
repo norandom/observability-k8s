@@ -86,9 +86,9 @@ data:
                 <div class="architecture-diagram">
                     <pre>
 Vector/Clients → OpenTelemetry Collector → {Loki (operational), Quickwit (security)}
-                           ↓                    ↓                    ↓
-                   Grafana (dashboards)  Quickwit UI (search)  Observable (reports)
-                           ↓                                        ↓
+                          ↓                    ↓                    ↓
+                  Grafana (dashboards)  Quickwit UI (search)  Observable (reports)
+                          ↓                                        ↓
                   Prometheus (metrics)                    Data analysis
                     </pre>
                 </div>

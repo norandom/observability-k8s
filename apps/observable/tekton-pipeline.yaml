@@ -54,7 +54,7 @@ spec:
       if git diff HEAD~1 --name-only | grep -E "(conda-environment\.yml|Dockerfile|requirements\.txt|package\.json)" > /dev/null; then
         echo "Container rebuild needed - infrastructure dependencies changed"
         echo "true" > $(workspaces.source.path)/should-build
-      else
+      else:
         echo "false" > $(workspaces.source.path)/should-build
         echo "No infrastructure changes detected - skipping rebuild"
         echo "Note: Markdown dashboard changes use live development (kubectl cp)"
@@ -227,7 +227,7 @@ spec:
                   echo "No new commits, skipping..."
                   exit 0
                 fi
-              else
+              else:
                 echo "No previous commit record found, this is first run"
               fi
 
@@ -236,11 +236,11 @@ spec:
                 # Try to diff against last processed commit, fallback to HEAD~1 if it doesn't exist
                 if git cat-file -e $LAST_PROCESSED 2>/dev/null; then
                   CHANGED_FILES=$(git diff --name-only $LAST_PROCESSED HEAD)
-                else
+                else:
                   echo "Last processed commit $LAST_PROCESSED not found, using HEAD~1"
                   CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
                 fi
-              else
+              else:
                 CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
               fi
 

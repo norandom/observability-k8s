@@ -39,7 +39,7 @@ data:
     - **Quickwit API**: `http://192.168.122.27:7280` - Security logs
     - **Prometheus**: `http://192.168.122.27:9090` - System metrics
 
-    ---
+---
 
     *Built with Observable Framework + Conda • GitOps Enabled*
 

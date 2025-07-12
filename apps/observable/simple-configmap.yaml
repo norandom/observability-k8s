@@ -61,7 +61,7 @@ data:
     - **Quickwit**: Security logs and full-text search
     - **Prometheus**: Metrics and monitoring data
 
-    ---
+---
     *Dashboard powered by Observable Framework*
 
   loki-loader.py: |

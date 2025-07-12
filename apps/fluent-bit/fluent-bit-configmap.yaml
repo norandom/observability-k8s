@@ -83,7 +83,7 @@ data:
         elseif namespace and (namespace:match("security") or namespace:match("auth") or namespace:match("audit")) then
             record["log_type"] = "security"
             record["category"] = "security"
-        else
+        else:
             record["log_type"] = "operational"
             record["category"] = "application"
         end
@@ -93,7 +93,7 @@ data:
             record["service_name"] = record["kubernetes"]["labels"]["app"]
         elseif record["kubernetes"] and record["kubernetes"]["container_name"] then
             record["service_name"] = record["kubernetes"]["container_name"]
-        else
+        else:
             record["service_name"] = "unknown"
         end
 
@@ -103,7 +103,7 @@ data:
             record["severity_text"] = "ERROR"
         elseif string.match(string.lower(message), "warn") then
             record["severity_text"] = "WARN"
-        else
+        else:
             record["severity_text"] = "INFO"
         end
 

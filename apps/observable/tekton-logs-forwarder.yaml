@@ -57,7 +57,7 @@ data:
     if [ -n "$1" ]; then
         # Forward specific log message
         send_log_to_otel "$1" "${2:-INFO}"
-    else
+    else:
         # Monitor mode - forward stdin
         while IFS= read -r line; do
             send_log_to_otel "$line" "INFO"

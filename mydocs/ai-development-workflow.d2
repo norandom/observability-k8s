@@ -1,214 +1,155 @@
-# AI Development Workflow
+# AI-Powered Dashboard Development Workflow
+# Clean, readable architecture for Observable Framework + Telepresence + AI tools
 
 direction: down
 
-# Style configuration
+# Optimized layout for laptop screens - more spacing for readability
 vars: {
   d2-config: {
-    theme-id: 1
     layout-engine: elk
+    elk-node-spacing: 80
+    elk-layer-spacing: 100
   }
 }
 
-# Clean Apple Keynote styling
+# Apple Keynote inspired styling - clean and minimal
 classes: {
-  primary: {
-    style.fill: "#007AFF"
-    style.font-color: "#FFFFFF"
-    style.border-radius: 8
-    style.font-size: 14
+  laptop: {
+    style.fill: "#F8F9FA"
+    style.font-color: "#1D1D1F" 
+    style.border-radius: 16
+    style.font-size: 20
+    style.bold: true
+    style.stroke: "#D1D1D6"
+    style.stroke-width: 2
+    style.shadow: true
   }
-  secondary: {
-    style.fill: "#5856D6" 
+  ai: {
+    style.fill: "#5856D6"
     style.font-color: "#FFFFFF"
-    style.border-radius: 8
-    style.font-size: 14
-  }
-  accent: {
-    style.fill: "#FF3B30"
-    style.font-color: "#FFFFFF"
-    style.border-radius: 8
-    style.font-size: 14
-  }
-  success: {
-    style.fill: "#34C759"
-    style.font-color: "#FFFFFF"
-    style.border-radius: 8
-    style.font-size: 14
-  }
-  warning: {
-    style.fill: "#FF9500"
-    style.font-color: "#FFFFFF"
-    style.border-radius: 8
-    style.font-size: 14
-  }
-  container: {
-    style.fill: "#F2F2F7"
-    style.font-color: "#000000"
     style.border-radius: 12
     style.font-size: 16
     style.bold: true
+    style.shadow: true
   }
-  note: {
+  bridge: {
+    style.fill: "#FF9500"
+    style.font-color: "#FFFFFF" 
+    style.border-radius: 12
+    style.font-size: 16
+    style.bold: true
+    style.shadow: true
+  }
+  cluster: {
+    style.fill: "#007AFF"
+    style.font-color: "#FFFFFF"
+    style.border-radius: 16
+    style.font-size: 20
+    style.bold: true
+    style.shadow: true
+  }
+  dashboard: {
+    style.fill: "#34C759"
+    style.font-color: "#FFFFFF"
+    style.border-radius: 16
+    style.font-size: 20
+    style.bold: true
+    style.shadow: true
+  }
+  tool: {
     style.fill: "#FFFFFF"
-    style.font-color: "#6C6C70"
-    style.border-radius: 6
-    style.font-size: 12
-    style.stroke: "#E5E5EA"
+    style.font-color: "#1D1D1F"
+    style.border-radius: 8
+    style.font-size: 14
+    style.stroke: "#D1D1D6"
+    style.stroke-width: 1
   }
 }
 
-# Local development environment
-local: {
-  label: "Local Development"
-  class: container
-  
+# 💻 Your Development Environment
+laptop_env: {
+  label: "💻 Your Laptop"
+  class: laptop
+
   ai_tools: {
-    label: "AI Tools"
-    class: secondary
-    
-    claude: {
-      label: "Claude Code"
-      class: secondary
-    }
-    
-    gemini: {
-      label: "Gemini CLI"
-      class: secondary
-    }
+    label: "🤖 AI Development Tools"
+    class: ai
   }
   
-  filesystem: {
-    label: "Local Files"
-    class: success
+  local_files: {
+    label: "📁 Dashboard Code\n(Observable Framework)"
+    class: tool
   }
   
-  editor: {
-    label: "VS Code / IDE"
-    class: primary
+  vs_code: {
+    label: "⚡ VS Code / IDE"
+    class: tool
   }
 }
 
-# Telepresence bridge
-bridge: {
-  label: "Telepresence Bridge"
-  class: container
-  
-  intercept: {
-    label: "Traffic\nIntercept"
-    class: warning
-  }
-  
-  mount: {
-    label: "File System\nMount"
-    class: warning
-  }
+# 🌉 Telepresence Bridge (The Magic)
+telepresence: {
+  label: "🌉 Telepresence Bridge\n\"Mount Remote as Local\""
+  class: bridge
 }
 
-# Kubernetes environment
-kubernetes: {
-  label: "Kubernetes Cluster"
-  class: container
+# ☸️ Kubernetes Cluster (Production-like)
+k8s_cluster: {
+  label: "☸️ Kubernetes Cluster"
+  class: cluster
   
   observable_pod: {
-    label: "Observable\nFramework Pod"
-    class: primary
-  }
-  
-  hot_reload: {
-    label: "Hot Reload"
-    class: success
-  }
-  
-  apis: {
-    label: "Cluster APIs"
-    class: note
+    label: "📊 Observable Pod\n(Live Data + Processing)"
+    class: tool
   }
 }
 
-# Live dashboard
-dashboard: {
-  label: "Live Dashboard"
-  class: container
-  
-  interface: {
-    label: "Web Interface"
-    class: primary
-  }
-  
-  data: {
-    label: "Real-time Data"
-    class: success
-  }
+# 🎯 Live Dashboard
+live_dashboard: {
+  label: "🎯 Live Interactive Dashboard\n\"localhost:3000\""
+  class: dashboard
 }
 
-# Development flow
-local.ai_tools.claude -> local.filesystem: "AI Code Gen" {
+# ⚡ The Magic Development Flow
+laptop_env.ai_tools -> laptop_env.local_files: "✨ AI writes\ndashboard code" {
   style.stroke: "#5856D6"
-  style.stroke-width: 2
-  style.font-size: 12
+  style.stroke-width: 4
+  style.font-size: 14
+  style.bold: true
 }
 
-local.ai_tools.gemini -> local.filesystem: "AI Assistance" {
-  style.stroke: "#5856D6"
-  style.stroke-width: 2
-  style.font-size: 12
+laptop_env.local_files -> telepresence: "📤 File changes\nsync instantly" {
+  style.stroke: "#FF9500"
+  style.stroke-width: 4
+  style.font-size: 14
+  style.bold: true
 }
 
-local.filesystem -> bridge.mount: "File Changes" {
+telepresence -> k8s_cluster.observable_pod: "🔄 Live mount\nto K8s pod" {
+  style.stroke: "#FF9500"
+  style.stroke-width: 4
+  style.font-size: 14
+  style.bold: true
+}
+
+k8s_cluster.observable_pod -> live_dashboard: "🚀 Hot reload\nwith real data" {
+  style.stroke: "#34C759"
+  style.stroke-width: 4
+  style.font-size: 14
+  style.bold: true
+}
+
+# 🎯 The Result
+result_box: {
+  label: "🎯 Development Superpowers\n\n✅ Edit locally with Claude Code / Gemini CLI\n✅ Test against live Kubernetes data\n✅ See changes instantly in browser\n✅ No Docker, no local setup hassle\n✅ Production-like development environment"
+  class: laptop
+  style.fill: "#E8F4FD"
+  style.font-size: 16
+}
+
+laptop_env -> result_box: "🌟 Experience" {
   style.stroke: "#34C759"
   style.stroke-width: 3
   style.font-size: 12
-}
-
-bridge.mount -> kubernetes.observable_pod: "Live Sync" {
-  style.stroke: "#FF9500"
-  style.stroke-width: 3
-  style.font-size: 12
-}
-
-kubernetes.hot_reload -> dashboard.interface: "Auto Refresh" {
-  style.stroke: "#007AFF"
-  style.stroke-width: 3
-  style.font-size: 12
-}
-
-# API access
-bridge.intercept -> kubernetes.apis: "Local API Access" {
-  style.stroke: "#FF9500"
-  style.stroke-width: 2
-  style.stroke-dash: 3
-  style.font-size: 12
-}
-
-kubernetes.apis -> dashboard.data: "Live Data" {
-  style.stroke: "#34C759"
-  style.stroke-width: 2
-  style.font-size: 12
-}
-
-# Benefits section
-benefits: {
-  label: "Development Benefits"
-  class: container
-  
-  instant: {
-    label: "Instant\nFeedback"
-    class: success
-  }
-  
-  ai_integration: {
-    label: "AI\nIntegration"
-    class: secondary
-  }
-  
-  live_data: {
-    label: "Live Data\nAccess"
-    class: primary
-  }
-  
-  local_tools: {
-    label: "Local IDE\nCapabilities"
-    class: warning
-  }
+  style.stroke-dash: 5
 }

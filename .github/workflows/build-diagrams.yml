@@ -61,12 +61,16 @@ jobs:
         chmod 600 ~/.ssh/id_rsa
         ssh-keygen -y -f ~/.ssh/id_rsa > ~/.ssh/id_rsa.pub
         
+        # Create allowed signers file
+        echo "action@github.com $(cat ~/.ssh/id_rsa.pub)" > ~/.ssh/allowed_signers
+        
         # Configure git
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git config --local gpg.format ssh
         git config --local user.signingkey ~/.ssh/id_rsa.pub
         git config --local commit.gpgsign true
+        git config --local gpg.ssh.allowedSignersFile ~/.ssh/allowed_signers
         
         # Debug: Show git config
         echo "Git configuration:"
@@ -75,6 +79,10 @@ jobs:
         # Test SSH key
         echo "Testing SSH key:"
         ssh-keygen -l -f ~/.ssh/id_rsa.pub
+        
+        # Show allowed signers file
+        echo "Allowed signers file:"
+        cat ~/.ssh/allowed_signers
         
     - name: Commit and push built diagrams
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'

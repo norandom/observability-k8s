@@ -7,10 +7,6 @@ direction: down
 vars: {
   d2-config: {
     layout-engine: elk
-    elk-node-spacing: 80
-    elk-layer-spacing: 100
-    # Enable animations
-    animate-interval: 1000
   }
 }
 
@@ -118,7 +114,6 @@ laptop_env.ai_tools -> laptop_env.local_files: "✨ AI writes\ndashboard code" {
   style.stroke-width: 5
   style.font-size: 18
   style.bold: true
-  style.animated: true
 }
 
 laptop_env.local_files -> telepresence: "📤 File changes\nsync instantly" {
@@ -126,7 +121,6 @@ laptop_env.local_files -> telepresence: "📤 File changes\nsync instantly" {
   style.stroke-width: 5
   style.font-size: 18
   style.bold: true
-  style.animated: true
 }
 
 telepresence -> k8s_cluster.observable_pod: "🔄 Live mount\nto K8s pod" {
@@ -134,7 +128,6 @@ telepresence -> k8s_cluster.observable_pod: "🔄 Live mount\nto K8s pod" {
   style.stroke-width: 5
   style.font-size: 18
   style.bold: true
-  style.animated: true
 }
 
 k8s_cluster.observable_pod -> live_dashboard: "🚀 Hot reload\nwith real data" {
@@ -142,7 +135,6 @@ k8s_cluster.observable_pod -> live_dashboard: "🚀 Hot reload\nwith real data" 
   style.stroke-width: 5
   style.font-size: 18
   style.bold: true
-  style.animated: true
 }
 
 # 🎯 The Result
@@ -158,5 +150,4 @@ laptop_env -> result_box: "🌟 Experience" {
   style.stroke-width: 4
   style.font-size: 16
   style.stroke-dash: 5
-  style.animated: true
 }

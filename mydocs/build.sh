@@ -93,17 +93,8 @@ build_diagram() {
         echo >> "$ERROR_LOG"
     fi
     
-    # Generate GIF for animated diagrams
-    if [[ "$base_name" == *"animated"* ]]; then
-        if d2 "$input_file" "output/${base_name}.gif" --animate-interval=1000 2>"$temp_error_file"; then
-            log_success "Generated output/${base_name}.gif"
-        else
-            log_error "Failed to generate GIF for $input_file"
-            echo "GIF Generation Error:" >> "$ERROR_LOG"
-            cat "$temp_error_file" >> "$ERROR_LOG"
-            echo >> "$ERROR_LOG"
-        fi
-    fi
+    # Note: D2 doesn't support direct GIF generation
+    # We can use the HTML animation approach instead
     
     rm -f "$temp_error_file"
     echo

@@ -61,11 +61,11 @@ jobs:
         chmod 600 ~/.ssh/id_rsa
         ssh-keygen -y -f ~/.ssh/id_rsa > ~/.ssh/id_rsa.pub
         
-        # Create allowed signers file
-        echo "action@github.com $(cat ~/.ssh/id_rsa.pub)" > ~/.ssh/allowed_signers
+        # Create allowed signers file  
+        echo "11855163+norandom@users.noreply.github.com $(cat ~/.ssh/id_rsa.pub)" > ~/.ssh/allowed_signers
         
         # Configure git
-        git config --local user.email "action@github.com"
+        git config --local user.email "11855163+norandom@users.noreply.github.com"
         git config --local user.name "GitHub Action"
         git config --local gpg.format ssh
         git config --local user.signingkey ~/.ssh/id_rsa.pub

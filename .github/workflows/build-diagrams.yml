@@ -52,11 +52,21 @@ jobs:
         ls -la mydocs/output/ || echo "No output files generated"
         echo "File count: $(ls mydocs/output/ 2>/dev/null | wc -l)"
         
-    - name: Configure Git
+    - name: Configure Git with SSH signing
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       run: |
+        # Setup SSH key for signing
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keygen -y -f ~/.ssh/id_rsa > ~/.ssh/id_rsa.pub
+        
+        # Configure git
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
+        git config --local gpg.format ssh
+        git config --local user.signingkey ~/.ssh/id_rsa.pub
+        git config --local commit.gpgsign true
         
     - name: Commit and push built diagrams
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'

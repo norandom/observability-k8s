@@ -1,0 +1,358 @@
+title: |md
+  # CI/CD Pipeline Architecture
+  ## GitHub Actions + Tekton Integration
+|
+
+direction: right
+
+# GitHub Repository
+github: {
+  label: "GitHub Repository\nobservability-k8s"
+  icon: https://icons.getbootstrap.com/assets/icons/github.svg
+  style.fill: "#24292e"
+  style.font-color: white
+}
+
+# Triggers
+triggers: {
+  push: {
+    label: "Push to main/develop"
+    icon: https://icons.getbootstrap.com/assets/icons/git.svg
+    style.fill: "#28a745"
+  }
+  
+  pr: {
+    label: "Pull Request"
+    icon: https://icons.getbootstrap.com/assets/icons/arrow-up-right-circle.svg
+    style.fill: "#007bff"
+  }
+  
+  schedule: {
+    label: "Schedule (2 AM UTC)"
+    icon: https://icons.getbootstrap.com/assets/icons/clock.svg
+    style.fill: "#6f42c1"
+  }
+  
+  manual: {
+    label: "Manual Trigger"
+    icon: https://icons.getbootstrap.com/assets/icons/hand-index.svg
+    style.fill: "#fd7e14"
+  }
+}
+
+# GitHub Actions Workflows
+github_actions: {
+  label: "GitHub Actions CI/CD"
+  style.fill: "#f6f8fa"
+  style.stroke: "#d0d7de"
+  style.stroke-width: 2
+  
+  security_scan: {
+    label: "Security Scan Workflow"
+    style.fill: "#dc3545"
+    style.font-color: white
+    
+    trufflehog: {
+      label: "TruffleHog\nSecret Scan"
+      icon: https://icons.getbootstrap.com/assets/icons/shield-lock.svg
+    }
+    
+    kubesec: {
+      label: "Kubesec\nK8s Security"
+    }
+    
+    trivy: {
+      label: "Trivy\nContainer Scan"
+      icon: https://icons.getbootstrap.com/assets/icons/box.svg
+    }
+    
+    yamllint: {
+      label: "YAML\nLint Check"
+      icon: https://icons.getbootstrap.com/assets/icons/file-text.svg
+    }
+    
+    summary: {
+      label: "Security\nSummary"
+      icon: https://icons.getbootstrap.com/assets/icons/clipboard-data.svg
+    }
+  }
+  
+  standalone_trufflehog: {
+    label: "TruffleHog Standalone"
+    style.fill: "#fd7e14"
+    style.font-color: white
+    
+    scan: {
+      label: "Secret\nDetection"
+      icon: https://icons.getbootstrap.com/assets/icons/search.svg
+    }
+    
+    report: {
+      label: "Security\nReport"
+      icon: https://icons.getbootstrap.com/assets/icons/file-earmark-text.svg
+    }
+  }
+  
+  build_diagrams: {
+    label: "Build Diagrams Workflow"
+    style.fill: "#28a745"
+    style.font-color: white
+    
+    d2_install: {
+      label: "Install D2"
+      icon: https://icons.getbootstrap.com/assets/icons/download.svg
+    }
+    
+    build: {
+      label: "Build\nDiagrams"
+      icon: https://icons.getbootstrap.com/assets/icons/diagram-3.svg
+    }
+    
+    commit: {
+      label: "Auto-commit\nGenerated Files"
+      icon: https://icons.getbootstrap.com/assets/icons/git.svg
+    }
+  }
+  
+  yaml_fix: {
+    label: "YAML Fix Workflow"
+    style.fill: "#6f42c1"
+    style.font-color: white
+    
+    fix: {
+      label: "Auto-fix\nYAML Issues"
+      icon: https://icons.getbootstrap.com/assets/icons/wrench.svg
+    }
+    
+    commit_fixes: {
+      label: "Commit\nFixes"
+      icon: https://icons.getbootstrap.com/assets/icons/check-circle.svg
+    }
+  }
+}
+
+# Outputs and Artifacts
+artifacts: {
+  label: "CI/CD Outputs"
+  style.fill: "#f8f9fa"
+  style.stroke: "#dee2e6"
+  
+  sarif: {
+    label: "SARIF Security\nReports"
+    icon: https://icons.getbootstrap.com/assets/icons/file-code.svg
+    style.fill: "#dc3545"
+    style.font-color: white
+  }
+  
+  diagrams: {
+    label: "Generated\nDiagrams"
+    icon: https://icons.getbootstrap.com/assets/icons/image.svg
+    style.fill: "#28a745"
+    style.font-color: white
+  }
+  
+  fixed_yaml: {
+    label: "Fixed YAML\nFiles"
+    icon: https://icons.getbootstrap.com/assets/icons/file-check.svg
+    style.fill: "#6f42c1"
+    style.font-color: white
+  }
+  
+  pr_comments: {
+    label: "PR Comments\n& Reviews"
+    icon: https://icons.getbootstrap.com/assets/icons/chat-dots.svg
+    style.fill: "#007bff"
+    style.font-color: white
+  }
+}
+
+# Kubernetes Cluster
+k8s_cluster: {
+  label: "Kubernetes Cluster (K3s)"
+  style.fill: "#326ce5"
+  style.font-color: white
+  
+  tekton: {
+    label: "Tekton Pipelines"
+    style.fill: "#fd7e14"
+    style.font-color: white
+    
+    git_poller: {
+      label: "Git Poller\nCronJob"
+      icon: https://icons.getbootstrap.com/assets/icons/arrow-clockwise.svg
+    }
+    
+    build_task: {
+      label: "Observable\nBuild Task"
+      icon: https://icons.getbootstrap.com/assets/icons/hammer.svg
+    }
+    
+    deploy_task: {
+      label: "Update\nDeployment"
+      icon: https://icons.getbootstrap.com/assets/icons/arrow-up-circle.svg
+    }
+  }
+  
+  argocd: {
+    label: "ArgoCD GitOps"
+    style.fill: "#28a745"
+    style.font-color: white
+    
+    sync: {
+      label: "Auto-sync\nManifests"
+      icon: https://icons.getbootstrap.com/assets/icons/arrow-repeat.svg
+    }
+    
+    deploy: {
+      label: "Deploy\nApplications"
+      icon: https://icons.getbootstrap.com/assets/icons/cloud-upload.svg
+    }
+  }
+  
+  registry: {
+    label: "Container Registry"
+    style.fill: "#6c757d"
+    style.font-color: white
+    
+    internal: {
+      label: "Internal\nRegistry"
+      icon: https://icons.getbootstrap.com/assets/icons/hdd-rack.svg
+    }
+    
+    external: {
+      label: "External\nAccess"
+      icon: https://icons.getbootstrap.com/assets/icons/cloud.svg
+    }
+  }
+}
+
+# Running Applications
+applications: {
+  label: "Running Applications"
+  style.fill: "#20c997"
+  style.font-color: white
+  
+  observable: {
+    label: "Observable\nFramework"
+    icon: https://icons.getbootstrap.com/assets/icons/bar-chart.svg
+  }
+  
+  grafana: {
+    label: "Grafana\nDashboards"
+    icon: https://icons.getbootstrap.com/assets/icons/graph-up.svg
+  }
+  
+  quickwit: {
+    label: "Quickwit\nSearch"
+    icon: https://icons.getbootstrap.com/assets/icons/search.svg
+  }
+  
+  loki: {
+    label: "Loki\nLogs"
+    icon: https://icons.getbootstrap.com/assets/icons/journal-text.svg
+  }
+}
+
+# Flow connections - GitHub Actions
+github -> triggers.push
+github -> triggers.pr
+github -> triggers.schedule
+github -> triggers.manual
+
+# Trigger to workflows
+triggers.push -> github_actions.security_scan
+triggers.pr -> github_actions.security_scan
+triggers.schedule -> github_actions.security_scan
+
+triggers.push -> github_actions.standalone_trufflehog
+triggers.pr -> github_actions.standalone_trufflehog
+triggers.manual -> github_actions.standalone_trufflehog
+
+triggers.push -> github_actions.build_diagrams: "mydocs/*.d2 changes"
+triggers.pr -> github_actions.build_diagrams: "mydocs/*.d2 changes"
+
+triggers.manual -> github_actions.yaml_fix
+
+# Security workflow flows
+github_actions.security_scan.trufflehog -> github_actions.security_scan.summary
+github_actions.security_scan.kubesec -> github_actions.security_scan.summary
+github_actions.security_scan.trivy -> github_actions.security_scan.summary
+github_actions.security_scan.yamllint -> github_actions.security_scan.summary
+
+# Workflow to outputs
+github_actions.security_scan.summary -> artifacts.sarif
+github_actions.standalone_trufflehog.report -> artifacts.sarif
+github_actions.build_diagrams.commit -> artifacts.diagrams
+github_actions.yaml_fix.commit_fixes -> artifacts.fixed_yaml
+github_actions.standalone_trufflehog.report -> artifacts.pr_comments
+github_actions.build_diagrams.commit -> artifacts.pr_comments
+
+# Git integration
+artifacts.diagrams -> github: "Auto-commit"
+artifacts.fixed_yaml -> github: "Auto-commit"
+
+# Kubernetes integration
+github -> k8s_cluster.tekton.git_poller: "Git polling"
+k8s_cluster.tekton.git_poller -> k8s_cluster.tekton.build_task: "Infrastructure changes"
+k8s_cluster.tekton.build_task -> k8s_cluster.registry.internal: "Push image"
+k8s_cluster.tekton.build_task -> k8s_cluster.tekton.deploy_task
+k8s_cluster.tekton.deploy_task -> k8s_cluster.argocd.sync
+
+# ArgoCD GitOps
+github -> k8s_cluster.argocd.sync: "YAML changes"
+k8s_cluster.argocd.sync -> k8s_cluster.argocd.deploy
+k8s_cluster.argocd.deploy -> applications.observable
+k8s_cluster.argocd.deploy -> applications.grafana
+k8s_cluster.argocd.deploy -> applications.quickwit
+k8s_cluster.argocd.deploy -> applications.loki
+
+# Registry access
+k8s_cluster.registry.internal -> k8s_cluster.registry.external: "External access"
+k8s_cluster.registry.external -> applications: "Image pulls"
+
+# Diagram build flow
+github_actions.build_diagrams.d2_install -> github_actions.build_diagrams.build
+github_actions.build_diagrams.build -> github_actions.build_diagrams.commit
+
+# YAML fix flow
+github_actions.yaml_fix.fix -> github_actions.yaml_fix.commit_fixes
+
+# Standalone TruffleHog flow
+github_actions.standalone_trufflehog.scan -> github_actions.standalone_trufflehog.report
+
+# Add legend
+legend: {
+  label: "Legend"
+  style.fill: "#f8f9fa"
+  style.stroke: "#dee2e6"
+  
+  ci_cd: {
+    label: "CI/CD Automation"
+    style.fill: "#007bff"
+    style.font-color: white
+  }
+  
+  security: {
+    label: "Security Scanning"
+    style.fill: "#dc3545"
+    style.font-color: white
+  }
+  
+  build: {
+    label: "Build & Deploy"
+    style.fill: "#28a745"
+    style.font-color: white
+  }
+  
+  gitops: {
+    label: "GitOps Flow"
+    style.fill: "#326ce5"
+    style.font-color: white
+  }
+  
+  running: {
+    label: "Running Apps"
+    style.fill: "#20c997"
+    style.font-color: white
+  }
+}

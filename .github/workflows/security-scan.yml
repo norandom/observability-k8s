@@ -105,30 +105,20 @@ jobs:
     - name: Install yamllint
       run: pip install yamllint
 
-    - name: Run yamllint
+    - name: Run yamllint with repo config
       run: |
-        yamllint -c .yamllint.yml apps/ || true
-
-    - name: Create yamllint config
+        echo "Using repository .yamllint.yml configuration"
+        cat .yamllint.yml
+        echo "Running yamllint..."
+        yamllint -c .yamllint.yml apps/
+        
+    - name: YAML Syntax Check
       run: |
-        cat > .yamllint.yml << 'EOF'
-        extends: default
-        rules:
-          line-length:
-            max: 120
-          comments:
-            min-spaces-from-content: 1
-          indentation:
-            spaces: 2
-          truthy:
-            allowed-values: ['true', 'false', 'yes', 'no']
-        ignore: |
-          .git/
-          node_modules/
-        EOF
-
-    - name: Run yamllint with config
-      run: yamllint -c .yamllint.yml apps/
+        echo "Checking for critical YAML syntax errors..."
+        find apps/ -name "*.yaml" -o -name "*.yml" | while read file; do
+          echo "Checking: $file"
+          python3 -c "import yaml; yaml.safe_load(open('$file'))" || echo "⚠️ Syntax issue in $file"
+        done
 
   security-summary:
     name: Security Summary

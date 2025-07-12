@@ -1,165 +1,191 @@
-# Data Flow Architecture - Python + JavaScript Hybrid
+# Data Flow Architecture
 
 direction: right
 
-# Log APIs
-apis: {
-  label: "Log APIs\n(Loki + Quickwit)"
-  style.fill: "#2196f3"
-  style.font-color: white
-  icon: https://icons.getbootstrap.com/assets/icons/cloud.svg
-  
-  loki_api: {
-    label: "Loki API\nOperational Logs"
-    style.fill: "#4caf50"
-    style.font-color: white
-  }
-  
-  quickwit_api: {
-    label: "Quickwit API\nSecurity Logs"
-    style.fill: "#f44336"
-    style.font-color: white
+# Style configuration
+vars: {
+  d2-config: {
+    theme-id: 1
+    layout-engine: elk
   }
 }
 
-# Python Processing
-python: {
-  label: "Python Loaders\n(Data Processing)"
-  style.fill: "#ff9800"
-  style.font-color: white
-  icon: https://icons.getbootstrap.com/assets/icons/cpu.svg
-  
-  processing_note: {
-    label: "Data extraction, aggregation,\nanalytics, health scoring"
-    style.fill: "#fff3e0"
-    style.font-color: "#e65100"
+# Apple Keynote style classes
+classes: {
+  primary: {
+    style.fill: "#007AFF"
+    style.font-color: "#FFFFFF"
+    style.border-radius: 8
+    style.font-size: 14
+  }
+  secondary: {
+    style.fill: "#5856D6" 
+    style.font-color: "#FFFFFF"
+    style.border-radius: 8
+    style.font-size: 14
+  }
+  accent: {
+    style.fill: "#FF3B30"
+    style.font-color: "#FFFFFF"
+    style.border-radius: 8
+    style.font-size: 14
+  }
+  success: {
+    style.fill: "#34C759"
+    style.font-color: "#FFFFFF"
+    style.border-radius: 8
+    style.font-size: 14
+  }
+  warning: {
+    style.fill: "#FF9500"
+    style.font-color: "#FFFFFF"
+    style.border-radius: 8
+    style.font-size: 14
+  }
+  container: {
+    style.fill: "#F2F2F7"
+    style.font-color: "#000000"
+    style.border-radius: 12
+    style.font-size: 16
+    style.bold: true
+  }
+  note: {
+    style.fill: "#FFFFFF"
+    style.font-color: "#6C6C70"
+    style.border-radius: 6
     style.font-size: 12
+    style.stroke: "#E5E5EA"
   }
 }
 
-# JSON Data Layer
-json: {
-  label: "JSON Files\n(Data Layer)"
-  style.fill: "#9c27b0"
-  style.font-color: white
-  icon: https://icons.getbootstrap.com/assets/icons/file-earmark-code.svg
+# Main flow components
+apis: {
+  label: "Log APIs"
+  class: container
+  
+  loki: {
+    label: "Loki API\nOperational"
+    class: success
+  }
+  
+  quickwit: {
+    label: "Quickwit API\nSecurity"
+    class: accent
+  }
+}
+
+python: {
+  label: "Python Processing"
+  class: container
+  
+  loader: {
+    label: "Data Loaders"
+    class: warning
+  }
+  
+  processing: {
+    label: "Extract\nAggregate\nAnalyze"
+    class: note
+  }
+}
+
+json_layer: {
+  label: "Data Layer"
+  class: container
   
   files: {
-    label: "loki-logs.json\nquickwit-logs.json"
-    style.fill: "#e1bee7"
-    style.font-color: "#4a148c"
-    style.font-size: 12
+    label: "JSON Files"
+    class: secondary
   }
-}
-
-# Observable Framework
-observable: {
-  label: "Observable Framework\n(JavaScript + Visualization)"
-  style.fill: "#607d8b"
-  style.font-color: white
-  icon: https://icons.getbootstrap.com/assets/icons/bar-chart.svg
   
-  processing_note: {
-    label: "JavaScript data processing,\nObservable Plot charts"
-    style.fill: "#eceff1"
-    style.font-color: "#263238"
-    style.font-size: 12
+  data: {
+    label: "loki-logs.json\nquickwit-logs.json"
+    class: note
   }
 }
 
-# Browser Dashboard
-browser: {
-  label: "Dashboard\n(User Interface)"
-  style.fill: "#795548"
-  style.font-color: white
-  icon: https://icons.getbootstrap.com/assets/icons/display.svg
+observable: {
+  label: "Observable Framework"
+  class: container
+  
+  js: {
+    label: "JavaScript\nVisualization"
+    class: primary
+  }
   
   features: {
-    label: "Interactive visualizations,\nreal-time updates"
-    style.fill: "#d7ccc8"
-    style.font-color: "#3e2723"
-    style.font-size: 12
+    label: "Observable Plot\nInteractive Charts"
+    class: note
   }
 }
 
-# Development Environment
-development: {
-  label: "🔧 Development Tools"
-  style.fill: "#e0f2f1"
+browser: {
+  label: "Dashboard"
+  class: container
+  
+  ui: {
+    label: "User Interface"
+    class: primary
+  }
+  
+  display: {
+    label: "Real-time\nInteractive"
+    class: note
+  }
+}
+
+# Development tools
+dev: {
+  label: "Development"
+  class: container
   
   telepresence: {
-    label: "Telepresence\nLocal ↔ Remote"
-    style.fill: "#00695c"
-    style.font-color: white
+    label: "Telepresence"
+    class: primary
   }
   
-  ai_tools: {
-    label: "Claude Code\nGemini CLI"
-    style.fill: "#1976d2"
-    style.font-color: white
-  }
-  
-  local_edit: {
-    label: "Local Editing\nLive Sync"
-    style.fill: "#388e3c"
-    style.font-color: white
+  ai: {
+    label: "AI Tools"
+    class: secondary
   }
 }
 
-# Data Flow Steps
-apis -> python: {
-  label: "1. HTTP API Calls"
-  style.stroke: "#2196f3"
+# Data flow connections
+apis.loki -> python.loader: "1. HTTP API" {
+  style.stroke: "#34C759"
   style.stroke-width: 3
+  style.font-size: 12
 }
 
-python -> json: {
-  label: "2. Structured Data Output"
-  style.stroke: "#ff9800"
+apis.quickwit -> python.loader: "1. HTTP API" {
+  style.stroke: "#FF3B30"
   style.stroke-width: 3
+  style.font-size: 12
 }
 
-json -> observable: {
-  label: "3. FileAttachment().json()"
-  style.stroke: "#9c27b0"
+python.loader -> json_layer.files: "2. Structured Data" {
+  style.stroke: "#FF9500"
   style.stroke-width: 3
+  style.font-size: 12
 }
 
-observable -> browser: {
-  label: "4. Rendered Dashboard"
-  style.stroke: "#607d8b"
+json_layer.files -> observable.js: "3. FileAttachment" {
+  style.stroke: "#5856D6"
   style.stroke-width: 3
+  style.font-size: 12
 }
 
-# Development Flow
-development.ai_tools -> development.local_edit: {
-  label: "AI Assistance"
-  style.stroke: "#1976d2"
+observable.js -> browser.ui: "4. Rendered" {
+  style.stroke: "#007AFF"
+  style.stroke-width: 3
+  style.font-size: 12
+}
+
+# Development flow
+dev.ai -> dev.telepresence: {style.stroke: "#5856D6"; style.stroke-width: 2}
+dev.telepresence -> observable: "Live Sync" {
+  style.stroke: "#007AFF"
   style.stroke-width: 2
-}
-
-development.local_edit -> development.telepresence: {
-  label: "File Changes"
-  style.stroke: "#388e3c"
-  style.stroke-width: 2
-}
-
-development.telepresence -> observable: {
-  label: "Live Sync"
-  style.stroke: "#00695c"
-  style.stroke-width: 3
-  style.stroke-dash: 5
-}
-
-# API Details
-apis.loki_api -> python: {
-  label: "LogQL Queries\nTime-series data"
-  style.stroke: "#4caf50"
-  style.stroke-width: 2
-}
-
-apis.quickwit_api -> python: {
-  label: "Search API\nSecurity events"
-  style.stroke: "#f44336"
-  style.stroke-width: 2
+  style.stroke-dash: 3
+  style.font-size: 12
 }

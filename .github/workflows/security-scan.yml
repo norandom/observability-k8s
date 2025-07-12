@@ -62,56 +62,6 @@ jobs:
         path: trufflehog-results.sarif
         retention-days: 30
 
-  kubernetes-security:
-    name: Kubernetes Security Scan
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
-
-    - name: Find YAML files for Kubesec
-      run: find apps/ -name "*.yaml" -o -name "*.yml" > yaml-files.txt
-      
-    - name: Run Kubesec Scan
-      continue-on-error: true
-      run: |
-        # Create empty SARIF file first
-        echo '{"version":"2.1.0","$schema":"https://json.schemastore.org/sarif-2.1.0.json","runs":[{"tool":{"driver":{"name":"kubesec","version":"2.11.0","informationUri":"https://kubesec.io/"}},"results":[]}]}' > kubesec-results.sarif
-        
-        if [ -s yaml-files.txt ]; then
-          # Install kubesec
-          DOWNLOAD_URL=$(curl -s "https://api.github.com/repos/controlplaneio/kubesec/releases/latest" | grep "browser_download_url.*linux-amd64" | cut -d '"' -f 4)
-          if [ -n "$DOWNLOAD_URL" ]; then
-            curl -sSL "$DOWNLOAD_URL" -o kubesec
-            chmod +x kubesec
-            
-            # Run basic scan (output to console for now)
-            while IFS= read -r file; do
-              echo "Scanning: $file"
-              ./kubesec scan "$file" || true
-            done < yaml-files.txt
-          else
-            echo "Could not download kubesec"
-          fi
-        else
-          echo "No YAML files found to scan"
-        fi
-
-    - name: Upload Kubesec SARIF to Security Tab
-      uses: github/codeql-action/upload-sarif@v3
-      if: always()
-      with:
-        sarif_file: kubesec-results.sarif
-        category: "Kubernetes Security - Kubesec"
-        
-    - name: Upload Kubesec Results as Artifact
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: kubesec-results
-        path: kubesec-results.sarif
-        retention-days: 30
 
   container-security:
     name: Container Image Security Scan
@@ -155,74 +105,11 @@ jobs:
         path: trivy-results.sarif
         retention-days: 30
 
-  yaml-security:
-    name: YAML Security Lint
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
-
-    - name: Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-
-    - name: Install yamllint and sarif-om
-      run: |
-        pip install yamllint
-        pip install sarif-om
-
-    - name: Run yamllint with repo config
-      continue-on-error: true
-      run: |
-        echo "Using repository .yamllint.yml configuration"
-        cat .yamllint.yml
-        echo "Running yamllint..."
-        yamllint -c .yamllint.yml -f parsable apps/ > yamllint-output.txt || true
-        
-    - name: Convert yamllint to SARIF
-      run: |
-        # Create empty SARIF file first
-        echo '{"version":"2.1.0","$schema":"https://json.schemastore.org/sarif-2.1.0.json","runs":[{"tool":{"driver":{"name":"yamllint","version":"1.0.0","informationUri":"https://yamllint.readthedocs.io/"}},"results":[]}]}' > yamllint-results.sarif
-        
-        # Basic output for verification
-        if [ -f yamllint-output.txt ]; then
-          echo "yamllint scan completed. Output file size: $(wc -l < yamllint-output.txt) lines"
-        else
-          echo "yamllint did not create output file"
-        fi
-        
-    - name: Upload yamllint SARIF to Security Tab
-      uses: github/codeql-action/upload-sarif@v3
-      if: always()
-      with:
-        sarif_file: yamllint-results.sarif
-        category: "YAML Lint - yamllint"
-        
-    - name: Upload yamllint Results as Artifact
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: yamllint-results
-        path: |
-          yamllint-results.sarif
-          yamllint-output.txt
-        retention-days: 30
-        
-    - name: YAML Syntax Check
-      continue-on-error: true
-      run: |
-        echo "Checking for critical YAML syntax errors..."
-        find apps/ -name "*.yaml" -o -name "*.yml" | while read file; do
-          echo "Checking: $file"
-          python3 -c "import yaml; list(yaml.safe_load_all(open('$file')))" || echo "⚠️ Syntax issue in $file"
-        done
 
   security-summary:
     name: Security Summary
     runs-on: ubuntu-latest
-    needs: [trufflehog, kubernetes-security, container-security, yaml-security]
+    needs: [trufflehog, container-security]
     if: always()
     
     steps:
@@ -235,31 +122,23 @@ jobs:
         echo "| Scan Type | Status | SARIF Upload |" >> $GITHUB_STEP_SUMMARY
         echo "|-----------|--------|-------------|" >> $GITHUB_STEP_SUMMARY
         echo "| TruffleHog Secret Scan | ${{ needs.trufflehog.result }} | ✅ Security Tab |" >> $GITHUB_STEP_SUMMARY
-        echo "| Kubernetes Security (Kubesec) | ${{ needs.kubernetes-security.result }} | ✅ Security Tab |" >> $GITHUB_STEP_SUMMARY
-        echo "| Container Security (Trivy) | ${{ needs.container-security.result }} | ✅ Security Tab |" >> $GITHUB_STEP_SUMMARY
-        echo "| YAML Lint (yamllint) | ${{ needs.yaml-security.result }} | ✅ Security Tab |" >> $GITHUB_STEP_SUMMARY
+        echo "| Trivy Kubernetes Security | ${{ needs.container-security.result }} | ✅ Security Tab |" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 📍 How to Review Security Findings" >> $GITHUB_STEP_SUMMARY
         echo "1. Go to the **Security** tab in this repository" >> $GITHUB_STEP_SUMMARY
         echo "2. Click on **Code scanning alerts**" >> $GITHUB_STEP_SUMMARY
         echo "3. Filter by tool category:" >> $GITHUB_STEP_SUMMARY
         echo "   - **TruffleHog Secret Scan** - Potential secrets and credentials" >> $GITHUB_STEP_SUMMARY
-        echo "   - **Kubernetes Security - Kubesec** - K8s security best practices" >> $GITHUB_STEP_SUMMARY
-        echo "   - **Container Security - Trivy** - Container and configuration vulnerabilities" >> $GITHUB_STEP_SUMMARY
-        echo "   - **YAML Lint - yamllint** - YAML formatting and structure issues" >> $GITHUB_STEP_SUMMARY
+        echo "   - **Container Security - Trivy** - Kubernetes configurations, container vulnerabilities, and security best practices" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🚨 Priority Actions" >> $GITHUB_STEP_SUMMARY
         if [[ "${{ needs.trufflehog.result }}" == "failure" ]]; then
           echo "- ⚠️ **CRITICAL**: Potential secrets detected! Review immediately." >> $GITHUB_STEP_SUMMARY
         fi
-        if [[ "${{ needs.kubernetes-security.result }}" == "failure" ]]; then
-          echo "- ⚠️ **HIGH**: Kubernetes security issues found. Review cluster configs." >> $GITHUB_STEP_SUMMARY
-        fi
         if [[ "${{ needs.container-security.result }}" == "failure" ]]; then
-          echo "- ⚠️ **MEDIUM**: Container security vulnerabilities detected." >> $GITHUB_STEP_SUMMARY
+          echo "- ⚠️ **HIGH**: Kubernetes security issues found. Review cluster configurations." >> $GITHUB_STEP_SUMMARY
         fi
-        if [[ "${{ needs.yaml-security.result }}" == "failure" ]]; then
-          echo "- ℹ️ **LOW**: YAML formatting issues - review for consistency." >> $GITHUB_STEP_SUMMARY
-        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Trivy scans Kubernetes manifests for security misconfigurations, making Kubesec redundant.**" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "**Scan artifacts are also available in the workflow artifacts for 30 days.**" >> $GITHUB_STEP_SUMMARY

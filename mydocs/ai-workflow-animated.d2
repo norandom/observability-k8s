@@ -1,18 +1,20 @@
-# AI-Powered Dashboard Development Workflow
-# Clean, readable architecture for Observable Framework + Telepresence + AI tools
+# AI-Powered Dashboard Development Workflow - Animated
+# Uses D2's animation features to show progressive flow
 
 direction: down
 
-# Optimized layout for laptop screens - more spacing for readability
+# Optimized layout for laptop screens
 vars: {
   d2-config: {
     layout-engine: elk
     elk-node-spacing: 80
     elk-layer-spacing: 100
+    # Enable animations
+    animate-interval: 1000
   }
 }
 
-# Apple Keynote inspired styling - clean and minimal
+# Large fonts for readability
 classes: {
   laptop: {
     style.fill: "#F8F9FA"
@@ -87,13 +89,13 @@ laptop_env: {
   }
 }
 
-# 🌉 Telepresence Bridge (The Magic)
+# 🌉 Telepresence Bridge
 telepresence: {
   label: "🌉 Telepresence Bridge\n\"Mount Remote as Local\""
   class: bridge
 }
 
-# ☸️ Kubernetes Cluster (Production-like)
+# ☸️ Kubernetes Cluster
 k8s_cluster: {
   label: "☸️ Kubernetes Cluster"
   class: cluster
@@ -110,12 +112,13 @@ live_dashboard: {
   class: dashboard
 }
 
-# ⚡ The Magic Development Flow
+# ⚡ Animated Development Flow
 laptop_env.ai_tools -> laptop_env.local_files: "✨ AI writes\ndashboard code" {
   style.stroke: "#5856D6"
   style.stroke-width: 5
   style.font-size: 18
   style.bold: true
+  style.animated: true
 }
 
 laptop_env.local_files -> telepresence: "📤 File changes\nsync instantly" {
@@ -123,6 +126,7 @@ laptop_env.local_files -> telepresence: "📤 File changes\nsync instantly" {
   style.stroke-width: 5
   style.font-size: 18
   style.bold: true
+  style.animated: true
 }
 
 telepresence -> k8s_cluster.observable_pod: "🔄 Live mount\nto K8s pod" {
@@ -130,6 +134,7 @@ telepresence -> k8s_cluster.observable_pod: "🔄 Live mount\nto K8s pod" {
   style.stroke-width: 5
   style.font-size: 18
   style.bold: true
+  style.animated: true
 }
 
 k8s_cluster.observable_pod -> live_dashboard: "🚀 Hot reload\nwith real data" {
@@ -137,6 +142,7 @@ k8s_cluster.observable_pod -> live_dashboard: "🚀 Hot reload\nwith real data" 
   style.stroke-width: 5
   style.font-size: 18
   style.bold: true
+  style.animated: true
 }
 
 # 🎯 The Result
@@ -144,12 +150,13 @@ result_box: {
   label: "🎯 Development Superpowers\n\n✅ Edit locally with Claude Code / Gemini CLI\n✅ Test against live Kubernetes data\n✅ See changes instantly in browser\n✅ No Docker, no local setup hassle\n✅ Production-like development environment"
   class: laptop
   style.fill: "#E8F4FD"
-  style.font-size: 16
+  style.font-size: 18
 }
 
 laptop_env -> result_box: "🌟 Experience" {
   style.stroke: "#34C759"
-  style.stroke-width: 3
-  style.font-size: 12
+  style.stroke-width: 4
+  style.font-size: 16
   style.stroke-dash: 5
+  style.animated: true
 }

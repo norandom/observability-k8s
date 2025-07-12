@@ -4,14 +4,11 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'mydocs/*.d2'
-      - 'mydocs/build.sh'
-      - '.github/workflows/build-diagrams.yml'
+      - 'mydocs/**'
   pull_request:
     branches: [ main ]
     paths:
-      - 'mydocs/*.d2'
-      - 'mydocs/build.sh'
+      - 'mydocs/**'
 
 jobs:
   build-diagrams:

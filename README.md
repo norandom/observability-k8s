@@ -4,6 +4,9 @@
 
 ![AI-Powered Dashboard Development](mydocs/output/ai-development-workflow.png)
 
+**🎬 [View Interactive Animation Demo →](https://norandom.github.io/observability-k8s/mydocs/animated-workflow.html)**
+*See the AI + Telepresence + Kubernetes workflow in action*
+
 ## 🚀 Quick Start: Live Development
 
 Experience **true cloud-native development** - edit locally with your favorite AI tools while running against live Kubernetes data.
@@ -47,25 +50,23 @@ Experience **Python data processing** with **Interactive JavaScript visualizatio
 ## 📋 Table of Contents
 
 ### **🚀 Development Workflows**
-1. [Live Development Setup](#live-development-setup) - **Start here for hands-on development**
-2. [Telepresence Integration](#telepresence-integration) - **Mount remote containers locally**
-3. [AI Tools Integration](#ai-tools-integration) - **Claude Code + Gemini CLI workflows**
-4. [File Mounting Strategies](#file-mounting-strategies) - **Local ↔ Remote file sync**
+1. [🎬 Interactive Animation Demo](https://norandom.github.io/observability-k8s/mydocs/animated-workflow.html) - **See the workflow in action**
+2. [Live Development Setup](#live-development-setup) - **Start here for hands-on development**
+3. [Telepresence Integration](#telepresence-integration) - **Mount remote containers locally**
+4. [AI Tools Integration](#ai-tools-integration) - **Claude Code + Gemini CLI workflows**
+5. [File Mounting Strategies](#file-mounting-strategies) - **Local ↔ Remote file sync**
 
 ### **🏗️ Architecture & Deployment**
-5. [System Architecture](#system-architecture) - **Understanding the stack**
-6. [GitOps Workflow](docs/gitops.md) - **Automated deployments**
-7. [Access Points](docs/access-points.md) - **URLs and credentials**
+6. [System Architecture](#system-architecture) - **Understanding the stack**
+7. [Architecture Documentation](docs/architecture.md) - **Complete system design**
+8. [GitHub Actions SSH Signing](docs/github-actions-ssh-signing.md) - **Automated workflow setup**
 
 ### **📊 Data & APIs**
-8. [Python Data Loaders](docs/data-loaders.md) - **Loki + Quickwit integration**
 9. [API Endpoints](docs/api-endpoints.md) - **Testing and development**
-10. [Log Pipeline](docs/log-pipeline.md) - **Data flow and routing**
+10. [Complete Setup Guide](docs/setup.md) - **Full deployment instructions**
 
 ### **📖 Documentation**
-11. [Complete Setup Guide](docs/setup.md) - **Full deployment instructions**
-12. [Example Usage](docs/examples.md) - **Step-by-step tutorials**
-13. [Troubleshooting](docs/troubleshooting.md) - **Common issues and solutions**
+11. [Example Usage](docs/examples.md) - **Step-by-step tutorials**
 
 ---
 

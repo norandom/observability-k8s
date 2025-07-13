@@ -1,344 +1,370 @@
-title: |md
-  # CI/CD Pipeline Architecture
-  ## GitHub Actions + Tekton Integration
-|
+# CI/CD Pipeline - Step-by-Step Workflow
 
-direction: right
+direction: down
 
-# GitHub Repository
-github: {
-  label: "GitHub Repository\nobservability-k8s"
-  icon: https://icons.getbootstrap.com/assets/icons/github.svg
-  style.fill: "#24292e"
-  style.font-color: white
-}
-
-# Triggers
-triggers: {
-  push: {
-    label: "Push to main/develop"
-    icon: https://icons.getbootstrap.com/assets/icons/git.svg
-    style.fill: "#28a745"
-  }
-  
-  pr: {
-    label: "Pull Request"
-    icon: https://icons.getbootstrap.com/assets/icons/arrow-up-right-circle.svg
-    style.fill: "#007bff"
-  }
-  
-  schedule: {
-    label: "Schedule (2 AM UTC)"
-    icon: https://icons.getbootstrap.com/assets/icons/clock.svg
-    style.fill: "#6f42c1"
-  }
-  
-  manual: {
-    label: "Manual Trigger"
-    icon: https://icons.getbootstrap.com/assets/icons/hand-index.svg
-    style.fill: "#fd7e14"
+vars: {
+  d2-config: {
+    layout-engine: elk
   }
 }
 
-# GitHub Actions Workflows
-github_actions: {
-  label: "GitHub Actions CI/CD"
-  style.fill: "#f6f8fa"
-  style.stroke: "#d0d7de"
-  style.stroke-width: 2
+# Apple Keynote styling consistent with other diagrams
+classes: {
+  step: {
+    style.fill: "#F8F9FA"
+    style.font-color: "#1D1D1F" 
+    style.border-radius: 16
+    style.font-size: 24
+    style.bold: true
+    style.stroke: "#D1D1D6"
+    style.stroke-width: 2
+    style.shadow: true
+  }
+  action: {
+    style.fill: "#007AFF"
+    style.font-color: "#FFFFFF"
+    style.border-radius: 12
+    style.font-size: 20
+    style.bold: true
+    style.shadow: true
+  }
+  trigger: {
+    style.fill: "#FF9500"
+    style.font-color: "#FFFFFF" 
+    style.border-radius: 12
+    style.font-size: 20
+    style.bold: true
+    style.shadow: true
+  }
+  security: {
+    style.fill: "#FF3B30"
+    style.font-color: "#FFFFFF"
+    style.border-radius: 12
+    style.font-size: 20
+    style.bold: true
+    style.shadow: true
+  }
+  success: {
+    style.fill: "#34C759"
+    style.font-color: "#FFFFFF"
+    style.border-radius: 12
+    style.font-size: 20
+    style.bold: true
+    style.shadow: true
+  }
+  deploy: {
+    style.fill: "#5856D6"
+    style.font-color: "#FFFFFF"
+    style.border-radius: 12
+    style.font-size: 20
+    style.bold: true
+    style.shadow: true
+  }
+}
+
+# Step 1: Developer Actions
+step1: "Step 1: Developer Actions" {
+  class: step
+  
+  git_push: {
+    shape: circle
+    label: "🚀\nGit Push"
+    class: trigger
+  }
+  
+  pr_create: {
+    shape: circle
+    label: "🔄\nPull Request"
+    class: trigger
+  }
+  
+  diagram_change: {
+    shape: circle
+    label: "📊\nDiagram Edit"
+    class: trigger
+  }
+}
+
+# Step 2: GitHub Actions Pipeline
+step2: "Step 2: GitHub Actions Pipeline" {
+  class: step
   
   security_scan: {
-    label: "Security Scan Workflow"
-    style.fill: "#dc3545"
-    style.font-color: white
+    shape: hexagon
+    label: "🔒\nSecurity Scan"
+    class: security
     
-    trufflehog: {
-      label: "TruffleHog\nSecret Detection"
-      icon: https://icons.getbootstrap.com/assets/icons/shield-lock.svg
+    trufflehog: "TruffleHog\nSecrets" {
+      style.font-size: 16
     }
-    
-    trivy: {
-      label: "Trivy\nKubernetes Security"
-      icon: https://icons.getbootstrap.com/assets/icons/box.svg
-    }
-    
-    summary: {
-      label: "Security\nSummary"
-      icon: https://icons.getbootstrap.com/assets/icons/clipboard-data.svg
+    trivy: "Trivy\nK8s Security" {
+      style.font-size: 16
     }
   }
   
-  standalone_trufflehog: {
-    label: "TruffleHog Standalone"
-    style.fill: "#fd7e14"
-    style.font-color: white
+  diagram_build: {
+    shape: hexagon
+    label: "🎨\nD2 Build"
+    class: action
     
-    scan: {
-      label: "Secret\nDetection"
-      icon: https://icons.getbootstrap.com/assets/icons/search.svg
+    install: "Install D2" {
+      style.font-size: 16
     }
-    
-    report: {
-      label: "Security\nReport"
-      icon: https://icons.getbootstrap.com/assets/icons/file-earmark-text.svg
+    generate: "Generate PNG/SVG" {
+      style.font-size: 16
     }
   }
   
-  build_diagrams: {
-    label: "Build Diagrams Workflow"
-    style.fill: "#28a745"
-    style.font-color: white
+  ssh_commit: {
+    shape: hexagon
+    label: "🔑\nSSH Commit"
+    class: success
     
-    d2_install: {
-      label: "Install D2"
-      icon: https://icons.getbootstrap.com/assets/icons/download.svg
+    sign: "Sign with SSH" {
+      style.font-size: 16
     }
-    
-    build: {
-      label: "Build\nDiagrams"
-      icon: https://icons.getbootstrap.com/assets/icons/diagram-3.svg
-    }
-    
-    commit: {
-      label: "Auto-commit\nGenerated Files"
-      icon: https://icons.getbootstrap.com/assets/icons/git.svg
-    }
-  }
-  
-  yaml_fix: {
-    label: "YAML Fix Workflow"
-    style.fill: "#6f42c1"
-    style.font-color: white
-    
-    fix: {
-      label: "Auto-fix\nYAML Issues"
-      icon: https://icons.getbootstrap.com/assets/icons/wrench.svg
-    }
-    
-    commit_fixes: {
-      label: "Commit\nFixes"
-      icon: https://icons.getbootstrap.com/assets/icons/check-circle.svg
+    push: "Auto-push" {
+      style.font-size: 16
     }
   }
 }
 
-# Outputs and Artifacts
-artifacts: {
-  label: "CI/CD Outputs"
-  style.fill: "#f8f9fa"
-  style.stroke: "#dee2e6"
+# Step 3: Security Integration
+step3: "Step 3: Security Integration" {
+  class: step
   
-  sarif: {
-    label: "SARIF Security\nReports (GitHub)"
-    icon: https://icons.getbootstrap.com/assets/icons/file-code.svg
-    style.fill: "#dc3545"
-    style.font-color: white
-  }
-  
-  diagrams: {
-    label: "Generated\nDiagrams"
-    icon: https://icons.getbootstrap.com/assets/icons/image.svg
-    style.fill: "#28a745"
-    style.font-color: white
+  sarif_upload: {
+    shape: cylinder
+    label: "📋\nSARIF Upload"
+    class: security
   }
   
   github_security: {
-    label: "GitHub Security\nTab Integration"
-    icon: https://icons.getbootstrap.com/assets/icons/shield-check.svg
-    style.fill: "#28a745"
-    style.font-color: white
+    shape: cloud
+    label: "🛡️\nGitHub Security Tab"
+    class: success
   }
   
-  pr_comments: {
-    label: "PR Comments\n& Reviews"
-    icon: https://icons.getbootstrap.com/assets/icons/chat-dots.svg
-    style.fill: "#007bff"
-    style.font-color: white
+  artifacts: {
+    shape: package
+    label: "📦\nArtifacts\n(30 days)"
+    class: action
   }
 }
 
-# Kubernetes Cluster
-k8s_cluster: {
-  label: "Kubernetes Cluster (K3s)"
-  style.fill: "#326ce5"
-  style.font-color: white
+# Step 4: Kubernetes Pipeline
+step4: "Step 4: Kubernetes Pipeline" {
+  class: step
   
-  tekton: {
-    label: "Tekton Pipelines"
-    style.fill: "#fd7e14"
-    style.font-color: white
-    
-    git_poller: {
-      label: "Git Poller\nCronJob"
-      icon: https://icons.getbootstrap.com/assets/icons/arrow-clockwise.svg
-    }
-    
-    build_task: {
-      label: "Observable\nBuild Task"
-      icon: https://icons.getbootstrap.com/assets/icons/hammer.svg
-    }
-    
-    deploy_task: {
-      label: "Update\nDeployment"
-      icon: https://icons.getbootstrap.com/assets/icons/arrow-up-circle.svg
-    }
+  git_poller: {
+    shape: diamond
+    label: "⏰\nGit Poller\n(2min CronJob)"
+    class: trigger
   }
   
-  argocd: {
-    label: "ArgoCD GitOps"
-    style.fill: "#28a745"
-    style.font-color: white
+  change_detection: {
+    shape: diamond
+    label: "🔍\nChange Detection"
+    class: action
     
-    sync: {
-      label: "Auto-sync\nManifests"
-      icon: https://icons.getbootstrap.com/assets/icons/arrow-repeat.svg
+    infrastructure: "Core Dependencies\n(.yml, Dockerfile)" {
+      style.font-size: 14
+      style.font-color: "#FF9500"
     }
-    
-    deploy: {
-      label: "Deploy\nApplications"
-      icon: https://icons.getbootstrap.com/assets/icons/cloud-upload.svg
-    }
-  }
-  
-  registry: {
-    label: "Container Registry"
-    style.fill: "#6c757d"
-    style.font-color: white
-    
-    internal: {
-      label: "Internal\nRegistry"
-      icon: https://icons.getbootstrap.com/assets/icons/hdd-rack.svg
-    }
-    
-    external: {
-      label: "External\nAccess"
-      icon: https://icons.getbootstrap.com/assets/icons/cloud.svg
+    dashboards: "Dashboard Files\n(.md)" {
+      style.font-size: 14
+      style.font-color: "#34C759"
     }
   }
 }
 
-# Running Applications
-applications: {
-  label: "Running Applications"
-  style.fill: "#20c997"
-  style.font-color: white
+# Step 5: Build & Deploy
+step5: "Step 5: Build & Deploy" {
+  class: step
+  
+  tekton_build: {
+    shape: hexagon
+    label: "🔨\nTekton Build"
+    class: action
+    
+    kaniko: "Kaniko Build" {
+      style.font-size: 16
+    }
+    registry: "Push to Registry" {
+      style.font-size: 16
+    }
+  }
+  
+  argocd_sync: {
+    shape: hexagon
+    label: "🔄\nArgoCD Sync"
+    class: deploy
+    
+    manifest_sync: "Manifest Sync" {
+      style.font-size: 16
+    }
+    dashboard_sync: "Dashboard Sync\n(No Rebuild)" {
+      style.font-size: 14
+      style.font-color: "#34C759"
+    }
+  }
+}
+
+# Step 6: Live Applications
+step6: "Step 6: Live Applications" {
+  class: step
   
   observable: {
-    label: "Observable\nFramework"
-    icon: https://icons.getbootstrap.com/assets/icons/bar-chart.svg
+    shape: circle
+    label: "📊\nObservable\nFramework"
+    class: success
   }
   
   grafana: {
-    label: "Grafana\nDashboards"
-    icon: https://icons.getbootstrap.com/assets/icons/graph-up.svg
+    shape: circle
+    label: "📈\nGrafana\nDashboards"
+    class: success
   }
   
-  quickwit: {
-    label: "Quickwit\nSearch"
-    icon: https://icons.getbootstrap.com/assets/icons/search.svg
-  }
-  
-  loki: {
-    label: "Loki\nLogs"
-    icon: https://icons.getbootstrap.com/assets/icons/journal-text.svg
+  monitoring: {
+    shape: circle
+    label: "📝\nLoki + Quickwit\nMonitoring"
+    class: success
   }
 }
 
-# Flow connections - GitHub Actions
-github -> triggers.push
-github -> triggers.pr
-github -> triggers.schedule
-github -> triggers.manual
+# Development Workflow Arrows
+step1.git_push -> step2.security_scan: "All pushes" {
+  style.stroke: "#FF3B30"
+  style.stroke-width: 3
+  style.font-size: 14
+}
 
-# Trigger to workflows
-triggers.push -> github_actions.security_scan
-triggers.pr -> github_actions.security_scan
-triggers.schedule -> github_actions.security_scan
+step1.pr_create -> step2.security_scan: "PR validation" {
+  style.stroke: "#FF3B30"
+  style.stroke-width: 3
+  style.font-size: 14
+}
 
-triggers.push -> github_actions.standalone_trufflehog
-triggers.pr -> github_actions.standalone_trufflehog
-triggers.manual -> github_actions.standalone_trufflehog
+step1.diagram_change -> step2.diagram_build: "mydocs/**" {
+  style.stroke: "#007AFF"
+  style.stroke-width: 3
+  style.font-size: 14
+}
 
-triggers.push -> github_actions.build_diagrams: "mydocs/*.d2 changes"
-triggers.pr -> github_actions.build_diagrams: "mydocs/*.d2 changes"
+# GitHub Actions Flow
+step2.security_scan -> step3.sarif_upload: "Results" {
+  style.stroke: "#FF3B30"
+  style.stroke-width: 2
+  style.font-size: 14
+}
 
-triggers.manual -> github_actions.yaml_fix
+step2.diagram_build -> step2.ssh_commit: "Generated files" {
+  style.stroke: "#007AFF"
+  style.stroke-width: 2
+  style.font-size: 14
+}
 
-# Security workflow flows
-github_actions.security_scan.trufflehog -> github_actions.security_scan.summary
-github_actions.security_scan.trivy -> github_actions.security_scan.summary
+step2.ssh_commit -> step3.artifacts: "Build artifacts" {
+  style.stroke: "#34C759"
+  style.stroke-width: 2
+  style.font-size: 14
+}
 
-# Workflow to outputs
-github_actions.security_scan.summary -> artifacts.sarif
-github_actions.standalone_trufflehog.report -> artifacts.sarif
-github_actions.build_diagrams.commit -> artifacts.diagrams
-github_actions.yaml_fix.commit_fixes -> artifacts.fixed_yaml
-github_actions.standalone_trufflehog.report -> artifacts.pr_comments
-github_actions.build_diagrams.commit -> artifacts.pr_comments
+step3.sarif_upload -> step3.github_security: "Security findings" {
+  style.stroke: "#FF3B30"
+  style.stroke-width: 2
+  style.font-size: 14
+}
 
-# Security integration
-artifacts.sarif -> artifacts.github_security: "SARIF Upload"
+# Kubernetes Flow
+step1.git_push -> step4.git_poller: "Repository changes" {
+  style.stroke: "#FF9500"
+  style.stroke-width: 3
+  style.font-size: 14
+}
 
-# Git integration
-artifacts.diagrams -> github: "Auto-commit"
-artifacts.fixed_yaml -> github: "Auto-commit"
+step4.git_poller -> step4.change_detection: "Check commits" {
+  style.stroke: "#007AFF"
+  style.stroke-width: 2
+  style.font-size: 14
+}
 
-# Kubernetes integration
-github -> k8s_cluster.tekton.git_poller: "Git polling"
-k8s_cluster.tekton.git_poller -> k8s_cluster.tekton.build_task: "Infrastructure changes"
-k8s_cluster.tekton.build_task -> k8s_cluster.registry.internal: "Push image"
-k8s_cluster.tekton.build_task -> k8s_cluster.tekton.deploy_task
-k8s_cluster.tekton.deploy_task -> k8s_cluster.argocd.sync
+step4.change_detection -> step5.tekton_build: "Infrastructure\nchanges only" {
+  style.stroke: "#FF9500"
+  style.stroke-width: 3
+  style.font-size: 14
+}
 
-# ArgoCD GitOps
-github -> k8s_cluster.argocd.sync: "YAML changes"
-k8s_cluster.argocd.sync -> k8s_cluster.argocd.deploy
-k8s_cluster.argocd.deploy -> applications.observable
-k8s_cluster.argocd.deploy -> applications.grafana
-k8s_cluster.argocd.deploy -> applications.quickwit
-k8s_cluster.argocd.deploy -> applications.loki
+step4.change_detection -> step5.argocd_sync: "All changes" {
+  style.stroke: "#5856D6"
+  style.stroke-width: 3
+  style.font-size: 14
+}
 
-# Registry access
-k8s_cluster.registry.internal -> k8s_cluster.registry.external: "External access"
-k8s_cluster.registry.external -> applications: "Image pulls"
+# Deploy to Applications
+step5.tekton_build -> step6.observable: "Container update" {
+  style.stroke: "#007AFF"
+  style.stroke-width: 2
+  style.font-size: 14
+}
 
-# Diagram build flow
-github_actions.build_diagrams.d2_install -> github_actions.build_diagrams.build
-github_actions.build_diagrams.build -> github_actions.build_diagrams.commit
+step5.argocd_sync -> step6.observable: "Live sync" {
+  style.stroke: "#34C759"
+  style.stroke-width: 3
+  style.font-size: 14
+}
 
-# YAML fix flow
-github_actions.yaml_fix.fix -> github_actions.yaml_fix.commit_fixes
+step5.argocd_sync -> step6.grafana: "GitOps deploy" {
+  style.stroke: "#5856D6"
+  style.stroke-width: 2
+  style.font-size: 14
+}
 
-# Standalone TruffleHog flow
-github_actions.standalone_trufflehog.scan -> github_actions.standalone_trufflehog.report
+step5.argocd_sync -> step6.monitoring: "Stack deploy" {
+  style.stroke: "#5856D6"
+  style.stroke-width: 2
+  style.font-size: 14
+}
 
-# Add legend
-legend: {
-  label: "Legend & Key Features"
-  style.fill: "#f8f9fa"
-  style.stroke: "#dee2e6"
+# Legend - Key Features
+legend: "Key Features" {
+  style.fill: "#F5F5F7"
+  style.stroke: "#D1D1D6"
+  style.stroke-width: 1
+  style.border-radius: 16
+  style.font-size: 18
+  style.shadow: true
   
-  security: {
-    label: "Streamlined Security\n(TruffleHog + Trivy)"
-    style.fill: "#dc3545"
-    style.font-color: white
+  smart_build: "🧠 Smart Build Detection" {
+    style.font-size: 16
+    style.font-color: "#FF9500"
+    style.bold: true
   }
   
-  github_integration: {
-    label: "GitHub Security\nTab Integration"
-    style.fill: "#28a745"
-    style.font-color: white
+  live_sync: "⚡ Live Dashboard Sync" {
+    style.font-size: 16
+    style.font-color: "#34C759"
+    style.bold: true
   }
   
-  automation: {
-    label: "Full CI/CD\nAutomation"
-    style.fill: "#007bff"
-    style.font-color: white
+  security: "🔒 Automated Security" {
+    style.font-size: 16
+    style.font-color: "#FF3B30"
+    style.bold: true
   }
   
-  gitops: {
-    label: "GitOps\nDeployment"
-    style.fill: "#326ce5"
-    style.font-color: white
+  gitops: "🔄 GitOps Deployment" {
+    style.font-size: 16
+    style.font-color: "#5856D6"
+    style.bold: true
   }
+  
+  details: |md
+    • **Infrastructure changes** trigger full container rebuild
+    • **Dashboard changes** sync instantly without rebuild
+    • **Security scans** upload to GitHub Security tab
+    • **SSH-signed commits** from GitHub Actions
+    • **2-minute polling** for responsive updates
+  | {style: {font-size: 14}}
 }

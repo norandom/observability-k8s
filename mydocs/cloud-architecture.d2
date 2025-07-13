@@ -5,120 +5,51 @@ direction: down
 title: |md
   # Enterprise Cloud Architecture
   ## Kubernetes Development with Zero Trust Security
-|
-
-# Cloud Providers Section
-clouds: Cloud Infrastructure {
-  shape: rectangle
-  style: {
-    fill: "#f0f4f8"
-    stroke: "#1a73e8"
-    stroke-width: 2
-    stroke-dash: 3
-  }
-  
-  aws: AWS {
-    shape: cloud
-    style: {
-      fill: "#ff9900"
-      stroke: "#232f3e"
-      font-color: "#ffffff"
-      bold: true
-    }
-    
-    eks: EKS Cluster {
-      shape: hexagon
-      style: {
-        fill: "#ffffff"
-        stroke: "#ff9900"
-      }
-    }
-  }
-  
-  azure: Azure {
-    shape: cloud
-    style: {
-      fill: "#0078d4"
-      stroke: "#0078d4"
-      font-color: "#ffffff"
-      bold: true
-    }
-    
-    aks: AKS Cluster {
-      shape: hexagon
-      style: {
-        fill: "#ffffff"
-        stroke: "#0078d4"
-      }
-    }
-  }
-  
-  gcp: Google Cloud {
-    shape: cloud
-    style: {
-      fill: "#4285f4"
-      stroke: "#4285f4"
-      font-color: "#ffffff"
-      bold: true
-    }
-    
-    gke: GKE Cluster {
-      shape: hexagon
-      style: {
-        fill: "#ffffff"
-        stroke: "#4285f4"
-      }
-    }
-  }
-  
-  onprem: On-Premise {
-    shape: cloud
-    style: {
-      fill: "#607d8b"
-      stroke: "#455a64"
-      font-color: "#ffffff"
-      bold: true
-    }
-    
-    k3s: K3s/K8s {
-      shape: hexagon
-      style: {
-        fill: "#ffffff"
-        stroke: "#607d8b"
-      }
-    }
-  }
-}
+| {style: {font-size: 28}}
 
 # Developer Environment
 dev_env: Developer Environment {
   shape: rectangle
   style: {
-    fill: "#e3f2fd"
-    stroke: "#1976d2"
+    fill: "#DDEEFE"
+    stroke: "#0A84FF"
     stroke-width: 2
+    border-radius: 16
+    font-size: 24
+    font-color: "#1D1D1F"
     bold: true
   }
   
   workstation: Developer Workstation {
     shape: rectangle
     style: {
+      fill: "#F8F9FA"
+      stroke: "#C8C8CC"
+      stroke-width: 1
+      border-radius: 12
+      font-size: 20
       3d: true
     }
     
     telepresence: Telepresence {
       shape: package
       style: {
-        fill: "#4caf50"
-        font-color: "#ffffff"
+        fill: "#34C759"
+        stroke: "#34C759"
+        font-size: 18
+        font-color: "#FFFFFF"
+        bold: true
       }
     }
     
     zscaler: Zscaler Client {
       shape: package
       style: {
-        fill: "#ff6900"
-        font-color: "#ffffff"
+        fill: "#FF9500"
+        stroke: "#FF9500"
+        font-size: 18
+        font-color: "#FFFFFF"
+        bold: true
       }
     }
   }
@@ -128,26 +59,34 @@ dev_env: Developer Environment {
 security: Security Layer {
   shape: rectangle
   style: {
-    fill: "#fff3e0"
-    stroke: "#f57c00"
+    fill: "#FFF3E0"
+    stroke: "#FF9500"
     stroke-width: 2
+    border-radius: 16
+    font-size: 24
+    font-color: "#1D1D1F"
     bold: true
   }
   
   zscaler_cloud: Zscaler Cloud {
     shape: cloud
     style: {
-      fill: "#ff6900"
-      font-color: "#ffffff"
+      fill: "#FF9500"
+      stroke: "#FF9500"
+      font-size: 20
+      font-color: "#FFFFFF"
       bold: true
     }
     
     ztna: Zero Trust\nNetwork Access {
       shape: rectangle
       style: {
-        fill: "#ffffff"
-        stroke: "#ff6900"
+        fill: "#FFFFFF"
+        stroke: "#FF9500"
         stroke-width: 2
+        border-radius: 8
+        font-size: 16
+        font-color: "#1D1D1F"
         double-border: true
       }
     }
@@ -156,16 +95,130 @@ security: Security Layer {
   identity: Identity Provider {
     shape: cylinder
     style: {
-      fill: "#0078d4"
-      font-color: "#ffffff"
+      fill: "#0078D4"
+      stroke: "#0078D4"
+      font-size: 20
+      font-color: "#FFFFFF"
       bold: true
     }
     
     entra: Microsoft\nEntra ID {
       shape: rectangle
       style: {
-        fill: "#ffffff"
-        stroke: "#0078d4"
+        fill: "#FFFFFF"
+        stroke: "#0078D4"
+        stroke-width: 2
+        border-radius: 8
+        font-size: 16
+        font-color: "#1D1D1F"
+      }
+    }
+  }
+}
+
+# Kubernetes Cluster - Single focus
+k8s: Kubernetes Cluster {
+  shape: cloud
+  style: {
+    fill: "#326CE5"
+    stroke: "#326CE5"
+    font-size: 24
+    font-color: "#FFFFFF"
+    bold: true
+  }
+  
+  observable: Observable Framework {
+    shape: rectangle
+    style: {
+      fill: "#FFFFFF"
+      stroke: "#326CE5"
+      stroke-width: 2
+      border-radius: 12
+      font-size: 20
+      font-color: "#1D1D1F"
+      bold: true
+    }
+    
+    dashboards: Live Dashboards {
+      style: {
+        font-size: 16
+      }
+    }
+    
+    data_processing: Python Data\nProcessing {
+      style: {
+        font-size: 16
+      }
+    }
+  }
+  
+  monitoring: Monitoring Stack {
+    shape: rectangle
+    style: {
+      fill: "#FFFFFF"
+      stroke: "#326CE5"
+      stroke-width: 2
+      border-radius: 12
+      font-size: 20
+      font-color: "#1D1D1F"
+      bold: true
+    }
+    
+    grafana: Grafana {
+      style: {
+        font-size: 16
+      }
+    }
+    
+    loki: Loki + Quickwit {
+      style: {
+        font-size: 16
+      }
+    }
+  }
+  
+  core_services: Core Services {
+    shape: rectangle
+    style: {
+      fill: "#FFFFFF"
+      stroke: "#326CE5"
+      stroke-width: 2
+      border-radius: 12
+      font-size: 20
+      font-color: "#1D1D1F"
+      bold: true
+    }
+    
+    coredns: Core DNS {
+      style: {
+        font-size: 16
+      }
+    }
+    
+    debug_example: e.g. Core DNS\nDebugging {
+      style: {
+        font-size: 14
+        font-color: "#FF9500"
+        italic: true
+      }
+    }
+  }
+  
+  argocd: ArgoCD GitOps {
+    shape: rectangle
+    style: {
+      fill: "#FFFFFF"
+      stroke: "#326CE5"
+      stroke-width: 2
+      border-radius: 12
+      font-size: 20
+      font-color: "#1D1D1F"
+      bold: true
+    }
+    
+    auto_sync: Auto-sync\nManifests {
+      style: {
+        font-size: 16
       }
     }
   }
@@ -175,40 +228,39 @@ security: Security Layer {
 flows: Network Flows {
   shape: text
   style: {
-    font-size: 16
+    font-size: 18
+    font-color: "#1D1D1F"
     bold: true
   }
 }
 
 # Connections - Development Flow
-dev_env.workstation.telepresence -> clouds.aws.eks: Direct Access\n(Bypass Zscaler) {
+dev_env.workstation.telepresence -> k8s.observable: Direct Access\n(Bypass Zscaler) {
   style: {
-    stroke: "#4caf50"
+    stroke: "#34C759"
     stroke-width: 3
+    font-size: 14
+    font-color: "#34C759"
     bold: true
   }
 }
 
-dev_env.workstation.telepresence -> clouds.azure.aks: Direct Access\n(Bypass Zscaler) {
+dev_env.workstation.telepresence -> k8s.core_services: DNS & Service\nDebugging {
   style: {
-    stroke: "#4caf50"
+    stroke: "#34C759"
     stroke-width: 3
+    font-size: 14
+    font-color: "#34C759"
     bold: true
   }
 }
 
-dev_env.workstation.telepresence -> clouds.gcp.gke: Direct Access\n(Bypass Zscaler) {
+dev_env.workstation.telepresence -> k8s.monitoring: Direct Monitoring\nAccess {
   style: {
-    stroke: "#4caf50"
+    stroke: "#34C759"
     stroke-width: 3
-    bold: true
-  }
-}
-
-dev_env.workstation.telepresence -> clouds.onprem.k3s: Direct Access\n(Bypass Zscaler) {
-  style: {
-    stroke: "#4caf50"
-    stroke-width: 3
+    font-size: 14
+    font-color: "#34C759"
     bold: true
   }
 }
@@ -216,17 +268,48 @@ dev_env.workstation.telepresence -> clouds.onprem.k3s: Direct Access\n(Bypass Zs
 # Connections - Security Flow
 dev_env.workstation.zscaler -> security.zscaler_cloud.ztna: Internet Traffic\n(Zero Trust) {
   style: {
-    stroke: "#ff6900"
+    stroke: "#FF9500"
     stroke-width: 3
+    font-size: 14
+    font-color: "#FF9500"
     bold: true
   }
 }
 
 security.identity.entra -> security.zscaler_cloud: Policy\nEnforcement {
   style: {
-    stroke: "#0078d4"
+    stroke: "#0078D4"
     stroke-width: 2
     stroke-dash: 3
+    font-size: 14
+    font-color: "#0078D4"
+  }
+}
+
+# GitOps Flow
+security.identity.entra -> k8s.argocd: Identity\nIntegration {
+  style: {
+    stroke: "#0078D4"
+    stroke-width: 2
+    stroke-dash: 3
+    font-size: 14
+    font-color: "#0078D4"
+  }
+}
+
+k8s.argocd -> k8s.observable: Automated\nDeployment {
+  style: {
+    stroke: "#326CE5"
+    stroke-width: 2
+    font-size: 14
+  }
+}
+
+k8s.argocd -> k8s.monitoring: Stack\nDeployment {
+  style: {
+    stroke: "#326CE5"
+    stroke-width: 2
+    font-size: 14
   }
 }
 
@@ -234,26 +317,29 @@ security.identity.entra -> security.zscaler_cloud: Policy\nEnforcement {
 benefits: Architecture Benefits {
   shape: rectangle
   style: {
-    fill: "#e8f5e9"
-    stroke: "#4caf50"
+    fill: "#E4F5E9"
+    stroke: "#34C759"
     stroke-width: 2
+    border-radius: 16
+    font-size: 18
+    shadow: true
     3d: true
   }
   
   content: |md
-    **Multi-Cloud Support:**
-    • Works with any Kubernetes cluster
-    • AWS EKS, Azure AKS, Google GKE
-    • On-premise K8s/K3s
+    **Kubernetes-Focused Development:**
+    • Direct access to any Kubernetes cluster
+    • Core DNS and service debugging capabilities
+    • Live dashboard development environment
     
     **Security Maintained:**
-    • Zero Trust for internet
-    • Direct cluster access
-    • Identity-based policies
+    • Zero Trust for internet traffic
+    • Direct cluster access bypasses proxy
+    • Identity-based policies via Entra ID
     
     **Developer Productivity:**
-    • No proxy latency
-    • Local development
-    • Live traffic interception
+    • No proxy latency for Kubernetes
+    • Local development with live data
+    • Real-time debugging and monitoring
   |
 }

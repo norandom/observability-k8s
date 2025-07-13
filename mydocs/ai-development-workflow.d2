@@ -97,7 +97,7 @@ k8s_cluster: {
   class: cluster
   
   observable_pod: {
-    label: "📊 Observable Pod\n(Live Data + Processing)"
+    label: "📊 Observable Framework\n(Live Data + Processing)"
     class: tool
   }
 }
@@ -106,6 +106,15 @@ k8s_cluster: {
 live_dashboard: {
   label: "🎯 Live Interactive Dashboard\n\"localhost:3000\""
   class: dashboard
+}
+
+# Dashboard Availability
+dashboard_access: {
+  label: "🌐 Available to All\nvia Kubernetes"
+  class: tool
+  style.fill: "#E3F2FD"
+  style.stroke: "#326CE5"
+  style.font-color: "#1D1D1F"
 }
 
 # ⚡ The Magic Development Flow
@@ -137,12 +146,20 @@ k8s_cluster.observable_pod -> live_dashboard: "🚀 Hot reload\nwith real data" 
   style.bold: true
 }
 
+live_dashboard -> dashboard_access: "🔗 K8s Service\nExposure" {
+  style.stroke: "#326CE5"
+  style.stroke-width: 3
+  style.font-size: 16
+  style.bold: true
+}
+
 # 🎯 The Result
 result_box: {
-  label: "🎯 Development Superpowers\n\n✅ Edit locally with Claude Code / Gemini CLI\n✅ Test against live Kubernetes data\n✅ See changes instantly in browser\n✅ No Docker, no local setup hassle\n✅ Production-like development environment"
+  label: "🎯 Development Superpowers\n\n• Edit locally with Claude Code / Gemini CLI\n• Test against live Kubernetes data\n• See changes instantly in browser\n• No Docker, no local setup hassle\n• Production-like development environment"
   class: laptop
   style.fill: "#E8F4FD"
   style.font-size: 16
+  style.bold: false
 }
 
 laptop_env -> result_box: "🌟 Experience" {

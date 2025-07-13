@@ -1,297 +1,431 @@
 # Telepresence + Zscaler Zero Trust Network Architecture
 
-direction: down
+direction: right
 
-# Define styles
+# Define styles for keynote presentation
 vars: {
   d2-config: {
     layout-engine: elk
+    pad: 40
   }
 }
 
 # Title
 title: |md
   # Telepresence + Zscaler Zero Trust Network
-  ## DNS Resolution and Traffic Flow
-|
+  ## Step-by-Step Traffic Flow
+| {style: {font-size: 28}}
 
-# Developer Workstation
-developer: Developer Workstation {
+# Step 1: Developer Workstation
+developer: {
   shape: rectangle
+  label: "Step 1: Developer Workstation"
   style: {
-    fill: "#e8f4f8"
-    stroke: "#0066cc"
-    stroke-width: 2
+    fill: "#F8F9FA"
+    stroke: "#C8C8CC"
+    stroke-width: 3
+    border-radius: 20
+    font-size: 22
+    font-color: "#1D1D1F"
+    bold: true
+    shadow: true
   }
   
   browser: Browser {
     shape: rectangle
     style: {
-      fill: "#f0f7ff"
+      fill: "#FFFFFF"
+      stroke: "#E5E5EA"
+      stroke-width: 2
+      border-radius: 12
+      font-size: 16
+      shadow: true
     }
   }
   
-  telepresence: Telepresence Client {
+  telepresence: Telepresence\nClient {
+    shape: package
+    style: {
+      fill: "#E4F5E9"
+      stroke: "#34C759"
+      stroke-width: 2
+      border-radius: 12
+      font-size: 16
+      font-color: "#1D1D1F"
+      bold: true
+      shadow: true
+    }
+  }
+  
+  kubectl: kubectl\nCLI {
     shape: rectangle
     style: {
-      fill: "#d4e6f1"
-    }
-    
-    user_daemon: User Daemon
-    root_daemon: Root Daemon {
-      dns_server: DNS Server\n127.0.0.1:53
+      fill: "#DDEEFE"
+      stroke: "#0A84FF"
+      stroke-width: 2
+      border-radius: 12
+      font-size: 16
+      shadow: true
     }
   }
   
-  kubectl: kubectl CLI {
-    shape: rectangle
-  }
-  
-  zscaler_client: Zscaler Client {
-    shape: rectangle
+  zscaler: Zscaler\nClient {
+    shape: package
     style: {
-      fill: "#ffeaa7"
+      fill: "#FFF3E0"
+      stroke: "#FF9500"
+      stroke-width: 2
+      border-radius: 12
+      font-size: 16
+      font-color: "#1D1D1F"
+      bold: true
+      shadow: true
     }
-    zpa: ZPA Module
-    zia: ZIA Module
   }
 }
 
-# DNS Resolution Layer
-dns_layer: DNS Resolution {
+# Step 2: DNS Resolution
+dns_resolution: {
   shape: rectangle
+  label: "Step 2: DNS Resolution"
   style: {
-    fill: "#f8f9fa"
-    stroke: "#6c757d"
-    stroke-width: 1
-    stroke-dash: 3
+    fill: "#FAFAFA"
+    stroke: "#8E8E93"
+    stroke-width: 3
+    border-radius: 20
+    font-size: 22
+    font-color: "#1D1D1F"
+    bold: true
+    shadow: true
   }
   
-  internal_dns: Cluster DNS {
-    shape: circle
-    style: {
-      fill: "#d1f2eb"
-    }
-    domains: |md
-      - *.cluster.local
-      - *.svc
-      - service names
-    |
-  }
-  
-  external_dns: Public DNS {
-    shape: circle
-    style: {
-      fill: "#ffeaa7"
-    }
-    domains: |md
-      - *.com
-      - *.io
-      - *.net
-      - *.org
-    |
-  }
-}
-
-# Zscaler Cloud
-zscaler_cloud: Zscaler Cloud {
-  shape: cloud
-  style: {
-    fill: "#fff5e6"
-    stroke: "#ff9800"
-    stroke-width: 2
-  }
-  
-  zpa_cloud: ZPA Service Edge {
-    shape: hexagon
-    style: {
-      fill: "#ffecb3"
-    }
-    policy: Zero Trust Policy\nEntra ID Groups
-  }
-  
-  zia_cloud: ZIA Service Edge {
-    shape: hexagon
-    style: {
-      fill: "#ffecb3"
-    }
-    filtering: Web Filtering\nDNS Security
-  }
-}
-
-# Corporate Network
-corp_network: Corporate Network {
-  shape: rectangle
-  style: {
-    fill: "#f0f0f0"
-    stroke: "#808080"
-    stroke-width: 2
-  }
-  
-  entra_id: Entra ID {
+  telepresence_dns: Telepresence DNS\n127.0.0.1:53 {
     shape: cylinder
     style: {
-      fill: "#e3f2fd"
+      fill: "#E4F5E9"
+      stroke: "#34C759"
+      stroke-width: 2
+      font-size: 16
+      font-color: "#1D1D1F"
+      shadow: true
     }
-    groups: Developer Groups\nAccess Policies
+  }
+  
+  cluster_domains: *.cluster.local\n*.svc {
+    shape: text
+    style: {
+      font-size: 14
+      font-color: "#34C759"
+      italic: true
+    }
+  }
+  
+  public_dns: Public DNS\nvia Zscaler {
+    shape: cylinder
+    style: {
+      fill: "#FFF3E0"
+      stroke: "#FF9500"
+      stroke-width: 2
+      font-size: 16
+      font-color: "#1D1D1F"
+      shadow: true
+    }
+  }
+  
+  public_domains: *.com, *.io\n*.net, *.org {
+    shape: text
+    style: {
+      font-size: 14
+      font-color: "#FF9500"
+      italic: true
+    }
   }
 }
 
-# Kubernetes Cluster
-k8s_cluster: Kubernetes Cluster {
-  shape: cloud
+# Step 3: Zscaler Security Layer
+zscaler_security: {
+  shape: rectangle
+  label: "Step 3: Zscaler Security"
   style: {
-    fill: "#326ce5"
-    stroke: "#326ce5"
-    stroke-width: 2
-    font-color: "#ffffff"
-    multiple: true
+    fill: "#FFF8E1"
+    stroke: "#FF9500"
+    stroke-width: 3
+    border-radius: 20
+    font-size: 22
+    font-color: "#1D1D1F"
+    bold: true
+    shadow: true
+  }
+  
+  zpa_service: ZPA\nZero Trust Access {
+    shape: hexagon
+    style: {
+      fill: "#FFFFFF"
+      stroke: "#FF9500"
+      stroke-width: 2
+      font-size: 16
+      font-color: "#1D1D1F"
+      bold: true
+      shadow: true
+    }
+  }
+  
+  zia_service: ZIA\nWeb Filtering {
+    shape: hexagon
+    style: {
+      fill: "#FFFFFF"
+      stroke: "#FF9500"
+      stroke-width: 2
+      font-size: 16
+      font-color: "#1D1D1F"
+      bold: true
+      shadow: true
+    }
+  }
+  
+  identity: Microsoft\nEntra ID {
+    shape: cylinder
+    style: {
+      fill: "#0078D4"
+      stroke: "#0078D4"
+      font-size: 16
+      font-color: "#FFFFFF"
+      bold: true
+      shadow: true
+    }
+  }
+}
+
+# Step 4: Kubernetes Cluster
+k8s_cluster: {
+  shape: rectangle
+  label: "Step 4: Kubernetes Cluster"
+  style: {
+    fill: "#E3F2FD"
+    stroke: "#326CE5"
+    stroke-width: 3
+    border-radius: 20
+    font-size: 22
+    font-color: "#1D1D1F"
+    bold: true
+    shadow: true
   }
   
   api_server: API Server\n192.168.122.27:6443 {
     shape: hexagon
     style: {
-      fill: "#c8e6c9"
+      fill: "#FFFFFF"
+      stroke: "#326CE5"
+      stroke-width: 2
+      font-size: 16
+      font-color: "#1D1D1F"
+      bold: true
+      shadow: true
     }
   }
   
-  traffic_manager: Traffic Manager {
+  traffic_manager: Telepresence\nTraffic Manager {
     shape: rectangle
     style: {
-      fill: "#a5d6a7"
+      fill: "#FFFFFF"
+      stroke: "#34C759"
+      stroke-width: 2
+      border-radius: 12
+      font-size: 16
+      font-color: "#1D1D1F"
+      shadow: true
     }
-    namespace: ambassador namespace
   }
   
-  services: Services {
-    shape: rectangle
-    style: {
-      fill: "#81c784"
-    }
-    subnets: |md
-      - 10.43.0.0/16
-      - 10.42.0.0/24
-    |
-  }
-  
-  observable: Observable Pod {
+  observable: Observable\nFramework {
     shape: circle
     style: {
-      fill: "#66bb6a"
+      fill: "#FFFFFF"
+      stroke: "#326CE5"
+      stroke-width: 2
+      font-size: 16
+      font-color: "#1D1D1F"
+      bold: true
+      shadow: true
     }
-    port: Port 3000
   }
 }
 
-# Internet
-internet: Internet {
-  shape: cloud
-  style: {
-    fill: "#ecf0f1"
-    stroke: "#34495e"
-  }
-}
-
-# Connections
-
-# DNS Resolution Flows
-developer.telepresence.root_daemon.dns_server -> dns_layer.internal_dns: {
-  label: "*.cluster.local\nPort 53"
-  style: {
-    stroke: "#4caf50"
-    stroke-width: 2
-  }
-}
-
-developer.browser -> developer.zscaler_client.zia -> dns_layer.external_dns: {
-  label: "*.com, *.io, etc\nvia Zscaler"
-  style: {
-    stroke: "#ff9800"
-    stroke-width: 2
-  }
-}
-
-# Traffic Flows
-developer.kubectl -> k8s_cluster.api_server: {
-  label: "Direct Connection\n(Never Proxy)"
-  style: {
-    stroke: "#2196f3"
-    stroke-width: 2
-    stroke-dash: 0
-  }
-}
-
-developer.telepresence -> k8s_cluster.traffic_manager: {
-  label: "Telepresence Connection"
-  style: {
-    stroke: "#4caf50"
-    stroke-width: 2
-  }
-}
-
-k8s_cluster.traffic_manager -> k8s_cluster.observable: {
-  label: "Intercept Traffic"
-  style: {
-    stroke: "#4caf50"
-    stroke-dash: 3
-  }
-}
-
-# Zscaler Flows
-developer.zscaler_client.zpa -> zscaler_cloud.zpa_cloud: {
-  label: "App Access"
-  style: {
-    stroke: "#ff9800"
-  }
-}
-
-developer.zscaler_client.zia -> zscaler_cloud.zia_cloud: {
-  label: "Web Traffic"
-  style: {
-    stroke: "#ff9800"
-  }
-}
-
-zscaler_cloud.zia_cloud -> internet: {
-  label: "Filtered Traffic"
-  style: {
-    stroke: "#ff9800"
-  }
-}
-
-corp_network.entra_id -> zscaler_cloud.zpa_cloud: {
-  label: "Identity & Policy"
-  style: {
-    stroke: "#3f51b5"
-    stroke-dash: 3
-  }
-}
-
-# Legend
-legend: Configuration Requirements {
+# Step 5: Internet & Applications
+internet_apps: {
   shape: rectangle
+  label: "Step 5: Internet & Apps"
   style: {
-    fill: "#f5f5f5"
-    stroke: "#9e9e9e"
-    font-size: 12
+    fill: "#F8F9FA"
+    stroke: "#8E8E93"
+    stroke-width: 3
+    border-radius: 20
+    font-size: 22
+    font-color: "#1D1D1F"
+    bold: true
+    shadow: true
   }
   
-  config: |md
-    **Zscaler Bypass Rules for Developers:**
+  internet: Internet\nResources {
+    shape: cloud
+    style: {
+      fill: "#FFFFFF"
+      stroke: "#8E8E93"
+      stroke-width: 2
+      font-size: 16
+      font-color: "#1D1D1F"
+      shadow: true
+    }
+  }
+  
+  dashboard: Live Dashboard\nlocalhost:3000 {
+    shape: rectangle
+    style: {
+      fill: "#34C759"
+      stroke: "#34C759"
+      font-size: 16
+      font-color: "#FFFFFF"
+      bold: true
+      border-radius: 12
+      shadow: true
+    }
+  }
+}
+
+# Step-by-Step Flow Connections
+
+# Step 1 → Step 2: DNS Resolution
+developer.telepresence -> dns_resolution.telepresence_dns: "1. Cluster DNS\n*.cluster.local" {
+  style: {
+    stroke: "#34C759"
+    stroke-width: 4
+    font-size: 14
+    font-color: "#34C759"
+    bold: true
+  }
+}
+
+developer.zscaler -> dns_resolution.public_dns: "2. Public DNS\nvia Zscaler" {
+  style: {
+    stroke: "#FF9500"
+    stroke-width: 4
+    font-size: 14
+    font-color: "#FF9500"
+    bold: true
+  }
+}
+
+# Step 2 → Step 3: Security Processing
+dns_resolution.public_dns -> zscaler_security.zia_service: "3. Web Filtering" {
+  style: {
+    stroke: "#FF9500"
+    stroke-width: 4
+    font-size: 14
+    font-color: "#FF9500"
+    bold: true
+  }
+}
+
+zscaler_security.identity -> zscaler_security.zpa_service: "4. Identity\nVerification" {
+  style: {
+    stroke: "#0078D4"
+    stroke-width: 3
+    font-size: 14
+    font-color: "#0078D4"
+    stroke-dash: 3
+  }
+}
+
+# Step 3 → Step 4: Kubernetes Access
+developer.kubectl -> k8s_cluster.api_server: "5. Direct K8s\nAPI Access" {
+  style: {
+    stroke: "#0A84FF"
+    stroke-width: 4
+    font-size: 14
+    font-color: "#0A84FF"
+    bold: true
+  }
+}
+
+developer.telepresence -> k8s_cluster.traffic_manager: "6. Telepresence\nConnection" {
+  style: {
+    stroke: "#34C759"
+    stroke-width: 4
+    font-size: 14
+    font-color: "#34C759"
+    bold: true
+  }
+}
+
+# Step 4 → Step 5: Live Applications
+k8s_cluster.traffic_manager -> k8s_cluster.observable: "7. Traffic\nIntercept" {
+  style: {
+    stroke: "#34C759"
+    stroke-width: 3
+    font-size: 14
+    stroke-dash: 3
+  }
+}
+
+k8s_cluster.observable -> internet_apps.dashboard: "8. Live Dashboard\nAccess" {
+  style: {
+    stroke: "#34C759"
+    stroke-width: 4
+    font-size: 14
+    font-color: "#34C759"
+    bold: true
+  }
+}
+
+zscaler_security.zia_service -> internet_apps.internet: "9. Filtered\nInternet" {
+  style: {
+    stroke: "#FF9500"
+    stroke-width: 4
+    font-size: 14
+    font-color: "#FF9500"
+    bold: true
+  }
+}
+
+# Configuration Summary
+config_summary: {
+  shape: text
+  label: "Key Configuration Points"
+  style: {
+    fill: "#F5F5F7"
+    stroke: "#D1D1D6"
+    stroke-width: 2
+    border-radius: 16
+    font-size: 18
+    font-color: "#1D1D1F"
+    bold: true
+    shadow: true
+  }
+  
+  details: |md
+    **🔧 Zscaler Bypass Rules:**
+    • DNS: 127.0.0.1:53 (Telepresence)
+    • Networks: 10.43.0.0/16, 10.42.0.0/24
+    • API Server: 192.168.122.27/32
     
-    **DNS Bypass:**
-    - 127.0.0.1:53 (Telepresence DNS)
+    **🌐 DNS Routing:**
+    • *.cluster.local → Telepresence DNS
+    • *.com, *.io, *.net → Zscaler ZIA
     
-    **Network Bypass:**
-    - 10.43.0.0/16 (K8s Services)
-    - 10.42.0.0/24 (K8s Pods)
-    - 192.168.122.27/32 (API Server)
-    
-    **Excluded DNS Suffixes:**
-    - .com, .io, .net, .org (via ZIA)
-    
-    **Included for Telepresence:**
-    - .cluster.local
-    - .svc
-  |
+    **🔒 Security Flow:**
+    • Internet traffic → Zscaler filtering
+    • K8s access → Direct connection
+    • Identity → Microsoft Entra ID
+  | {style: {font-size: 14}}
+}
+
+# Flow indicators for presentation
+flow_title: {
+  shape: text
+  label: "Traffic Flow: Developer → DNS → Security → Kubernetes → Applications"
+  style: {
+    font-size: 20
+    font-color: "#007AFF"
+    bold: true
+  }
 }
